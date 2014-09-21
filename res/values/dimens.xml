@@ -9,4 +9,9 @@
     <dimen name="raster12">48dp</dimen>
 	<dimen name="toolbar_height">56dp</dimen>
 	<dimen name="item_height">72dp</dimen> 
+	<dimen name="keyline1">16dp</dimen>
+	<dimen name="keyline2">72dp</dimen>
+	<dimen name="small_fab">40dp</dimen>
+	<dimen name="large_fab">56dp</dimen>
+	<dimen name="elevation">2dp</dimen>
 </resources>
