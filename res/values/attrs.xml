@@ -7,6 +7,7 @@
 	    <attr name="icon_default" format="reference" />
 	    <attr name="icon_out_animation" format="reference" />
 	    <attr name="icon_in_animation" format="reference" />
+	    <attr name="default_animation" format="reference" />
   	</declare-styleable>
 </resources>
  

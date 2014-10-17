@@ -12,6 +12,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Pair;
 
+import com.privatesecuredata.arch.db.annotations.DbField;
+import com.privatesecuredata.arch.db.annotations.Persister;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 /**
@@ -140,6 +142,18 @@ public class PersistanceManager {
 		}
 	}
 	
+	public void addPersistentType(Class<?> persistentType) {
+		try {
+			IPersister<? extends IPersistable<?>> persisterObj = new AutomaticPersister(persistentType);
+					
+			persisterMap.put(persistentType, persisterObj);
+		}
+		catch (Exception ex)
+		{
+			throw new DBException("Error adding common Persister!", ex);			
+		}
+	}
+	
 	public <T extends IPersistable<T>> IPersister<T> getPersister(Class<T> classObj)
 	{
 		return (IPersister<T>)persisterMap.get(classObj);
@@ -158,6 +172,13 @@ public class PersistanceManager {
 		try {
 			for (String createSQL : dbDesc.getCreateStatements())
 			{
+				db.execSQL(createSQL);
+			}
+			
+			for (Class persistentType : dbDesc.getPersistentTypes())
+			{
+				AutomaticPersister<?> persister = (AutomaticPersister)this.getPersister(persistentType);
+				String createSQL = persister.getCreateStatement();
 				db.execSQL(createSQL);
 			}
 			db.setTransactionSuccessful();

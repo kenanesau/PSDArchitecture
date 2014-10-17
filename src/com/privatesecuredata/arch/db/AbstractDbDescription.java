@@ -5,6 +5,10 @@ import com.google.common.base.Objects;
 
 public abstract class AbstractDbDescription implements IDbDescription {
 
+	@Override
+	public Class<?>[] getPersistentTypes() {
+		return new Class[] {};
+	}
 
 	@Override
 	public boolean equals(Object o) {

@@ -1,10 +1,12 @@
 package com.privatesecuredata.arch.db;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 
 import android.content.Context;
 
 import com.privatesecuredata.arch.exceptions.DBException;
+import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
 
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
@@ -26,8 +28,11 @@ public class PersistanceManagerLocator {
 			PersistanceManager pm = new PersistanceManager(dbDesc); 
 			pmMap.put(dbDesc, pm);
 
-			for(Class<?> classObj : dbDesc.getPersisterClasses())
+			for(Class<?> classObj : dbDesc.getPersisterTypes())
 				pm.addPersister(classObj);
+			
+			for(Class<?> classObj : dbDesc.getPersistentTypes())
+				pm.addPersistentType(classObj);
 		}
 	}
 

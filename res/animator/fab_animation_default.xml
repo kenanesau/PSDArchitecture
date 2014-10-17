@@ -2,10 +2,10 @@
 <set xmlns:android="http://schemas.android.com/apk/res/android"
     android:ordering="together">
 	<objectAnimator 
-	    android:propertyName="rotation" 
-	    android:duration="@android:integer/config_shortAnimTime" 
+	    android:propertyName="rotationY" 
+	    android:duration="@android:integer/config_mediumAnimTime" 
 	    android:valueType="floatType" 
-	    android:valueFrom="90.0"
-	    android:valueTo="0.0" />
+	    android:valueFrom="0.0"
+	    android:valueTo="360.0" />
 </set>
     

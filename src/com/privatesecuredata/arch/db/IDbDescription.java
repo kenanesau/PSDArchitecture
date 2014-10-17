@@ -14,5 +14,6 @@ public interface IDbDescription {
 	Integer getVersion();
 	Integer getInstance();
 	String[] getCreateStatements();
-	Class<?>[] getPersisterClasses();
+	Class<?>[] getPersisterTypes();
+	Class<?>[] getPersistentTypes();
 }

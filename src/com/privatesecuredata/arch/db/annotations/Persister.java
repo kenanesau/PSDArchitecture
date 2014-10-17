@@ -1,4 +1,4 @@
-package com.privatesecuredata.arch.db;
+package com.privatesecuredata.arch.db.annotations;
 
 import java.lang.annotation.*;
 
