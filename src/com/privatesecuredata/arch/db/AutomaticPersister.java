@@ -2,17 +2,17 @@ package com.privatesecuredata.arch.db;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.R.integer;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteStatement;
-import android.provider.ContactsContract.Data;
 
+import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.annotations.DbField;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersister<T> {
@@ -53,7 +53,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 
 			Class<?> fieldType = field.getType();
 
-			if ((fieldType.equals(integer.class)) || (fieldType.equals(Integer.class)))
+			if ((fieldType.equals(int.class)) || (fieldType.equals(Integer.class)))
 			{
 				_type =  SqlType.INTEGER;
 			} 
@@ -69,7 +69,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			{
 				_type =  SqlType.DOUBLE;
 			}
-			else if (fieldType.equals(Data.class))
+			else if (fieldType.equals(Date.class))
 			{
 				_type =  SqlType.DATE;
 			}
@@ -77,6 +77,8 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			{
 				_type =  SqlType.STRING;
 			}
+			else
+				throw new ArgumentException("FATAL: Could not determine type of SqlField!");
 		}
 		
 		public String getName() { return _name; }
@@ -118,6 +120,15 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			return _mandatory;
 		}
 		public void setMandatory() { _mandatory = true; }
+		
+		@Override
+		public String toString() {
+			return MoreObjects.toStringHelper(this)
+					.add("Table", _tableName)
+					.add("Field", _name)
+					.add("Type", getSqlTypeString())
+					.toString();
+		}
 	}
 	
 	SQLiteStatement insert;
@@ -168,17 +179,29 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			.append(getTableName())
 			.append(" ( ");
 		
+		int i=1;
 		for(SqlField fld : _tableFields)
 		{
 			sql.append(fld.getName());
+			
+			if (i < _tableFields.size())
+			  sql.append(", ");
+			
+			i++;
 		}
 		
 		sql.append(" ) VALUES ( ");
 		
-		for (int i = 0; i<_tableFields.size(); i++)
-			sql.append("? ");
+		for (i = 0; i<_tableFields.size(); i++)
+		{
+			sql.append("?");
+			if (i + 1 < _tableFields.size())
+				sql.append(", ");
+			else
+				sql.append(" ");
+		}
 		
-		sql.append(" )");
+		sql.append(")");
 		return sql.toString();
 	}
 	
@@ -188,10 +211,14 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			.append(getTableName())
 			.append(" SET ");
 		
+		int i = 1;
 		for (SqlField field : _tableFields)
 		{
 			sql.append(field.getName());
 			sql.append("=? ");
+			if (i < _tableFields.size())
+				sql.append(", ");
+			i++;
 		}
 		
 		sql.append("WHERE _id=?");
@@ -213,7 +240,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 				.append(field.getSqlTypeString()).append(" ");
 			
 			if (field.isMandatory())
-				sql.append("NOT NULL ");
+				sql.append("NOT NULL");
 		}
 		
 		sql.append(" ) ");
@@ -231,23 +258,31 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	
 	public void bind(SQLiteStatement sql, int idx, SqlField field, T persistable) throws IllegalAccessException, IllegalArgumentException
 	{
+		Field fld = field.getField();
+		fld.setAccessible(true);
+		
 		switch(field.getSqlType())
 		{
 		case STRING:
 		case DATE:
-			bind(sql, idx, field.getField().get(persistable).toString());
+			Object val = fld.get(persistable);
+			String valStr = null;
+			if (null != val)
+				valStr = val.toString();
+			
+			bind(sql, idx, valStr);
 			break;
 		case DOUBLE:
-			bind(sql, idx, field.getField().getDouble(persistable));
+			bind(sql, idx, fld.getDouble(persistable));
 			break;
 		case FLOAT:
-			bind(sql, idx, field.getField().getFloat(persistable));
+			bind(sql, idx, fld.getFloat(persistable));
 			break;
 		case INTEGER:
-			bind(sql, idx, field.getField().getInt(persistable));
+			bind(sql, idx, fld.getInt(persistable));
 			break;
 		case LONG:
-			bind(sql, idx, field.getField().getLong(persistable));
+			bind(sql, idx, fld.getLong(persistable));
 			break;
 		default:
 			break;
@@ -294,45 +329,61 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	@Override
 	public T rowToObject(int pos, Cursor csr) throws DBException {
 		T obj = null;
+		SqlField field = null;
 		
 		try {
 			obj = _const.newInstance();
 			csr.moveToPosition(pos);
 			
 			obj.setDbId(new DbId<T>(csr.getLong(0)));
-			for (int colIndex=1; colIndex<=csr.getColumnCount(); colIndex++)
+			for (int colIndex=1; colIndex<csr.getColumnCount(); colIndex++)
 			{
-				SqlField field = _tableFields.get(colIndex);
+				field = _tableFields.get(colIndex - 1);
+				//int colIndex = csr.getColumnIndex(field.getName());
+				
+				Field fld = field.getField();
+				fld.setAccessible(true);
 				switch(field.getSqlType())
 				{
 				case DATE:
 					String dateStr = csr.getString(colIndex);
 					java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
-						field.getField().set(obj, df.parse(dateStr));
+					Date val = null;
+					if (null != dateStr)
+						val = df.parse(dateStr);
+					fld.set(obj, val);
 					break;
 				case STRING:
-					field.getField().set(obj, csr.getString(colIndex));
+					fld.set(obj, csr.getString(colIndex));
 					break;
 				case DOUBLE:
-					field.getField().set(obj, csr.getDouble(colIndex));
+					fld.set(obj, csr.getDouble(colIndex));
 					break;
 				case FLOAT:
-					field.getField().set(obj, csr.getFloat(colIndex));
+					fld.set(obj, csr.getFloat(colIndex));
 					break;
 				case INTEGER:
-					field.getField().set(obj, csr.getInt(colIndex));
+					fld.set(obj, csr.getInt(colIndex));
 					break;
 				case LONG:
-					field.getField().set(obj, csr.getLong(colIndex));
+					fld.set(obj, csr.getLong(colIndex));
 					break;
 				default:
 					throw new DBException("Unknow data-type");
 				}
 			}
 		} catch (Exception e) {
-			throw new DBException(
-					String.format("Error converting Curor-row to object of type %s", 
-					_persistentType.getName()), e);
+			if (field != null) {
+				throw new DBException(
+					String.format("Error converting value for Field \"%s\" in object of type \"%s\"", 
+							field.getName(),
+							_persistentType.getName()), e);
+			}
+			else {
+				throw new DBException(
+						String.format("Error converting Cursor-row to object of type \"%s\"", 
+								_persistentType.getName()), e);
+			}
 		} 
 		
 		return obj;
