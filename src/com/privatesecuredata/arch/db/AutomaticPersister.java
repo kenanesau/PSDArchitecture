@@ -1,143 +1,58 @@
 package com.privatesecuredata.arch.db;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Locale;
 
-import android.R.integer;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteStatement;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.privatesecuredata.arch.db.annotations.DbField;
+import com.privatesecuredata.arch.db.annotations.DbForeignKeyField;
+import com.privatesecuredata.arch.db.annotations.DbThisToMany;
+import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersister<T> {
 	
-	public enum SqlType 
-	{
-		INTEGER,
-		LONG, 
-		STRING,
-		FLOAT,
-		DOUBLE,
-		DATE,
-	}
-	
-	protected class SqlField {
-		private String _tableName;
-		private String _name;
-		private SqlType _type;
-		private Field _field;
-		private boolean _mandatory = false;
-		
-		public SqlField(String table, String name, SqlType type)
-		{
-			_tableName = table;
-			_name = name;
-			_type = type;
-		}
-		
-		public SqlField(String name, SqlType type)
-		{
-			this("", name, type);
-		}
-		
-		public SqlField(Field field)
-		{
-			_field = field;
-			_name = String.format("fld_%s", field.getName());
-
-			Class<?> fieldType = field.getType();
-
-			if ((fieldType.equals(int.class)) || (fieldType.equals(Integer.class)))
-			{
-				_type =  SqlType.INTEGER;
-			} 
-			else if ((fieldType.equals(long.class)) || (fieldType.equals(Long.class)))
-			{
-				_type =  SqlType.LONG;
-			}
-			else if ((fieldType.equals(float.class)) || (fieldType.equals(Float.class)))
-			{
-				_type =  SqlType.FLOAT;
-			}
-			else if ((fieldType.equals(double.class)) || (fieldType.equals(Double.class)))
-			{
-				_type =  SqlType.DOUBLE;
-			}
-			else if (fieldType.equals(Date.class))
-			{
-				_type =  SqlType.DATE;
-			}
-			else if (fieldType.equals(String.class))
-			{
-				_type =  SqlType.STRING;
-			}
-			else
-				throw new ArgumentException("FATAL: Could not determine type of SqlField!");
-		}
-		
-		public String getName() { return _name; }
-		
-		public SqlType getSqlType() { return _type; }
-		
-		public String getSqlTypeString() 
-		{
-			switch (_type)
-			{
-			case INTEGER:
-				return "INTEGER";
-			case LONG:
-				return "INTEGER";
-			case FLOAT:
-				return "REAL";
-			case DOUBLE:
-				return "REAL";
-			case STRING:
-				return "TEXT";
-			case DATE:
-				return "TEXT";
-			default:
-				return "";
-			}
-		}
-
-		public String getTableName() {
-			return _tableName;
-		}
-
-		public void setTableName(String _tableName) {
-			this._tableName = _tableName;
-		}
-		
-		public Field getField() { return _field; }
-
-		public boolean isMandatory() {
-			return _mandatory;
-		}
-		public void setMandatory() { _mandatory = true; }
-		
-		@Override
-		public String toString() {
-			return MoreObjects.toStringHelper(this)
-					.add("Table", _tableName)
-					.add("Field", _name)
-					.add("Type", getSqlTypeString())
-					.toString();
-		}
-	}
-	
 	SQLiteStatement insert;
 	SQLiteStatement update;
-	SQLiteStatement updateForeignKey;
 	
 	private String _tableName;
-	private List<SqlField> _tableFields;
+	private List<SqlDataField> _tableFields;
+	
+	/**
+	 * ID-Fields in the table of the current persister which point to rows in other tables
+	 * (Counter-part of an OneToMany- or an OneToOne-Relation of another Persister 
+	 */
+	private Hashtable<Class<?>, SqlForeignKeyField> _foreignKeyFields;
+	
+	/**
+	 * List of Fields to be filled in an persistable and the corresponding types 
+	 */
+	private List<ObjectRelation> _lstOneToOneRelations;
+	
+	/**
+	 * List of list-Fields to be filled in an persistable and the corresponding types 
+	 */
+	private List<ObjectRelation> _lstOneToManyRelations;
+	
+	/**
+	 * Constructor of the Persistable for which this Persister is used for
+	 */
 	Constructor<T> _const;
+	
+	/**
+	 * Type of the Persistable which is persited with this persister
+	 */
 	Class<T> _persistentType;
 	
 	
@@ -145,27 +60,59 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	{
 		_tableName = persistentType.getSimpleName();
 		_persistentType = persistentType;
-				
 		Field[] fields = persistentType.getDeclaredFields();
 		_const = persistentType.getConstructor((Class<?>[])null);
-			
-		_tableFields = new ArrayList<SqlField>();
-		for (Field field : fields)
-		{
-			DbField anno = field.getAnnotation(DbField.class);
-			if (null == anno)
-				continue;
-			
+		_tableFields = new ArrayList<SqlDataField>();
+		_lstOneToOneRelations = new ArrayList<ObjectRelation>();
+		_lstOneToManyRelations = new ArrayList<ObjectRelation>();
+		_foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
 		
-			SqlField sqlField = new SqlField(field); 
-			if (anno.isMandatory())
-				sqlField.setMandatory();
+		Annotation[] annos = persistentType.getAnnotations();
+		for(Annotation anno : annos)
+		{
+			if (anno instanceof DbForeignKeyField)
+			{
+				DbForeignKeyField dbAnno = (DbForeignKeyField) anno;
+				Class<?> foreignKeyType = dbAnno.foreignType();
+				
+				SqlForeignKeyField sqlForeignKeyField = new SqlForeignKeyField(_tableName, foreignKeyType); 
+				if (dbAnno.isMandatory())
+					sqlForeignKeyField.setMandatory();
+				Class<?> key = foreignKeyType; //sqlForeignKeyField.createHashtableKey();
+				_foreignKeyFields.put(key, sqlForeignKeyField);
+			}
+		}
+		
+		for (Field field : fields)
+		{			
+			DbField fieldAnno = field.getAnnotation(DbField.class);
+			if (null != fieldAnno)
+				addSqlField(field, fieldAnno);
 			
-			_tableFields.add(sqlField);
+			DbThisToOne oneToOneAnno = field.getAnnotation(DbThisToOne.class);
+			if (null != oneToOneAnno) {
+				field.setAccessible(true);
+				_lstOneToOneRelations.add(new ObjectRelation(field, field.getType()));
+			}
+			
+			DbThisToMany oneToManyAnno = field.getAnnotation(DbThisToMany.class);
+			if (null != oneToManyAnno) {
+				field.setAccessible(true);
+				_lstOneToManyRelations.add(new ObjectRelation(field, field.getType()));
+			}
 		}
 
 		if (_tableFields.isEmpty())
 			throw new Exception(String.format("No DBField-annotation found in type \"%s\"", persistentType.getName()));
+	}
+	
+	protected void addSqlField(Field field, DbField anno) 
+	{
+		SqlDataField sqlField = new SqlDataField(field); 
+		if (anno.isMandatory())
+			sqlField.setMandatory();
+		
+		_tableFields.add(sqlField);
 	}
 	
 	@Override
@@ -173,29 +120,34 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		return _tableName;
 	}
 	
-	protected String getAddStatement()
+	/**
+	 * Creates the SQL-Statement for inserting a new row to the database
+	 * 
+	 * @return SQL-Statement (insert)
+	 */
+	protected String getInsertStatement()
 	{
 		StringBuilder sql = new StringBuilder("INSERT INTO ")
 			.append(getTableName())
 			.append(" ( ");
 		
-		int i=1;
-		for(SqlField fld : _tableFields)
+		int fieldCount = 0;
+		for(SqlDataField fld : _tableFields )
 		{
+			if (fieldCount > 0)
+				sql.append(", ");
+			
 			sql.append(fld.getName());
 			
-			if (i < _tableFields.size())
-			  sql.append(", ");
-			
-			i++;
+			fieldCount++;
 		}
 		
 		sql.append(" ) VALUES ( ");
 		
-		for (i = 0; i<_tableFields.size(); i++)
+		for (int i = 0; i < fieldCount; i++)
 		{
 			sql.append("?");
-			if (i + 1 < _tableFields.size())
+			if (i + 1 < fieldCount)
 				sql.append(", ");
 			else
 				sql.append(" ");
@@ -205,6 +157,11 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		return sql.toString();
 	}
 	
+	/**
+	 * Creates the SQL-Statement for updating a row in the database
+	 * 
+	 * @return SQL-Statement (update)
+	 */
 	protected String getUpdateStatement()
 	{
 		StringBuilder sql = new StringBuilder("UPDATE ")
@@ -212,7 +169,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			.append(" SET ");
 		
 		int i = 1;
-		for (SqlField field : _tableFields)
+		for (SqlDataField field : _tableFields)
 		{
 			sql.append(field.getName());
 			sql.append("=? ");
@@ -226,6 +183,11 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		return sql.toString();
 	}
 	
+	/**
+	 * Creates the SQL-Statement for creating the database
+	 * 
+	 * @return SQL-Statement (create)
+	 */
 	protected String getCreateStatement()
 	{
 		StringBuilder sql = new StringBuilder("CREATE TABLE ")
@@ -233,7 +195,8 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			.append(" ( ")
 			.append("_id INTEGER PRIMARY KEY AUTOINCREMENT");
 		
-		for (SqlField field : _tableFields)
+		//Handle normal DB-Fields
+		for (SqlDataField field : _tableFields)
 		{
 			sql.append(", ")
 				.append(field.getName()).append(" ")
@@ -243,49 +206,81 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 				sql.append("NOT NULL");
 		}
 		
+		//Add the foreign key-fields and constraints
+		for (SqlDataField field : _foreignKeyFields.values())
+		{
+			sql.append(", ")
+				.append(field.getName()).append(" ")
+				.append(field.getSqlTypeString()).append(" ");
+			
+			// Foreign-Key Fields do never have a NOT NULL constraint
+			// since they are deferred
+		}
+		for (SqlForeignKeyField field : _foreignKeyFields.values())
+		{
+			Class<?> cls = field.getForeignKeyType();
+			if ( ( field.isMandatory()) && (null != cls) )
+			{
+				sql.append(",\nFOREIGN KEY(")
+					.append(field.getName()).append(") REFERENCES ")
+					.append(cls.getSimpleName()).append("(_id) DEFERRABLE INITIALLY DEFERRED");
+			}
+		}
+		
 		sql.append(" ) ");
 
 		return sql.toString();
 	}
-
+	
 	@Override
 	public void init(Object obj) throws DBException {
 		setPM((PersistanceManager)obj);
 		
-		insert = getDb().compileStatement(getAddStatement());
+		insert = getDb().compileStatement(getInsertStatement());
 		update = getDb().compileStatement(getUpdateStatement());
+		for(SqlForeignKeyField fld : _foreignKeyFields.values())
+		{
+			fld.compileUpdateStatement(getDb());
+		}
 	}
 	
-	public void bind(SQLiteStatement sql, int idx, SqlField field, T persistable) throws IllegalAccessException, IllegalArgumentException
+	public void bind(SQLiteStatement sql, int idx, SqlDataField field, T persistable) throws IllegalAccessException, IllegalArgumentException
 	{
 		Field fld = field.getField();
-		fld.setAccessible(true);
-		
-		switch(field.getSqlType())
+		if (null != fld)
 		{
-		case STRING:
-		case DATE:
-			Object val = fld.get(persistable);
-			String valStr = null;
-			if (null != val)
-				valStr = val.toString();
+			fld.setAccessible(true);
 			
-			bind(sql, idx, valStr);
-			break;
-		case DOUBLE:
-			bind(sql, idx, fld.getDouble(persistable));
-			break;
-		case FLOAT:
-			bind(sql, idx, fld.getFloat(persistable));
-			break;
-		case INTEGER:
-			bind(sql, idx, fld.getInt(persistable));
-			break;
-		case LONG:
-			bind(sql, idx, fld.getLong(persistable));
-			break;
-		default:
-			break;
+			switch(field.getSqlType())
+			{
+			case STRING:
+			case DATE:
+				Object val = fld.get(persistable);
+				String valStr = null;
+				if (null != val)
+					valStr = val.toString();
+				
+				bind(sql, idx, valStr);
+				break;
+			case DOUBLE:
+				bind(sql, idx, fld.getDouble(persistable));
+				break;
+			case FLOAT:
+				bind(sql, idx, fld.getFloat(persistable));
+				break;
+			case INTEGER:
+				bind(sql, idx, fld.getInt(persistable));
+				break;
+			case LONG:
+				bind(sql, idx, fld.getLong(persistable));
+				break;
+			default:
+				break;
+			}
+		}
+		else
+		{
+			
 		}
 	}
 	
@@ -295,7 +290,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		
 		int i=1;
 		try {
-			for (SqlField field : _tableFields) {
+			for (SqlDataField field : _tableFields) {
 				bind(sql, i++, field, persistable);
 			}
 		} 
@@ -307,29 +302,101 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	}
 
 	@Override
-	public long insert(T persistable) throws DBException {
+	public long insert(T persistable) throws DBException 
+	{
 		bind(insert, persistable);
+		
+		long id = insert.executeInsert();
+		DbId<?> dbId = null;
+		
+		if (_lstOneToOneRelations.size() > 0)
+			dbId = getPM().assignDbId(persistable, id);
+		if (_lstOneToManyRelations.size() > 0);
+			dbId = getPM().assignDbId(persistable, id);
+		
+		try {
+				
+			for(ObjectRelation rel : _lstOneToOneRelations)
+			{
+				IPersistable<?> other = (IPersistable<?>) rel.getField().get(persistable);
+				if (null == other)
+					continue;
+				
+				getPM().saveAndUpdateForeignKey(other, dbId);
+			}
+		}
+		catch (Exception ex)
+		{
+			throw new DBException(String.format("Error saving one-to-one relation in type \"%s\"!", 
+					persistable.getClass().getName()));
+		}
+		
+		try {
 			
-		return insert.executeInsert();
+			for(ObjectRelation rel : _lstOneToManyRelations)
+			{
+				List<?> others = (List<?>) rel.getField().get(persistable);
+				if (null == others)
+					continue;
+				
+				for(Object other : others)
+				{
+					getPM().saveAndUpdateForeignKey((IPersistable<?>)other, dbId);
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			throw new DBException(String.format("Error saving one-to-many relation in type \"%s\"!", 
+					persistable.getClass().getName()));
+		}
+		
+		return id;
 	}
 
 	@Override
 	public void update(T persistable) throws DBException {
 		bind(update, persistable);
+		bind(update, _tableFields.size()+1, persistable.getDbId().getId());
 		
-		update.executeUpdateDelete();
+		int rowsAffected = update.executeUpdateDelete();
+		if (rowsAffected==0)
+			throw new DBException(String.format("Update of \"%s\" was not successful", persistable.getClass().getName()));
 	}
 
 	@Override
 	public void updateForeignKey(T persistable, DbId<?> foreignId)
 			throws DBException {
-		// TODO Auto-generated method stub
+		IPersistable<?> foreignObj = foreignId.getObj();
+		if (null != foreignObj)
+		{
+			Class<?> foreignType = foreignObj.getClass();
+			SqlForeignKeyField fld = _foreignKeyFields.get(foreignType);
+			
+			if (fld != null)
+			{
+				SQLiteStatement updateForeignKey = fld.getUpdateForeingKey();
+				updateForeignKey.clearBindings();
+				updateForeignKey.bindLong(1, foreignId.getId());
+				updateForeignKey.bindLong(2, persistable.getDbId().getId());
+				
+				int ret = updateForeignKey.executeUpdateDelete();
+				if (ret == 0)
+					throw new DBException(String.format("Updating Foreign-key-relation to type \"%s\" in type \"%s\" failed!",
+							foreignType.getName(), _persistentType.getName()));
+			}
+			else 
+			{
+				throw new DBException(String.format("Could not find Foreign-key-relation to type \"%s\" in type \"%s\"",
+						foreignType.getName(), _persistentType.getName())); 
+			}
+		}
 	}
 
 	@Override
 	public T rowToObject(int pos, Cursor csr) throws DBException {
 		T obj = null;
-		SqlField field = null;
+		SqlDataField field = null;
 		
 		try {
 			obj = _const.newInstance();
@@ -372,6 +439,11 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 					throw new DBException("Unknow data-type");
 				}
 			}
+			
+			for (ObjectRelation rel : _lstOneToManyRelations)
+			{
+				getPM().load(rel.getType(), pos)
+			}
 		} catch (Exception e) {
 			if (field != null) {
 				throw new DBException(
@@ -388,5 +460,6 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		
 		return obj;
 	}
+
 
 }

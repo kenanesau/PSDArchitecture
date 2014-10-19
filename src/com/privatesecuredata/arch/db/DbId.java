@@ -31,9 +31,9 @@ public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
 		this._id = id;
 	}
 	
-	public void setObj(IPersistable<T> persObj)
+	public void setObj(IPersistable<?> persObj)
 	{
-		this.persistableObj = persObj;
+		this.persistableObj = (IPersistable<T>) persObj;
 	}
 	public IPersistable<T> getObj()
 	{

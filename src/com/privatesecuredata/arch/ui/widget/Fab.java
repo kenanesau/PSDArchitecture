@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -71,9 +72,15 @@ public class Fab extends FrameLayout
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        Outline outline = new Outline();
-        outline.setOval(0, 0, w, h);
-        setOutline(outline);
+        
+        setOutlineProvider(new ViewOutlineProvider() {
+			
+			@Override
+			public void getOutline(View view, Outline outline) {
+		        outline.setOval(0, 0, view.getWidth(), view.getHeight());
+			}
+		});
+        
         setClipToOutline(true);
     }
     

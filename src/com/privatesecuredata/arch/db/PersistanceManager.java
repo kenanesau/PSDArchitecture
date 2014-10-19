@@ -40,6 +40,18 @@ public class PersistanceManager {
 		this.dbDesc = dbDesc;
 	}
 	
+	/**
+	 * This method initializes the database. 
+	 * This means:
+	 * - create the database and all tables if needed.
+	 * - update the database if needed
+	 * - 
+	 * 
+	 * 
+	 * @param ctx
+	 * @param dbDesc
+	 * @throws DBException
+	 */
 	public void initialize(Context ctx, IDbDescription dbDesc) throws DBException
 	{
 		try {
@@ -142,6 +154,11 @@ public class PersistanceManager {
 		}
 	}
 	
+	/**
+	 * Create a Persister for a persistable type and register it at the Persistance-Manager
+	 * 
+	 * @param persistentType
+	 */
 	public void addPersistentType(Class<?> persistentType) {
 		try {
 			IPersister<? extends IPersistable<?>> persisterObj = new AutomaticPersister(persistentType);
@@ -247,7 +264,7 @@ public class PersistanceManager {
 		try {
 			IPersister<T> persister = getPersister(classObj);
 			DbId<T> dbId = new DbId<T>(id);
-			IPersistable<T> persistable = persister.load(dbId);
+			IPersistable<T> persistable = (IPersistable<T>) persister.load(dbId);
 			dbId.setObj(persistable);
 			persistable.setDbId(dbId);
 			dbId.setClean();
@@ -261,10 +278,11 @@ public class PersistanceManager {
 		}
 	}
 	
-	public <T extends IPersistable<T>> void saveAndUpdateForeignKey(T persistable, DbId<?> foreignKey) throws DBException
+	@SuppressWarnings("unchecked")
+	public <T extends IPersistable> void saveAndUpdateForeignKey(T persistable, DbId<?> foreignKey) throws DBException
 	{
 		try {
-			DbId<T> dbId = persistable.getDbId(); 
+			DbId<?> dbId = persistable.getDbId(); 
 			if ( (null == dbId) || (dbId.getDirty()) )
 			{
 				save(persistable);
@@ -276,7 +294,7 @@ public class PersistanceManager {
 			throw new DBException(
 					String.format("Error updating foreign key for an object of type=%s, id=%s, foreignkey-id=%d", 
 							persistable.getClass().getName(), 
-							((persistable.getDbId()==null) ? "NULL" : new Long(persistable.getDbId().getId()).toString()),
+							((persistable.getDbId()==null) ? "NULL" : Long.valueOf(persistable.getDbId().getId()).toString()),
 							foreignKey.getId()));
 					
 		}
@@ -341,6 +359,65 @@ public class PersistanceManager {
 		}
 	}
 	
+//	public <T extends IPersistable<T>> void save(T persistable) throws DBException
+//	{
+//
+//		DbId<T> dbId = persistable.getDbId();
+//		if (null == dbId)
+//		{
+//			db.beginTransaction();
+//			try {
+//				Class<T> classObj = (Class<T>) persistable.getClass();
+//				IPersister<T> persister = getPersister(classObj);
+//				long id = persister.insert(persistable);
+//				if (id >= 0) {
+//					assignDbId(persistable, id);
+//					persistable.getDbId().setClean();
+//				}
+//				else
+//					throw new DBException("Error inserting new row in database");
+//
+//				db.setTransactionSuccessful();
+//			}
+//			catch (Exception ex)
+//			{
+//				throw new DBException(
+//						String.format("Error inserting an object of type=%s to database", 
+//								persistable.getClass().getName()));
+//			}
+//			finally 
+//			{
+//				db.endTransaction();
+//			}
+//		}
+//		else
+//		{
+//			if (!dbId.getDirty())
+//				return;
+//
+//			db.beginTransaction();
+//			try {
+//				Class<T> classObj = (Class<T>) persistable.getClass();
+//				IPersister<T> persister = getPersister(classObj);
+//
+//				persister.update(persistable);
+//				dbId.setClean();
+//				db.setTransactionSuccessful();
+//			}
+//			catch (Exception ex)
+//			{
+//				throw new DBException(
+//						String.format("Error updating an object of type=%s, id=%d",
+//								persistable.getClass().getName(),
+//								dbId.getId()));
+//			}
+//			finally 
+//			{
+//				db.endTransaction();
+//			}
+//		}
+//	}
+	
 	public <T extends IPersistable<T>> void delete(T persistable) throws DBException
 	{
 		DbId<T> dbId = persistable.getDbId();
@@ -351,7 +428,7 @@ public class PersistanceManager {
 		db.beginTransaction();
 		try {
 			Class<T> classObj = (Class<T>) persistable.getClass();
-			IPersister<T> persister = getPersister(classObj);
+			IPersister<T> persister = (IPersister<T>) getPersister(classObj);
 			persister.delete(persistable);
 			db.setTransactionSuccessful();
 		}

@@ -10,10 +10,36 @@ package com.privatesecuredata.arch.db;
  * @see PersistanceManager
  */
 public interface IDbDescription {
+	/**
+	 * @return Returns the name of the DB-file
+	 */
 	String getName();
+	/**
+	 * @return Return the version of the DB (positive integer)
+	 */
 	Integer getVersion();
+	/**
+	 * @return Return the number of the instance of the database -- in case you have
+	 * more than one instance running at the same time
+	 */
 	Integer getInstance();
+	/**
+	 * @return Returns the SQL-create-statements
+	 */
 	String[] getCreateStatements();
+	/**
+	 * @return Returns an array of all classes where hand-made persisters exist
+	 */
 	Class<?>[] getPersisterTypes();
+	/**
+	 * @return Returns an array of classes which can be persisted by an automatic persister
+	 * (@see AutomaticPersister) which is created by the annotations of the persistable 
+	 * class
+	 * 
+	 * @see DbField
+	 * @see DbForeignKeyField
+	 * @see DbThisToMany
+	 * @see DbThisToOne
+	 */
 	Class<?>[] getPersistentTypes();
 }

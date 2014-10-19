@@ -45,7 +45,7 @@ public class MVVMCursorAdapter<M extends IPersistable<M>> extends BaseAdapter
 		modelType = modelClass;
 		this.ctx = ctx;
 		
-		persister = pm.getPersister(modelClass);
+		persister = (IPersister<M>) pm.getPersister(modelClass);
 	}
 	
 	public MVVMCursorAdapter(PersistanceManager pm, Class<M> modelClass, Context ctx, Cursor cursor)
