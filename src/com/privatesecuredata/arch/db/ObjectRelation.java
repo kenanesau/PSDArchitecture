@@ -4,21 +4,19 @@ import java.lang.reflect.Field;
 
 public class ObjectRelation {
 	private Field _fld;
-	private Class _type;
 	private IPersister _persister;
 	
-	public ObjectRelation(Field fld, Class<?> type)
+	public ObjectRelation(Field fld)
 	{
 		_fld = fld;
-		_type = type;
 	}
 	
 	public Field getField() { return _fld; }
-	public Class<?> getType() { return _type; }
+	public Class getType() { return _fld.getType(); }
 	public IPersister getPersister(PersistanceManager pm)
 	{
 		if (null==_persister)
-			_persister = pm.getPersister(_type);
+			_persister = pm.getPersister(getType());
 		
 		return _persister;
 	}

@@ -30,7 +30,7 @@ import com.privatesecuredata.arch.exceptions.DBException;
  */
 public class PersistanceManager {
 	private Hashtable<Class<?>, IPersister<? extends IPersistable<?>>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable<?>>>();
-	private Hashtable<Pair<IPersister<? extends IPersistable<?>>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<IPersister<? extends IPersistable<?>>, Class<?>>, ICursorLoader>();
+	private Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader>();
 	private SQLiteDatabase db;
 	private IDbDescription dbDesc;
 	private boolean initialized = false;
@@ -161,7 +161,7 @@ public class PersistanceManager {
 	 */
 	public void addPersistentType(Class<?> persistentType) {
 		try {
-			IPersister<? extends IPersistable<?>> persisterObj = new AutomaticPersister(persistentType);
+			IPersister<? extends IPersistable<?>> persisterObj = new AutomaticPersister(this, persistentType);
 					
 			persisterMap.put(persistentType, persisterObj);
 		}
@@ -444,29 +444,27 @@ public class PersistanceManager {
 		}
 	}
 	
-	public ICursorLoader getLoader(Class<?> classObj, Class<?> foreignKeyClass)
+	public ICursorLoader getLoader(Class<?> referencingType, Class<?> referencedType)
 	{
-		IPersister<?> persister = persisterMap.get(classObj);
-		Pair<IPersister<? extends IPersistable<?>>, Class<?>> key = new Pair<IPersister<? extends IPersistable<?>>, Class<?>>(persister, foreignKeyClass);
+		Pair<Class<?>, Class<?>> key = new Pair<Class<?>, Class<?>>(referencingType, referencedType);
 		return cursorLoaderMap.get(key);
 	}
 	
-	public <T extends IPersistable<T>> Cursor getCursor(Class<T> classObj, Class<?> foreignKeyClass) throws DBException
+	public <T extends IPersistable<T>> Cursor getCursor(Class<T> referencingType, Class<?> referencedType) throws DBException
 	{
-		ICursorLoader loader = getLoader(classObj, foreignKeyClass);
-		return loader.getCursor(null);
+		ICursorLoader loader = getLoader(referencingType, referencedType);
+		return (loader != null) ? loader.getCursor(null) : null;
 	}
 	
-	public <T extends IPersistable<T>> Cursor getCursor(Class<T> classObj, IPersistable<?> foreignKey) throws DBException
+	public <T extends IPersistable<T>> Cursor getCursor(Class<T> referencingType, IPersistable<?> referencedType) throws DBException
 	{
-		ICursorLoader loader = getLoader(classObj, foreignKey.getClass());
-		return loader.getCursor(foreignKey);		
+		ICursorLoader loader = getLoader(referencingType, referencedType.getClass());
+		return (loader != null) ? loader.getCursor(referencedType) : null;
 	}
 	
-	public void registerCursorLoader(Class<?> classObj, Class<?> foreignKeyType, ICursorLoader loader)
+	public void registerCursorLoader(Class<?> referencingType, Class<?> referencedType, ICursorLoader loader)
 	{
-		IPersister<?> persister = persisterMap.get(classObj);
-		Pair<IPersister<? extends IPersistable<?>>, Class<?>> key = new Pair<IPersister<? extends IPersistable<?>>, Class<?>>(persister, foreignKeyType);
+		Pair<Class<?>, Class<?>> key = new Pair<Class<?>, Class<?>>(referencingType, referencedType);
 		
 		cursorLoaderMap.put(key, loader);
 	}

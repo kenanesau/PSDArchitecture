@@ -56,9 +56,9 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	Class<T> _persistentType;
 	
 	
-	public AutomaticPersister(Class<T> persistentType) throws Exception
+	public AutomaticPersister(PersistanceManager pm, Class<T> persistentType) throws Exception
 	{
-		_tableName = persistentType.getSimpleName();
+		_tableName = DbNameHelper.getTableName(persistentType);
 		_persistentType = persistentType;
 		Field[] fields = persistentType.getDeclaredFields();
 		_const = persistentType.getConstructor((Class<?>[])null);
@@ -67,6 +67,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		_lstOneToManyRelations = new ArrayList<ObjectRelation>();
 		_foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
 		
+		setPM(pm);
 		Annotation[] annos = persistentType.getAnnotations();
 		for(Annotation anno : annos)
 		{
@@ -92,13 +93,25 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			DbThisToOne oneToOneAnno = field.getAnnotation(DbThisToOne.class);
 			if (null != oneToOneAnno) {
 				field.setAccessible(true);
-				_lstOneToOneRelations.add(new ObjectRelation(field, field.getType()));
+				_lstOneToOneRelations.add(new ObjectRelation(field));
+				
+				// At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
+				// object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
+				_tableFields.add(new SqlDataField(field));
 			}
 			
+			// At the moment DbThisToMany-Annotations are always saved as a foreign-key in the table of the referenced object
 			DbThisToMany oneToManyAnno = field.getAnnotation(DbThisToMany.class);
 			if (null != oneToManyAnno) {
 				field.setAccessible(true);
-				_lstOneToManyRelations.add(new ObjectRelation(field, field.getType()));
+				_lstOneToManyRelations.add(new ObjectRelation(field));
+				
+				Class<?> referencedType = oneToManyAnno.referencedType();
+				ICursorLoader loader = new IdCursorLoader(getPM(), persistentType, referencedType);
+				getPM().registerCursorLoader(persistentType, referencedType, loader);
+				
+				// Add table-field for the collection-proxy-size
+				_tableFields.add(new SqlDataField(field));
 			}
 		}
 
@@ -234,6 +247,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	
 	@Override
 	public void init(Object obj) throws DBException {
+		super.init(obj);
 		setPM((PersistanceManager)obj);
 		
 		insert = getDb().compileStatement(getInsertStatement());
@@ -244,14 +258,14 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		}
 	}
 	
-	public void bind(SQLiteStatement sql, int idx, SqlDataField field, T persistable) throws IllegalAccessException, IllegalArgumentException
+	public void bind(SQLiteStatement sql, int idx, SqlDataField sqlField, T persistable) throws IllegalAccessException, IllegalArgumentException
 	{
-		Field fld = field.getField();
+		Field fld = sqlField.getField();
 		if (null != fld)
 		{
 			fld.setAccessible(true);
 			
-			switch(field.getSqlType())
+			switch(sqlField.getSqlType())
 			{
 			case STRING:
 			case DATE:
@@ -273,6 +287,18 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 				break;
 			case LONG:
 				bind(sql, idx, fld.getLong(persistable));
+				break;
+			case REFERENCE:
+				IPersistable<?> referencedObj = (IPersistable<?>) fld.get(persistable);
+				if (null == referencedObj)
+					break;
+				
+				DbId<?> dbId = referencedObj.getDbId();
+				if (null == dbId)
+					throw new DBException(String.format("Unable to safe reference from object of type \"%s\" to object of type \"%s\" since this object is not persistent yet!",
+							persistable.getClass().getName(), referencedObj.getClass().getName()));
+							
+				bind(sql, idx, referencedObj.getDbId().getId());
 				break;
 			default:
 				break;
@@ -304,25 +330,16 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	@Override
 	public long insert(T persistable) throws DBException 
 	{
-		bind(insert, persistable);
-		
-		long id = insert.executeInsert();
-		DbId<?> dbId = null;
-		
-		if (_lstOneToOneRelations.size() > 0)
-			dbId = getPM().assignDbId(persistable, id);
-		if (_lstOneToManyRelations.size() > 0);
-			dbId = getPM().assignDbId(persistable, id);
-		
+		// First save the referenced objects 
 		try {
-				
+			
 			for(ObjectRelation rel : _lstOneToOneRelations)
 			{
-				IPersistable<?> other = (IPersistable<?>) rel.getField().get(persistable);
+				IPersistable other = (IPersistable) rel.getField().get(persistable);
 				if (null == other)
 					continue;
 				
-				getPM().saveAndUpdateForeignKey(other, dbId);
+				getPM().save(other);
 			}
 		}
 		catch (Exception ex)
@@ -331,6 +348,15 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 					persistable.getClass().getName()));
 		}
 		
+		bind(insert, persistable);
+		
+		long id = insert.executeInsert();
+		DbId<?> dbId = null;
+		
+		if ( (_lstOneToOneRelations.size() > 0) ||
+		     (_lstOneToManyRelations.size() > 0) )
+			dbId = getPM().assignDbId(persistable, id);
+			
 		try {
 			
 			for(ObjectRelation rel : _lstOneToManyRelations)
@@ -403,7 +429,9 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			csr.moveToPosition(pos);
 			
 			obj.setDbId(new DbId<T>(csr.getLong(0)));
-			for (int colIndex=1; colIndex<csr.getColumnCount(); colIndex++)
+			
+			//Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fieds
+			for (int colIndex=1; colIndex<_tableFields.size() + 1; colIndex++)
 			{
 				field = _tableFields.get(colIndex - 1);
 				//int colIndex = csr.getColumnIndex(field.getName());
@@ -435,15 +463,25 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 				case LONG:
 					fld.set(obj, csr.getLong(colIndex));
 					break;
+				case REFERENCE:
+					long referencedObjectId = csr.getLong(colIndex);
+					IPersistable referencedObj = getPM().load(obj.getDbId(), (Class)fld.getType(), referencedObjectId);
+					fld.set(obj, referencedObj);
+					break;
+				case COLLECTION_PROXY_SIZE:
+					//TODO: Implement me (create a proxy for the collection....)
+					break;
 				default:
 					throw new DBException("Unknow data-type");
 				}
 			}
 			
-			for (ObjectRelation rel : _lstOneToManyRelations)
-			{
-				getPM().load(rel.getType(), pos)
-			}
+//			for (ObjectRelation rel : _lstOneToManyRelations)
+//			{
+//				Cursor cursor = getPM().getCursor(rel.getType());
+//				
+//				
+//			}
 		} catch (Exception e) {
 			if (field != null) {
 				throw new DBException(

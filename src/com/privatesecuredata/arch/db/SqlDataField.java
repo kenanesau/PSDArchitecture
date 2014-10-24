@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.db;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 
@@ -15,7 +16,7 @@ import com.privatesecuredata.arch.exceptions.ArgumentException;
  */
 public class SqlDataField {
 	
-	public enum SqlType 
+	public enum SqlFieldType 
 	{
 		INTEGER,
 		LONG, 
@@ -23,24 +24,26 @@ public class SqlDataField {
 		FLOAT,
 		DOUBLE,
 		DATE,
+		REFERENCE,
+		COLLECTION_PROXY_SIZE,
 	}
 	
 	private String _tableName;
 	private String _name;
-	private SqlType _type;
+	private SqlFieldType _type;
 	private Field _field;
 	private boolean _mandatory = false;
 	
 	protected SqlDataField() {}
 	
-	public SqlDataField(String table, String name, SqlType type)
+	public SqlDataField(String table, String name, SqlFieldType type)
 	{
 		_tableName = table.toLowerCase(Locale.US);
 		_name = name;
 		_type = type;
 	}
 	
-	public SqlDataField(String name, SqlType type)
+	public SqlDataField(String name, SqlFieldType type)
 	{
 		this("", name, type);
 	}
@@ -48,43 +51,50 @@ public class SqlDataField {
 	public SqlDataField(Field field)
 	{
 		_field = field;
-		_name = String.format("fld_%s", field.getName().toLowerCase(Locale.US));
+		_name = DbNameHelper.getFieldName(field);
 
 		Class<?> fieldType = field.getType();
 
 		if ((fieldType.equals(int.class)) || (fieldType.equals(Integer.class)))
 		{
-			_type =  SqlType.INTEGER;
+			_type = SqlFieldType.INTEGER;
 		} 
 		else if ((fieldType.equals(long.class)) || (fieldType.equals(Long.class)))
 		{
-			_type =  SqlType.LONG;
+			_type = SqlFieldType.LONG;
 		}
 		else if ((fieldType.equals(float.class)) || (fieldType.equals(Float.class)))
 		{
-			_type =  SqlType.FLOAT;
+			_type = SqlFieldType.FLOAT;
 		}
 		else if ((fieldType.equals(double.class)) || (fieldType.equals(Double.class)))
 		{
-			_type =  SqlType.DOUBLE;
+			_type = SqlFieldType.DOUBLE;
 		}
 		else if (fieldType.equals(Date.class))
 		{
-			_type =  SqlType.DATE;
+			_type = SqlFieldType.DATE;
 		}
 		else if (fieldType.equals(String.class))
 		{
-			_type =  SqlType.STRING;
+			_type = SqlFieldType.STRING;
 		}
-		else
-			throw new ArgumentException("FATAL: Could not determine type of SqlField!");
+		else {
+			if (IPersistable.class.isAssignableFrom(fieldType))
+				_type = SqlFieldType.REFERENCE;
+			else if (Collection.class.isAssignableFrom(fieldType))
+				_type = SqlFieldType.COLLECTION_PROXY_SIZE;
+			else
+				throw new ArgumentException("FATAL: Could not determine type of SqlField!");
+		}
+			
 	}
 	
 	protected void setName(String name) { _name = name; }
 	public String getName() { return _name; }
 	
-	protected void setSqlType(SqlType type) { _type = type; }
-	public SqlType getSqlType() { return _type; }
+	protected void setSqlType(SqlFieldType type) { _type = type; }
+	public SqlFieldType getSqlType() { return _type; }
 	
 	public String getSqlTypeString() 
 	{
@@ -102,6 +112,10 @@ public class SqlDataField {
 			return "TEXT";
 		case DATE:
 			return "TEXT";
+		case REFERENCE:
+			return "INTEGER";
+		case COLLECTION_PROXY_SIZE:
+			return "INTEGER";
 		default:
 			return "";
 		}
@@ -126,8 +140,9 @@ public class SqlDataField {
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
 				.add("Table", ((_tableName == null) ? "null" : _tableName))
-				.add("Field", ((_name == null) ? "null" : _name))
-				.add("Type", getSqlTypeString())
+				.add("FieldName", ((_name == null) ? "null" : _name))
+				.add("FieldType", _type)
+				.add("SqlType", getSqlTypeString())
 				.toString();
 	}
 	

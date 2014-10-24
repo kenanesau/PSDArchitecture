@@ -1,8 +1,11 @@
 package com.privatesecuredata.arch.db;
 
+import java.lang.reflect.Field;
+
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import android.database.Cursor;
+import android.database.sqlite.SQLiteStatement;
 
 /**
  * This Cursorloader tries to load a cursor which is retrieved from a SQL-statement
@@ -14,28 +17,47 @@ import android.database.Cursor;
  *
  */
 public class IdCursorLoader implements ICursorLoader {
-	private PersistanceManager pm;
-	private String dbName;
-	private String foreignKeyColumn;
+	private PersistanceManager _pm;
+	private String _tableName;
+	private String _foreignKeyColumn;
+	private String _selectAllRawString;
+	private String _selectIdRawString;
 	
-	public IdCursorLoader(PersistanceManager pm, String dbName, String foreignKeyColumn)
+	public IdCursorLoader(PersistanceManager pm, String table, String foreignKeyColumn)
 	{
-		this.pm = pm;
-		this.dbName = dbName;
-		this.foreignKeyColumn = foreignKeyColumn;
+		init(pm, table, foreignKeyColumn);
 	}
 	
+	public IdCursorLoader(PersistanceManager pm, Class<?> persistentType, Class<?> referencedType) 
+	{
+		String table = DbNameHelper.getTableName(referencedType);
+		String foreingKeyColumn = DbNameHelper.getForeignKeyFieldName(persistentType);
+		
+		init(pm, table, foreingKeyColumn);
+	}
+	
+	protected void init(PersistanceManager pm, String table, String foreignKeyColumn)
+	{
+		this._pm = pm;
+		this._tableName = table;
+		this._foreignKeyColumn = foreignKeyColumn;
+		
+		_selectAllRawString = String.format("SELECT * FROM %s WHERE %s IS NULL", _tableName, _foreignKeyColumn);
+		_selectIdRawString = String.format("SELECT * FROM %s WHERE %s=", _tableName, _foreignKeyColumn);
+	}
+
 	@Override
 	public Cursor getCursor(IPersistable<?> foreignKey) {
 		String sqlQuery=null;
-		if (null==foreignKey)
-			sqlQuery = String.format("select * from %s where %s is null", dbName, foreignKeyColumn);
+		if (null == foreignKey) {
+			sqlQuery = _selectAllRawString;
+		}
 		else if (null != foreignKey.getDbId()) {
 			String param = Long.valueOf(foreignKey.getDbId().getId()).toString();
-			sqlQuery = String.format("select * from %s where %s=%s", dbName, foreignKeyColumn, param);
+			sqlQuery = _selectIdRawString.concat(param);
 		} else
-			throw new DBException("foreign-key not yet saved to DB, so it is not possible to use it in a query!!!");
+			throw new DBException("Foreign-key not yet saved to DB, so it is not possible to use it in a query!!!");
 		
-		return pm.getDb().rawQuery(sqlQuery, new String[] {});
+		return _pm.getDb().rawQuery(sqlQuery, new String[] {});
 	}
 }

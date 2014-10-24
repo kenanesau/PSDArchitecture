@@ -21,7 +21,11 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	protected String getSelectAllSQLString() { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
 	
 	@Override
-	public abstract void init(Object obj) throws DBException;
+	public void init(Object obj) {
+		setPM((PersistanceManager)obj);
+		String delStatement = String.format(DELSQLSTATEMENT, getTableName());
+		this.delete = getDb().compileStatement(delStatement);
+	}
 	@Override
 	public abstract long insert(T persistable) throws DBException;
 	@Override
@@ -37,8 +41,6 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	
 	protected void setPM(PersistanceManager pm) {
 		this.pm = pm;
-		String delStatement = String.format(DELSQLSTATEMENT, getTableName());
-		this.delete = getDb().compileStatement(delStatement);
 	}
 	
 	protected PersistanceManager getPM() { return this.pm; }

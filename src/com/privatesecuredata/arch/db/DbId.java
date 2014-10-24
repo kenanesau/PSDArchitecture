@@ -49,6 +49,9 @@ public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
 	public void addChild(DbId<?> childId)
 	{
 		childId.addDirtyChangedListener(this);
+		if (null == loadedChildren)
+			loadedChildren = new LinkedList<DbId<?>>();
+			
 		loadedChildren.add(childId);
 	}
 
@@ -59,7 +62,10 @@ public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
 	}
 
 	@Override
-	public void onDirtyChanged(DbId<?> childId) {
+	public void onDirtyChanged(DbId<?> childId) 
+	{
+		if (null == dirtyChildren)
+		    dirtyChildren = new LinkedList<DbId<?>>();
 		
 		dirtyChildren.add(childId);
 	}
@@ -69,6 +75,4 @@ public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
 		if (this.dirtyChildren.contains(childId))
 			dirtyChildren.remove(childId);
 	}
-	
-	
 }
