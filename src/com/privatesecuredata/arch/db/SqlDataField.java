@@ -7,6 +7,7 @@ import java.util.Locale;
 
 import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.exceptions.DBException;
 
 /**
  * Class used by @see AutomaticPersister to save the SQL-data-fields
@@ -24,8 +25,8 @@ public class SqlDataField {
 		FLOAT,
 		DOUBLE,
 		DATE,
-		REFERENCE,
-		COLLECTION_PROXY_SIZE,
+		OBJECT_REFERENCE,
+		COLLECTION_REFERENCE,
 	}
 	
 	private String _tableName;
@@ -33,6 +34,7 @@ public class SqlDataField {
 	private SqlFieldType _type;
 	private Field _field;
 	private boolean _mandatory = false;
+	private Class<?> _referencedType = null;
 	
 	protected SqlDataField() {}
 	
@@ -48,10 +50,18 @@ public class SqlDataField {
 		this("", name, type);
 	}
 	
+	public SqlDataField(Field field, Class<?> referencedType)
+	{
+		this(field);
+		if (!Collection.class.isAssignableFrom(field.getType()))
+			throw new ArgumentException("FATAL: Field is not a collection reference!");
+		
+		_referencedType = referencedType;
+	}
+	
 	public SqlDataField(Field field)
 	{
 		_field = field;
-		_name = DbNameHelper.getFieldName(field);
 
 		Class<?> fieldType = field.getType();
 
@@ -81,12 +91,14 @@ public class SqlDataField {
 		}
 		else {
 			if (IPersistable.class.isAssignableFrom(fieldType))
-				_type = SqlFieldType.REFERENCE;
+				_type = SqlFieldType.OBJECT_REFERENCE;
 			else if (Collection.class.isAssignableFrom(fieldType))
-				_type = SqlFieldType.COLLECTION_PROXY_SIZE;
+				_type = SqlFieldType.COLLECTION_REFERENCE;
 			else
 				throw new ArgumentException("FATAL: Could not determine type of SqlField!");
 		}
+		
+		_name = DbNameHelper.getFieldName(field, _type);
 			
 	}
 	
@@ -95,6 +107,13 @@ public class SqlDataField {
 	
 	protected void setSqlType(SqlFieldType type) { _type = type; }
 	public SqlFieldType getSqlType() { return _type; }
+	
+	public Class<?> getReferencedType() {
+		if (_type != SqlFieldType.COLLECTION_REFERENCE)
+			throw new DBException("Can not return referenced type since this is no Collection-reference");
+		
+		return _referencedType;
+	}
 	
 	public String getSqlTypeString() 
 	{
@@ -112,9 +131,9 @@ public class SqlDataField {
 			return "TEXT";
 		case DATE:
 			return "TEXT";
-		case REFERENCE:
+		case OBJECT_REFERENCE:
 			return "INTEGER";
-		case COLLECTION_PROXY_SIZE:
+		case COLLECTION_REFERENCE:
 			return "INTEGER";
 		default:
 			return "";

@@ -51,7 +51,7 @@ public class SqlForeignKeyField extends SqlDataField {
 	{
 		setSqlType(SqlFieldType.LONG);
 		setTableName(tableName);
-		String name = DbNameHelper.getTableName(foreignKeyType);
+		String name = DbNameHelper.getForeignKeyFieldName(foreignKeyType);
 				
 		setName(name);
 		setForeingKeyType(foreignKeyType);

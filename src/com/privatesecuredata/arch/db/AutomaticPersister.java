@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
@@ -111,7 +112,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 				getPM().registerCursorLoader(persistentType, referencedType, loader);
 				
 				// Add table-field for the collection-proxy-size
-				_tableFields.add(new SqlDataField(field));
+				_tableFields.add(new SqlDataField(field, referencedType));
 			}
 		}
 
@@ -288,7 +289,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			case LONG:
 				bind(sql, idx, fld.getLong(persistable));
 				break;
-			case REFERENCE:
+			case OBJECT_REFERENCE:
 				IPersistable<?> referencedObj = (IPersistable<?>) fld.get(persistable);
 				if (null == referencedObj)
 					break;
@@ -299,6 +300,13 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 							persistable.getClass().getName(), referencedObj.getClass().getName()));
 							
 				bind(sql, idx, referencedObj.getDbId().getId());
+				break;
+			case COLLECTION_REFERENCE:
+				Collection<?> referencedColl = (Collection<?>) fld.get(persistable);
+				if (null == referencedColl)
+					break;
+				
+				bind(sql, idx, referencedColl.size());
 				break;
 			default:
 				break;
@@ -361,7 +369,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			
 			for(ObjectRelation rel : _lstOneToManyRelations)
 			{
-				List<?> others = (List<?>) rel.getField().get(persistable);
+				Collection<?> others = (Collection<?>) rel.getField().get(persistable);
 				if (null == others)
 					continue;
 				
@@ -463,25 +471,33 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 				case LONG:
 					fld.set(obj, csr.getLong(colIndex));
 					break;
-				case REFERENCE:
+				case OBJECT_REFERENCE:
 					long referencedObjectId = csr.getLong(colIndex);
 					IPersistable referencedObj = getPM().load(obj.getDbId(), (Class)fld.getType(), referencedObjectId);
 					fld.set(obj, referencedObj);
 					break;
-				case COLLECTION_PROXY_SIZE:
-					//TODO: Implement me (create a proxy for the collection....)
+				case COLLECTION_REFERENCE:
+					List lstItems = new ArrayList();
+					//TODO: If object is not lazily loaded omit the proxy-stuff ...
+					if (!csr.isNull(colIndex))
+					{
+						int collSize = csr.getInt(colIndex);
+						if (0 != collSize)
+						{
+							//TODO: Get type of objects in collection...
+							ICursorLoader loader = getPM().getLoader(_persistentType, field.getReferencedType());
+							lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class)field.getReferencedType(), obj, collSize, loader);
+						}
+					}
+					
+					fld.set(obj, lstItems);
 					break;
+
 				default:
 					throw new DBException("Unknow data-type");
 				}
 			}
 			
-//			for (ObjectRelation rel : _lstOneToManyRelations)
-//			{
-//				Cursor cursor = getPM().getCursor(rel.getType());
-//				
-//				
-//			}
 		} catch (Exception e) {
 			if (field != null) {
 				throw new DBException(

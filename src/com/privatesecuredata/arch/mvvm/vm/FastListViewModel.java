@@ -68,6 +68,11 @@ public class FastListViewModel<M, E extends IModel<M>> extends ComplexViewModel<
 		}
 	}
 	
+	public void init(Collection<M> modelItems)
+	{
+		init(new ArrayList<M>(modelItems));
+	}
+	
 	/**
 	 * Initialise the ViewModel. 
 	 * 

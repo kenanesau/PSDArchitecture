@@ -60,6 +60,11 @@ public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List
 		}
 	}
 	
+	public void init(Collection<M> modelItems)
+	{
+		init(new ArrayList<M>(modelItems));
+	}
+	
 	/**
 	 * Initialise the ViewModel. This creates a ViewModel-Wrapper around each Model, puts them 
 	 * into a List and registers them as childs of this ViewModel.

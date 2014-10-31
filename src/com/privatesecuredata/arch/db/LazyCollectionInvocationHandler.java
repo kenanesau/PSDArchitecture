@@ -27,7 +27,7 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 			try {
 				cursor = loader.getCursor(foreignKey);
 			} catch (Exception e) {
-				e.printStackTrace();
+				throw new DBException("Error getting data via cursor", e);
 			}
 		}
 		
@@ -52,6 +52,15 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 		return loadedColl;
 	}
 	
+	/**
+	 * Invocation-Handler to load collections of IPersistable object from an ICursorloader
+	 * 
+	 * @param pm          The persistance Manager
+	 * @param type        The type of the IPersistable objects to load
+	 * @param foreignKey  The foreign key (The referencing object) 
+	 * @param size        The cached size for the proxy
+	 * @param loader      The ICursorLoader for loading 
+	 */
 	public LazyCollectionInvocationHandler(PersistanceManager pm, Class<V> type, IPersistable<?> foreignKey, int size, ICursorLoader loader) {
 		this.pm = pm;
 		this.foreignKey = foreignKey;
