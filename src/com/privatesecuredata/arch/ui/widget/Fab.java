@@ -53,7 +53,7 @@ public class Fab extends FrameLayout
 		if (attrs!=null) {
 			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.Fab, 0, 0);
 			
-			int defaultDrawableId = a.getResourceId(R.styleable.Fab_icon_default, R.drawable.ic_action_add_item);
+			int defaultDrawableId = a.getResourceId(R.styleable.Fab_icon_default, R.drawable.ic_action_add_small);
 			_defaultDrawable = res.getDrawable(defaultDrawableId);
 			getDefaultImageView().setImageDrawable(_defaultDrawable);
 			

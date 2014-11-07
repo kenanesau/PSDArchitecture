@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="lightgrey">#bababa</color> 
+    <color name="lightgrey">#898989</color> 
+    <color name="darkgrey">#dddddd</color>
     <color name="transparentlightgrey">#66bababa</color>
     <color name="primary">#3f51b5</color>
     <color name="primary_dark">#303f9f</color>
@@ -8,4 +9,5 @@
 <!--     <color name="accent_light">#f9ffb3</color> -->
     <color name="accent">#64dd17</color>
     <color name="accent_light">#ffff00</color>
+    <color name="background_light">#FFFFFF</color>
 </resources>
