@@ -66,7 +66,7 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 		this.foreignKey = foreignKey;
 		this.loader = loader;
 		this.persister = (IPersister<V>)pm.getPersister(type);
-		coll = new LazyLoadCollectionProxy<T, V>(this, persister);
+		coll = new LazyLoadCollectionProxy<T, V>(this, pm, persister);
 		this.size = size;
 	}
 	

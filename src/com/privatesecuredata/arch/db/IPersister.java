@@ -21,7 +21,7 @@ import android.database.Cursor;
 public interface IPersister<T extends IPersistable<T>> extends ILoadCollection<T> {
 	void init(Object obj) throws DBException;
 	long insert(T persistable) throws DBException;
-	void update(T persistable) throws DBException;
+	long update(T persistable) throws DBException;
 	T rowToObject(int pos, Cursor csr) throws DBException;
 	Cursor getLoadAllCursor() throws DBException;
 	T load(DbId<T> id) throws DBException;	

@@ -280,7 +280,10 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		childModels.put(field.getName(), vm);
 	}
 
-	
+	/**
+	 * Write all data of the complete object tree back to the model.
+	 */
+	@Override
 	protected void commitData()
 	{
 		if (!this.isDirty())
@@ -291,16 +294,6 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		}
 		
 		this.setClean();
-	}
-	
-	/**
-	 * Write all data of the complete object tree back to the model.
-	 */
-	@Override
-	public void commit() 
-	{
-		this.commitData();
-		ViewModelCommitHelper.notifyCommit(this);
 	}
 	
 	/**

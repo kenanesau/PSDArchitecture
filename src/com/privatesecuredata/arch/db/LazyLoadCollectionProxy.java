@@ -17,19 +17,20 @@ public class LazyLoadCollectionProxy<T extends Collection<V>,
 	private LazyCollectionInvocationHandler<T, V> handler;
 	private PersistanceManager pm;
 	
-	public LazyLoadCollectionProxy(LazyCollectionInvocationHandler<T, V>  handler, IPersister<V> persister)
+	public LazyLoadCollectionProxy(LazyCollectionInvocationHandler<T, V>  handler, PersistanceManager pm, IPersister<V> persister)
 	{
 		if ( (null == handler) || (null == persister) )
 			throw new ArgumentException("Parameters handler and/or persister must not be null!");
 		
 		this.handler = handler;
+		this.pm = pm;
 		this.persister = persister;
 	}
 	
 	@Override
 	public V get(int location) {
 		try {
-			return (V)persister.rowToObject(location, handler.getCursor());
+			return persister.rowToObject(location, handler.getCursor());
 		} catch (Exception e) {
 			throw new DBException(String.format("Error converting cursor-content to object using persister of type=%s at position=%d", persister.getClass().getName(), location), e);
 		}

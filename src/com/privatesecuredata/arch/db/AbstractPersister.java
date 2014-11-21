@@ -29,7 +29,7 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	@Override
 	public abstract long insert(T persistable) throws DBException;
 	@Override
-	public abstract void update(T persistable) throws DBException;
+	public abstract long update(T persistable) throws DBException;
 	@Override
 	public abstract void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;
 	@Override

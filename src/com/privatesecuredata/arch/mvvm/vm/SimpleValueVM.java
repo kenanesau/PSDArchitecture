@@ -68,7 +68,7 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IModel<T> {
 	}
 	
 	@Override
-	public void commit() 
+	public void commitData() 
 	{
 		this.setModel(data);
 				

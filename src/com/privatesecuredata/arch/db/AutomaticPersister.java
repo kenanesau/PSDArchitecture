@@ -389,13 +389,13 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	}
 
 	@Override
-	public void update(T persistable) throws DBException {
+	public long update(T persistable) throws DBException {
 		bind(update, persistable);
 		bind(update, _tableFields.size()+1, persistable.getDbId().getId());
 		
 		int rowsAffected = update.executeUpdateDelete();
-		if (rowsAffected==0)
-			throw new DBException(String.format("Update of \"%s\" was not successful", persistable.getClass().getName()));
+
+		return rowsAffected;
 	}
 
 	@Override

@@ -1,18 +1,18 @@
 package com.privatesecuredata.arch.db;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
-
 import android.content.Context;
-
 import com.privatesecuredata.arch.exceptions.DBException;
-import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
+import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
 	private static HashMap<IDbDescription, PersistanceManager> pmMap = new HashMap<IDbDescription, PersistanceManager>();
 	
-	private PersistanceManagerLocator() {}
+	private PersistanceManagerLocator() 
+	{
+		ViewModelCommitHelper.addGlobalCommitListener(new DBViewModelCommitListener());
+	}
 	
 	public static PersistanceManagerLocator getInstance()
 	{

@@ -341,7 +341,10 @@ public class PersistanceManager {
 				Class<T> classObj = (Class<T>) persistable.getClass();
 				IPersister<T> persister = getPersister(classObj);
 
-				persister.update(persistable);
+				long rowsAffected = persister.update(persistable);
+				if (rowsAffected != 1)
+					throw new DBException(String.format("Update of \"%s\" was not successful", persistable.getClass().getName()));
+
 				dbId.setClean();
 				db.setTransactionSuccessful();
 			}
@@ -496,11 +499,20 @@ public class PersistanceManager {
 	
 	public <T extends IPersistable<T>> DbId<T> assignDbId(T persistable, long id)
 	{
+		return assignDbId(persistable, id, true);
+	}
+	
+	public <T extends IPersistable<T>> DbId<T> assignDbId(T persistable, long id, boolean isClean)
+	{
 		if (null == persistable.getDbId())
 		{
 			DbId<T> dbId = new DbId<T>(id);
 			dbId.setObj(persistable);
 			persistable.setDbId(dbId);
+			if (isClean)
+				persistable.getDbId().setClean();
+			else
+				persistable.getDbId().setDirty();
 		}
 		
 		return persistable.getDbId();

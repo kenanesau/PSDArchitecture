@@ -6,6 +6,7 @@ import java.util.Collection;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IModel;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
+import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 
 /**
  * @author kenan
@@ -66,8 +67,15 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IMo
 	/**
 	 * Write data from ViewModel to Model
 	 */
+	protected abstract void commitData();
+	
 	@Override
-	public abstract void commit();	
+	public void commit() 
+	{
+		this.commitData();
+		ViewModelCommitHelper.notifyCommit(this);
+	}
+	
 	/**
 	 * (re)load all data from the Model to the ViewModel 
 	 */
