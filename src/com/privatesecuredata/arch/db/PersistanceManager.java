@@ -278,6 +278,38 @@ public class PersistanceManager {
 		}
 	}
 	
+	public <T extends IPersistable> void saveAndUpdateForeignKey(Collection<T> persistables, DbId<?> foreignKey) throws DBException
+	{
+		Class<?> type = null;
+		try {
+			db.beginTransaction();
+			if (!persistables.isEmpty()) {
+				T persistable = persistables.iterator().next();
+				type = persistable.getClass();
+			}
+				
+			for (T persistable : persistables)
+			{
+				
+				DbId<?> dbId = persistable.getDbId(); 
+				if ( (null == dbId) || (dbId.getDirty()) )
+				{
+					save(persistable);
+					updateForeignKey(persistable, foreignKey);
+				}
+			}
+			db.setTransactionSuccessful();
+		}
+		catch (Exception ex)
+		{
+			throw new DBException(String.format("Error saving and updating foreign keys for an list of objects of type=%s", 
+					( (null!=type) ? type.getName() : "unknown")));
+		}
+		finally {
+			db.endTransaction();
+		}
+	}
+	
 	@SuppressWarnings("unchecked")
 	public <T extends IPersistable> void saveAndUpdateForeignKey(T persistable, DbId<?> foreignKey) throws DBException
 	{
@@ -285,8 +317,10 @@ public class PersistanceManager {
 			DbId<?> dbId = persistable.getDbId(); 
 			if ( (null == dbId) || (dbId.getDirty()) )
 			{
+				db.beginTransaction();
 				save(persistable);
 				updateForeignKey(persistable, foreignKey);
+				db.setTransactionSuccessful();
 			}
 		}
 		catch (Exception ex)
@@ -298,6 +332,9 @@ public class PersistanceManager {
 							foreignKey.getId()));
 					
 		}
+		finally {
+			db.endTransaction();
+		}
 	}
 	
 	public <T extends IPersistable<T>> void save(T persistable) throws DBException
@@ -306,7 +343,6 @@ public class PersistanceManager {
 		DbId<T> dbId = persistable.getDbId();
 		if (null == dbId)
 		{
-			db.beginTransaction();
 			try {
 				Class<T> classObj = (Class<T>) persistable.getClass();
 				IPersister<T> persister = getPersister(classObj);
@@ -318,7 +354,6 @@ public class PersistanceManager {
 				else
 					throw new DBException("Error inserting new row in database");
 
-				db.setTransactionSuccessful();
 			}
 			catch (Exception ex)
 			{
@@ -326,17 +361,12 @@ public class PersistanceManager {
 						String.format("Error inserting an object of type=%s to database", 
 								persistable.getClass().getName()));
 			}
-			finally 
-			{
-				db.endTransaction();
-			}
 		}
 		else
 		{
 			if (!dbId.getDirty())
 				return;
 
-			db.beginTransaction();
 			try {
 				Class<T> classObj = (Class<T>) persistable.getClass();
 				IPersister<T> persister = getPersister(classObj);
@@ -346,7 +376,6 @@ public class PersistanceManager {
 					throw new DBException(String.format("Update of \"%s\" was not successful", persistable.getClass().getName()));
 
 				dbId.setClean();
-				db.setTransactionSuccessful();
 			}
 			catch (Exception ex)
 			{
@@ -354,10 +383,6 @@ public class PersistanceManager {
 						String.format("Error updating an object of type=%s, id=%d",
 								persistable.getClass().getName(),
 								dbId.getId()));
-			}
-			finally 
-			{
-				db.endTransaction();
 			}
 		}
 	}
@@ -428,22 +453,16 @@ public class PersistanceManager {
 		if (null == dbId)
 			return;
 					
-		db.beginTransaction();
 		try {
 			Class<T> classObj = (Class<T>) persistable.getClass();
 			IPersister<T> persister = (IPersister<T>) getPersister(classObj);
 			persister.delete(persistable);
-			db.setTransactionSuccessful();
 		}
 		catch (Exception ex)
 		{
 			throw new DBException(
 					String.format("Error deleting an object of type=%s to database", 
 							persistable.getClass().getName()));
-		}
-		finally 
-		{
-			db.endTransaction();
 		}
 	}
 	
@@ -453,16 +472,16 @@ public class PersistanceManager {
 		return cursorLoaderMap.get(key);
 	}
 	
-	public <T extends IPersistable<T>> Cursor getCursor(Class<T> referencingType, Class<?> referencedType) throws DBException
+	public Cursor getCursor(Class<?> referencingType, Class<?> referencedType) throws DBException
 	{
 		ICursorLoader loader = getLoader(referencingType, referencedType);
 		return (loader != null) ? loader.getCursor(null) : null;
 	}
 	
-	public <T extends IPersistable<T>> Cursor getCursor(Class<T> referencingType, IPersistable<?> referencedType) throws DBException
+	public Cursor getCursor(IPersistable<?> referencingObject, Class<?> referencedType) throws DBException
 	{
-		ICursorLoader loader = getLoader(referencingType, referencedType.getClass());
-		return (loader != null) ? loader.getCursor(referencedType) : null;
+		ICursorLoader loader = getLoader(referencingObject.getClass(), referencedType);
+		return (loader != null) ? loader.getCursor(referencingObject) : null;
 	}
 	
 	public void registerCursorLoader(Class<?> referencingType, Class<?> referencedType, ICursorLoader loader)
@@ -484,7 +503,10 @@ public class PersistanceManager {
 		Collection<T> ret = persister.loadAll();
 		
 		for (T persistable : ret) {
-			persistable.getDbId().setClean();
+			DbId<T> dbId = persistable.getDbId();
+			
+			dbId.setClean();
+			dbId.setObj(persistable);
 		}
 		return ret;
 	}
