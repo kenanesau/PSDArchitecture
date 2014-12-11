@@ -7,5 +7,5 @@ package com.privatesecuredata.arch.mvvm;
  *
  */
 public interface IViewModelCommitListener {
-	void notifyCommit(IModel<?> vm);
+	void notifyCommit(IViewModel<?> vm);
 }

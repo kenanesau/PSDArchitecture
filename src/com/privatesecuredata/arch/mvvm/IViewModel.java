@@ -7,7 +7,7 @@ package com.privatesecuredata.arch.mvvm;
  *
  * @param <MODEL>
  */
-public interface IModel<MODEL> extends IViewModelChangedListener {
+public interface IViewModel<MODEL> extends IViewModelChangedListener {
 
 	/**   
 	 * @return Returns the model
@@ -16,7 +16,7 @@ public interface IModel<MODEL> extends IViewModelChangedListener {
 
 	public abstract void addChangedListener(IViewModelChangedListener listener);
 	public abstract void delChangedListener(IViewModelChangedListener listener);
-	public abstract void notifyChange(IModel<?> changedModel, IModel<?> originator);
+	public abstract void notifyChange(IViewModel<?> changedModel, IViewModel<?> originator);
 	public abstract void notifyChange();
 
 	public abstract boolean isDirty();

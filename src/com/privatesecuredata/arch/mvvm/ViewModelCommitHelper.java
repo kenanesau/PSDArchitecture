@@ -17,7 +17,7 @@ import java.util.Collection;
 public class ViewModelCommitHelper {
 	private static Collection<IViewModelCommitListener> globalCommitListeners = new ArrayList<IViewModelCommitListener>();
 	
-	public static void notifyCommit(IModel<?> vm) {
+	public static void notifyCommit(IViewModel<?> vm) {
 		for(IViewModelCommitListener listener : globalCommitListeners)
 			listener.notifyCommit(vm);
 	}

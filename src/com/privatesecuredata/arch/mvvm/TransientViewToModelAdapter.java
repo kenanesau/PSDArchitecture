@@ -63,7 +63,7 @@ public class TransientViewToModelAdapter<T> {
 	 * @param v View to write data to 
 	 * @param vm The complex ViewModel which contains the data to transfer to the view
 	 */
-	public void updateView(View v, IModel<?> vm)
+	public void updateView(View v, IViewModel<?> vm)
 	{
 		this.writeViewCmd.set(v, this.getModelCmd.getVM(vm).get());
 	}

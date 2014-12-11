@@ -205,7 +205,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 		}
 	}
 	
-	public void init(View _view, IModel<?> complexVM)
+	public void init(View _view, IViewModel<?> complexVM)
 	{
 		if (null != this.view)
 			unregisterListeners();
@@ -244,7 +244,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	 * @param complexVM The complex ViewModel which contains the data to transfer to the view
 	 */
 	@Override
-	public void updateView(View v, IModel<?> complexVM) 
+	public void updateView(View v, IViewModel<?> complexVM) 
 	{
 		this.setVM(this.getModelCmd.getVM(complexVM));
 		this.writeViewCmd.set(v, this.getVM().get());		
@@ -254,7 +254,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	 * A ViewModel changed and the corresponding View has to be updatet...
 	 */
 	@Override
-	public void notifyChange(IModel<?> vm, IModel<?> originator) 
+	public void notifyChange(IViewModel<?> vm, IViewModel<?> originator) 
 	{
 		SimpleValueVM<T> simpleVM = getVM(); 
 		setVMUpdatesView();

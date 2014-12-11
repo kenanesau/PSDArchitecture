@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 
 /**
@@ -27,12 +27,12 @@ import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
  * @see SimpleViewModel<T>
  * @see IModel<T>
  */
-public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List<M>> implements List<E> {
+public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<List<M>> implements List<E> {
 	
 	public interface ICommitItemCallback<M>
 	{
-		void removeItem(IModel<M> item);
-		void addItem(IModel<M> item);
+		void removeItem(IViewModel<M> item);
+		void addItem(IViewModel<M> item);
 	}
 	
 	private ArrayList<E> items = new ArrayList<E>();
@@ -114,7 +114,7 @@ public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List
 	public boolean addAll(Collection<? extends E> arg0) {
 		newItems.addAll(arg0);
 		boolean ret = items.addAll(arg0);
-		for(IModel<?> vm : arg0)
+		for(IViewModel<?> vm : arg0)
 			registerChildVM(vm);
 		
 		this.notifyChange();
@@ -126,7 +126,7 @@ public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List
 	public boolean addAll(int arg0, Collection<? extends E> arg1) {
 		newItems.addAll(arg1);
 		boolean ret = items.addAll(arg0, arg1);
-		for(IModel<?> vm : arg1)
+		for(IViewModel<?> vm : arg1)
 			registerChildVM(vm);
 		
 		this.notifyChange();
@@ -138,7 +138,7 @@ public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List
 	public void clear() {
 		deletedItems.addAll(items);
 		newItems.clear();
-		for(IModel<?> vm : items)
+		for(IViewModel<?> vm : items)
 			unregisterChildVM(vm);
 		items.clear();
 		
@@ -205,7 +205,7 @@ public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List
 		if (ret == true)
 		{
 			deletedItems.add((E) object);
-			unregisterChildVM((IModel<?>)object);
+			unregisterChildVM((IViewModel<?>)object);
 			notifyChange();
 		}
 		return ret;
@@ -219,7 +219,7 @@ public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List
 		while(it.hasNext())
 		{
 			Object obj = it.next();
-			unregisterChildVM((IModel<?>)obj);
+			unregisterChildVM((IViewModel<?>)obj);
 			deletedItems.add((E)obj);
 		}
 		
@@ -234,7 +234,7 @@ public class ListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List
 		if (ret)
 		{
 			_deletedItems.removeAll(arg0);
-			for(IModel<?> vm : _deletedItems)
+			for(IViewModel<?> vm : _deletedItems)
 				unregisterChildVM(vm);
 			deletedItems.addAll(_deletedItems);
 		}

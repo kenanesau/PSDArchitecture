@@ -3,13 +3,13 @@ package com.privatesecuredata.arch.mvvm.android;
 
 import java.util.ArrayList;
 
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 
 import android.view.View;
 
-public class MVVMViewHolder<COMPLEXVM extends IModel<?>> implements IViewHolder<COMPLEXVM> {
+public class MVVMViewHolder<COMPLEXVM extends IViewModel<?>> implements IViewHolder<COMPLEXVM> {
 	private class Elem {
 		// View containing Element of data
 		public View view;

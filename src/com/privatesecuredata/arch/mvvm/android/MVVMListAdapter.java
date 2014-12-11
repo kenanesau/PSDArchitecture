@@ -16,7 +16,7 @@ import android.widget.ListView;
 
 import com.privatesecuredata.arch.mvvm.IDataBinding;
 import com.privatesecuredata.arch.mvvm.IGetModelCommand;
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
@@ -28,7 +28,7 @@ import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.FastListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
-public class MVVMListAdapter<M, COMPLEXVM extends IModel<M>> extends BaseAdapter 
+public class MVVMListAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter 
 															implements IDataBinding, IViewModelChangedListener
 {
 	Class<M> modelType;
@@ -226,7 +226,7 @@ public class MVVMListAdapter<M, COMPLEXVM extends IModel<M>> extends BaseAdapter
 		
 		this.addModelMapping(Boolean.class, id, new IGetModelCommand<Boolean>() {
 			@Override
-			public SimpleValueVM<Boolean> getVM(IModel<?> vm) {
+			public SimpleValueVM<Boolean> getVM(IViewModel<?> vm) {
 				if (vm instanceof ComplexViewModel<?>)
 					return ((ComplexViewModel<?>)vm).getSelectedVM();
 				else
@@ -239,7 +239,7 @@ public class MVVMListAdapter<M, COMPLEXVM extends IModel<M>> extends BaseAdapter
 	 * Called by underlying ListViewModel when data has changed
 	 */
 	@Override
-	public void notifyChange(IModel<?> vm, IModel<?> originator) {
+	public void notifyChange(IViewModel<?> vm, IViewModel<?> originator) {
 		//notify (list)view of changed data -> redraw
 		this.notifyDataSetChanged();
 	}

@@ -17,7 +17,7 @@ import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
 import com.privatesecuredata.arch.db.LazyLoadCollectionProxy;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
@@ -30,8 +30,8 @@ import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
  * child-ViewModels.  
  */
 public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
-	private HashMap<Integer, IModel<?>> children = new HashMap<Integer, IModel<?>>(); 
-	private ArrayList<IModel<?>> childrenOrdered = new ArrayList<IModel<?>>();
+	private HashMap<Integer, IViewModel<?>> children = new HashMap<Integer, IViewModel<?>>(); 
+	private ArrayList<IViewModel<?>> childrenOrdered = new ArrayList<IViewModel<?>>();
 	private SimpleValueVM<Boolean> selected = new SimpleValueVM<Boolean>(false);
 	protected Method modelGetter = null;
 	protected Object parentModel = null;
@@ -101,19 +101,19 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	public boolean isSelected() { return this.selected.get(); }
 	public void setSelected(boolean val) { this.selected.set(val); }
 
-	private void addChild(IModel<?> vm) 
+	private void addChild(IViewModel<?> vm) 
 	{
 		this.children.put(System.identityHashCode(vm), vm);
 		this.childrenOrdered.add(vm);
 	}
 	
-	private void delChild(IModel<?> vm) 
+	private void delChild(IViewModel<?> vm) 
 	{
 		this.children.remove(System.identityHashCode(vm));
 		this.childrenOrdered.remove(vm);
 	}
 	
-	private List<IModel<?>> getChildrenOrdered()
+	private List<IViewModel<?>> getChildrenOrdered()
 	{
 		return this.childrenOrdered;			
 	}
@@ -124,7 +124,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	 * 
 	 * @param vm Child-Viewmodel
 	 */
-	public void registerChildVM(IModel<?> vm) 
+	public void registerChildVM(IViewModel<?> vm) 
 	{
 		if (!this.children.containsKey(System.identityHashCode(vm)))
 		{
@@ -140,15 +140,15 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	 * 
 	 * @param vm Child-Viewmodel
 	 */
-	public void unregisterChildVM(IModel<?> vm) 
+	public void unregisterChildVM(IViewModel<?> vm) 
 	{
 		delChild(vm);
 		vm.delChangedListener(this);
 	}
 	
-	public HashMap<String, IModel<?>> setModelAndRegisterChildren(MODEL model)
+	public HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL model)
 	{
-		HashMap<String, IModel<?>> childModels = new HashMap<String, IModel<?>>();
+		HashMap<String, IViewModel<?>> childModels = new HashMap<String, IViewModel<?>>();
 		setModel(model);
 
 		if (null != model)
@@ -212,7 +212,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected void setListModelMapping(HashMap<String, IModel<?>> childModels,
+	protected void setListModelMapping(HashMap<String, IViewModel<?>> childModels,
 			Field field, ListVmMapping listAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException 
 	{
 		Class<?> viewModelType = listAnno.vmClass();
@@ -230,7 +230,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		childModels.put(field.getName(), vm);
 	}
 	
-	protected void setComplexModelMapping(HashMap<String, IModel<?>> childModels,
+	protected void setComplexModelMapping(HashMap<String, IViewModel<?>> childModels,
 			Field field, ComplexVmMapping complexAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException 
 	{
 		if (complexAnno.loadLazy()==false) {
@@ -266,7 +266,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		}
 	}
 
-	protected void setSimpleModelMapping(HashMap<String, IModel<?>> childModels, 
+	protected void setSimpleModelMapping(HashMap<String, IViewModel<?>> childModels, 
 			Field field, SimpleVmMapping simpleAnno) throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException 
 	{
 		Method getter = createGetter(field);
@@ -289,7 +289,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		if (!this.isDirty())
 			return;
 		
-		for(IModel<?> vm : children.values()) {
+		for(IViewModel<?> vm : children.values()) {
 			vm.commit();
 		}
 		
@@ -301,7 +301,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	 */
 	public void reload() 
 	{
-		for(IModel<?> vm : children.values()) {
+		for(IViewModel<?> vm : children.values()) {
 			vm.reload();
 		}
 		
@@ -312,7 +312,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	public int hashCode() {
 		int hashCode = 1; 
 
-		Iterator<IModel<?>> it = children.values().iterator();
+		Iterator<IViewModel<?>> it = children.values().iterator();
 		while (it.hasNext()) {
 		    Object obj = it.next();
 		    hashCode = 31*hashCode + (obj==null ? 0 : obj.hashCode());
@@ -335,13 +335,13 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 			//-> We know both collections are of same size...
 			if ( (this.children.size() >= 0) && (complexVM.children.size()>=0))
 			{
-				Iterator<IModel<?>> thisChildrenIt = getChildrenOrdered().iterator();
-				Iterator<IModel<?>> thatChildrenIt = complexVM.getChildrenOrdered().iterator();
+				Iterator<IViewModel<?>> thisChildrenIt = getChildrenOrdered().iterator();
+				Iterator<IViewModel<?>> thatChildrenIt = complexVM.getChildrenOrdered().iterator();
 				
 				while (thisChildrenIt.hasNext())
 				{
-					IModel<?> thisChild = thisChildrenIt.next();
-					IModel<?> thatChild = thatChildrenIt.next();
+					IViewModel<?> thisChild = thisChildrenIt.next();
+					IViewModel<?> thatChild = thatChildrenIt.next();
 					if (!thisChild.equals(thatChild))
 						return false;
 				}

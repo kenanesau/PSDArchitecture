@@ -1,5 +1,5 @@
 package com.privatesecuredata.arch.mvvm;
 
 public interface IViewModelChangedListener {
-	void notifyChange(IModel<?> vm, IModel<?> originator);
+	void notifyChange(IViewModel<?> vm, IViewModel<?> originator);
 }

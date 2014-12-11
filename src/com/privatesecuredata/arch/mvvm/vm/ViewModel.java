@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 
@@ -15,7 +15,7 @@ import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
  * 
  * @see SimpleValueVM, ListViewModel
  */
-public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IModel<MODEL> {
+public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IViewModel<MODEL> {
 	
 	private Collection<IViewModelChangedListener> changeListeners = new ArrayList<IViewModelChangedListener>();
 	private boolean isDirty = false;
@@ -43,7 +43,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IMo
 	}
 	
 	@Override
-	public void notifyChange(IModel<?> changedModel, IModel<?> originator) 
+	public void notifyChange(IViewModel<?> changedModel, IViewModel<?> originator) 
 	{
 		this.setDirty();
 		for(IViewModelChangedListener listener : changeListeners)

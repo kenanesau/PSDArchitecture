@@ -1,12 +1,12 @@
 package com.privatesecuredata.arch.db;
 
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IViewModelCommitListener;
 
 public class DBViewModelCommitListener implements IViewModelCommitListener {
 
 	@Override
-	public void notifyCommit(IModel<?> vm) {
+	public void notifyCommit(IViewModel<?> vm) {
 		Object obj = vm.getModel();
 		
 		if (obj instanceof IPersistable<?>)

@@ -5,12 +5,12 @@ import java.util.Hashtable;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.IDataBinding;
 import com.privatesecuredata.arch.mvvm.IGetModelCommand;
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 
 import android.view.View;
 
-public class MVVMAdapter<COMPLEXVM extends IModel<?>> implements IDataBinding {
+public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBinding {
 	View mainView;
 	COMPLEXVM vm;
 	private Hashtable<Integer, ViewToModelAdapter<?>> view2ModelAdapters = new Hashtable<Integer, ViewToModelAdapter<?>>();

@@ -11,7 +11,7 @@ import java.util.ListIterator;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IModel;
+import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 
 /**
@@ -30,13 +30,13 @@ import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
  * @see SimpleViewModel<T>
  * @see IModel<T>
  */
-public class FastListViewModel<M, E extends IModel<M>> extends ComplexViewModel<List<M>> implements List<M> {
+public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<List<M>> implements List<M> {
 	
 	public interface ICommitItemCallback<M>
 	{
-		void removeItem(M item);
-		void addItem(M item);
-		void updateItem(M item); 
+		void removeItem(IViewModel<?> parent, M item);
+		void addItem(IViewModel<?> parent, M item);
+		void updateItem(IViewModel<?> parent, M item); 
 	}
 	
 	private ArrayList<M> items = new ArrayList<M>();
@@ -49,7 +49,14 @@ public class FastListViewModel<M, E extends IModel<M>> extends ComplexViewModel<
 	private boolean initialized = false;
 	
 	private HashMap<Integer, E> positionToViewModel = new HashMap<Integer, E>();
+	private IViewModel<?> parentVM;
 
+	public FastListViewModel(IViewModel<?> parentVM, Class<M> modelClazz, Class<E> vmClazz)
+	{
+		this(modelClazz, vmClazz);
+		this.parentVM = parentVM;
+	}
+	
 	public FastListViewModel(Class<M> modelClazz, Class<E> vmClazz)
 	{
 		super();
@@ -91,7 +98,10 @@ public class FastListViewModel<M, E extends IModel<M>> extends ComplexViewModel<
 	@Override
 	public boolean add(M object) {
 		newItems.add(object);
-		boolean ret = getItems().add(object);
+		
+		boolean ret = false;
+		if (!initialized)
+			ret = getItems().add(object);
 		
 		this.notifyChange();
 		
@@ -280,15 +290,15 @@ public class FastListViewModel<M, E extends IModel<M>> extends ComplexViewModel<
 			M item = iterator.next();
 			ret = model.remove(item);
 			if (itemCB != null)
-				itemCB.removeItem(item);
+				itemCB.removeItem(parentVM, item);
 		}
 		deletedItems.clear();
 		
 		for (Iterator<M> iterator = newItems.iterator(); iterator.hasNext();) {
-			M vm = iterator.next();
-			ret = model.add(vm);
+			M item = iterator.next();
+			ret = model.add(item);
 			if (itemCB != null)
-				itemCB.addItem(vm);
+				itemCB.addItem(parentVM, item);
 		}
 		newItems.clear();
 		
