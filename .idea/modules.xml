@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/PSDArchitecture.iml" filepath="$PROJECT_DIR$/PSDArchitecture.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/psdarchitecture/psdarchitecture.iml" filepath="$PROJECT_DIR$/psdarchitecture/psdarchitecture.iml" />
     </modules>
   </component>
 </project>
