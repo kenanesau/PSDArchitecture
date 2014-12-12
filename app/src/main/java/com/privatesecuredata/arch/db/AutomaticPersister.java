@@ -477,7 +477,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 					fld.set(obj, referencedObj);
 					break;
 				case COLLECTION_REFERENCE:
-					List lstItems = new ArrayList();
+					Collection lstItems = new ArrayList();
 					//TODO: If object is not lazily loaded omit the proxy-stuff ...
 					if (!csr.isNull(colIndex))
 					{
