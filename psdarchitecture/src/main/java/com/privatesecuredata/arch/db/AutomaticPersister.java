@@ -378,36 +378,43 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		if ( (_lstthisToOneRelations.size() > 0) ||
 		     (_lstOneToManyRelations.size() > 0) )
 			dbId = getPM().assignDbId(persistable, id);
-			
-		try {
-			
-			for(ObjectRelation rel : _lstOneToManyRelations)
-			{
-				Collection<?> others = (Collection<?>) rel.getField().get(persistable);
-				if (null == others)
-					continue;
-				
-				for(Object other : others)
-				{
-					getPM().saveAndUpdateForeignKey((IPersistable<?>)other, dbId);
-				}
-			}
-		}
-		catch (Exception ex)
-		{
-			throw new DBException(String.format("Error saving one-to-many relation in type \"%s\"!", 
-					persistable.getClass().getName()), ex);
-		}
-		
-		return id;
+
+        saveAndUpdateForeignKeyRelations(persistable, dbId);
+
+        return id;
 	}
 
-	@Override
+    private void saveAndUpdateForeignKeyRelations(T persistable, DbId<?> dbId) {
+        try {
+
+            for(ObjectRelation rel : _lstOneToManyRelations)
+            {
+                Collection<?> others = (Collection<?>) rel.getField().get(persistable);
+                if (null == others)
+                    continue;
+
+                for(Object other : others)
+                {
+                    getPM().saveAndUpdateForeignKey((IPersistable<?>)other, dbId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new DBException(String.format("Error saving one-to-many relation in type \"%s\"!",
+                    persistable.getClass().getName()), ex);
+        }
+    }
+
+    @Override
 	public long update(T persistable) throws DBException {
 		bind(update, persistable);
 		bind(update, _tableFields.size()+1, persistable.getDbId().getId());
 		
 		int rowsAffected = update.executeUpdateDelete();
+
+        DbId<T> dbId = persistable.getDbId();
+        saveAndUpdateForeignKeyRelations(persistable, dbId);
 
 		return rowsAffected;
 	}
