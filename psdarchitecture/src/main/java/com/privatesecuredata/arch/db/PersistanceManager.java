@@ -30,6 +30,7 @@ import com.privatesecuredata.arch.exceptions.DBException;
  */
 public class PersistanceManager {
 	private Hashtable<Class<?>, IPersister<? extends IPersistable<?>>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable<?>>>();
+    private Hashtable<String, Class<?>> classNameMap = new Hashtable<String, Class<?>>();
 	private Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader>();
 	private SQLiteDatabase db;
 	private IDbDescription dbDesc;
@@ -135,6 +136,13 @@ public class PersistanceManager {
 		else
 			return false;
 	}
+
+    private void addPersisterToMap(Class<?> persistentType, IPersister<?> persisterObj)
+    {
+        persisterMap.put(persistentType, persisterObj);
+        classNameMap.put(persistentType.getName(), persistentType);
+
+    }
 	
 	public void addPersister(Class<?> persisterClass) throws DBException 
 	{
@@ -145,8 +153,8 @@ public class PersistanceManager {
 				
 			Constructor<?> ctor = persisterClass.getConstructor();
 			IPersister<? extends IPersistable<?>> persisterObj = (IPersister<? extends IPersistable<?>>) ctor.newInstance();
-					
-			persisterMap.put(persisterAnnotation.persists(), persisterObj);
+
+            addPersisterToMap(persisterAnnotation.persists(), persisterObj);
 		}
 		catch (Exception ex)
 		{
@@ -163,7 +171,7 @@ public class PersistanceManager {
 		try {
 			IPersister<? extends IPersistable<?>> persisterObj = new AutomaticPersister(this, persistentType);
 					
-			persisterMap.put(persistentType, persisterObj);
+			addPersisterToMap(persistentType, persisterObj);
 		}
         catch (NoSuchMethodException ex)
         {
@@ -174,7 +182,12 @@ public class PersistanceManager {
 			throw new DBException("Error adding common Persister!", ex);			
 		}
 	}
-	
+
+    public Class<?> getPersistentType(String className)
+    {
+        return classNameMap.get(className);
+    }
+
 	public <T extends IPersistable<T>> IPersister<T> getPersister(Class<T> classObj)
 	{
 		return (IPersister<T>)persisterMap.get(classObj);
@@ -260,14 +273,23 @@ public class PersistanceManager {
     {
         T persistable = persister.rowToObject(pos, cursor);
 
-        int idx = cursor.getColumnIndex("_id");
-        cursor.moveToPosition(pos);
-        if (idx > -1) {
-            int id = cursor.getInt(idx);
-            DbId<T> dbId = new DbId<T>(id);
-            dbId.setObj(persistable);
+        DbId<T> dbId = persistable.getDbId();
+        if (dbId != null)
             dbId.setClean();
-            persistable.setDbId(dbId);
+        else
+        {
+            /**
+             * Do this in case we did NOT load via AutomaticPersister...
+             */
+            int idx = cursor.getColumnIndex("_id");
+            cursor.moveToPosition(pos);
+            if (idx > -1) {
+                int id = cursor.getInt(idx);
+                dbId = new DbId<T>(id);
+                dbId.setObj(persistable);
+                dbId.setClean();
+                persistable.setDbId(dbId);
+            }
         }
 
         return persistable;
@@ -596,16 +618,8 @@ public class PersistanceManager {
 		ArrayList<T> lst = new ArrayList<T>(cnt);
 		while(cursor.moveToNext())
 		{
-            T persistable = persister.rowToObject(cursor.getPosition(), cursor);
-			lst.add(persistable);
-            int idx = cursor.getColumnIndex("_id");
-            if (idx > -1) {
-                int id = cursor.getInt(idx);
-                DbId<T> dbId = new DbId<T>(id);
-                dbId.setObj(persistable);
-                dbId.setClean();
-                persistable.setDbId(dbId);
-            }
+            T persistable = this.load(persister, cursor, cursor.getPosition());
+            lst.add(persistable);
         }
 		
 		return lst;

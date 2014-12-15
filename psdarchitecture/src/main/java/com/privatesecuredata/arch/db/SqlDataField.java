@@ -26,10 +26,11 @@ public class SqlDataField {
 		DOUBLE,
 		DATE,
 		OBJECT_REFERENCE,
+        OBJECT_NAME,
 		COLLECTION_REFERENCE,
 	}
 	
-	private String _tableName;
+	private String _tableName = null;
 	private String _name;
 	private SqlFieldType _type;
 	private Field _field;
@@ -40,14 +41,14 @@ public class SqlDataField {
 	
 	public SqlDataField(String table, String name, SqlFieldType type)
 	{
-		_tableName = table.toLowerCase(Locale.US);
+		_tableName = ((table == null) ? null : table.toLowerCase(Locale.US));
 		_name = name;
 		_type = type;
 	}
 	
 	public SqlDataField(String name, SqlFieldType type)
 	{
-		this("", name, type);
+		this(null, name, type);
 	}
 	
 	public SqlDataField(Field field, Class<?> referencedType)
@@ -133,6 +134,8 @@ public class SqlDataField {
 			return "TEXT";
 		case OBJECT_REFERENCE:
 			return "INTEGER";
+        case OBJECT_NAME:
+            return "Text";
 		case COLLECTION_REFERENCE:
 			return "INTEGER";
 		default:
@@ -149,6 +152,7 @@ public class SqlDataField {
 	}
 	
 	public Field getField() { return _field; }
+    public void setField(Field fld) { _field = fld; }
 
 	public boolean isMandatory() {
 		return _mandatory;

@@ -10,18 +10,23 @@ public class DbNameHelper {
 	{
 		return String.format("tbl_%s", persistable.getSimpleName().toLowerCase(Locale.US));
 	}
-	
+
+    public static String getFieldName(String baseName, SqlDataField.SqlFieldType type)
+    {
+        StringBuilder sbl = new StringBuilder("fld_")
+                .append(baseName.toLowerCase(Locale.US));
+
+        if (type==SqlFieldType.OBJECT_REFERENCE)
+            sbl.append("_id");
+        else if (type==SqlFieldType.COLLECTION_REFERENCE)
+            sbl.append("_cnt");
+
+        return sbl.toString();
+    }
+
 	public static String getFieldName(Field field, SqlDataField.SqlFieldType type)
 	{
-		StringBuilder sbl = new StringBuilder("fld_")
-			.append(field.getName().toLowerCase(Locale.US));
-		
-		if (type==SqlFieldType.OBJECT_REFERENCE)
-			sbl.append("_id");
-		else if (type==SqlFieldType.COLLECTION_REFERENCE)
-			sbl.append("_cnt");
-		
-		return sbl.toString();
+		return getFieldName(field.getName(), type);
 	}
 	
 	public static String getForeignKeyFieldName(Class<?> persistable)

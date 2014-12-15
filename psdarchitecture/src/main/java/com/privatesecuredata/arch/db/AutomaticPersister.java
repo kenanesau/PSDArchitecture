@@ -90,11 +90,17 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
 			if (null != thisToOneAnno) {
 				field.setAccessible(true);
-				_lstthisToOneRelations.add(new ObjectRelation(field));
+                ObjectRelation objRel = new ObjectRelation(field);
+				_lstthisToOneRelations.add(objRel);
 				
 				// At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
 				// object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
-				_tableFields.add(new SqlDataField(field));
+                SqlDataField idField = new SqlDataField(field);
+				_tableFields.add(idField);
+                String fldName = String.format("fld_tpy_%s", field.getName());
+                SqlDataField fldTypeName = new SqlDataField(fldName, SqlDataField.SqlFieldType.OBJECT_NAME);
+                fldTypeName.setField(idField.getField());
+                _tableFields.add(fldTypeName);
 			}
 			
 			// At the moment DbThisToMany-Annotations are always saved as a foreign-key in the table of the referenced object
@@ -258,66 +264,72 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	public void bind(SQLiteStatement sql, int idx, SqlDataField sqlField, T persistable) throws IllegalAccessException, IllegalArgumentException
 	{
 		Field fld = sqlField.getField();
-		if (null != fld)
-		{
-			fld.setAccessible(true);
-			
-			switch(sqlField.getSqlType())
-			{
-			case STRING:
-                Object val = fld.get(persistable);
-                String valStr = null;
-                if (null != val)
-                    valStr = val.toString();
-                bind(sql, idx, valStr);
+        if (null != fld)
+            fld.setAccessible(true);
+
+        switch(sqlField.getSqlType())
+        {
+        case STRING:
+            Object val = fld.get(persistable);
+            String valStr = null;
+            if (null != val)
+                valStr = val.toString();
+            bind(sql, idx, valStr);
+            break;
+        case DATE:
+            java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
+            val = fld.get(persistable);
+            valStr = null;
+            if (null != val)
+                valStr = df.format((Date)val);
+            bind(sql, idx, valStr);
+            break;
+        case DOUBLE:
+            bind(sql, idx, fld.getDouble(persistable));
+            break;
+        case FLOAT:
+            bind(sql, idx, fld.getFloat(persistable));
+            break;
+        case INTEGER:
+            bind(sql, idx, fld.getInt(persistable));
+            break;
+        case LONG:
+            bind(sql, idx, fld.getLong(persistable));
+            break;
+        case OBJECT_REFERENCE:
+            IPersistable<?> referencedObj = (IPersistable<?>) fld.get(persistable);
+            if (null == referencedObj)
+            {
+                bindNull(sql, idx);
                 break;
-			case DATE:
-                java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
-				val = fld.get(persistable);
-				valStr = null;
-				if (null != val)
-					valStr = df.format((Date)val);
-				bind(sql, idx, valStr);
-				break;
-			case DOUBLE:
-				bind(sql, idx, fld.getDouble(persistable));
-				break;
-			case FLOAT:
-				bind(sql, idx, fld.getFloat(persistable));
-				break;
-			case INTEGER:
-				bind(sql, idx, fld.getInt(persistable));
-				break;
-			case LONG:
-				bind(sql, idx, fld.getLong(persistable));
-				break;
-			case OBJECT_REFERENCE:
-				IPersistable<?> referencedObj = (IPersistable<?>) fld.get(persistable);
-				if (null == referencedObj)
-					break;
-				
-				DbId<?> dbId = referencedObj.getDbId();
-				if (null == dbId)
-					throw new DBException(String.format("Unable to safe reference from object of type \"%s\" to object of type \"%s\" since this object is not persistent yet!",
-							persistable.getClass().getName(), referencedObj.getClass().getName()));
-							
-				bind(sql, idx, referencedObj.getDbId().getId());
-				break;
-			case COLLECTION_REFERENCE:
-				Collection<?> referencedColl = (Collection<?>) fld.get(persistable);
-				if (null == referencedColl)
-					break;
-				
-				bind(sql, idx, referencedColl.size());
-				break;
-			default:
-				break;
-			}
-		}
-		else
-		{
-			
-		}
+            }
+
+            DbId<?> dbId = referencedObj.getDbId();
+            if (null == dbId)
+                throw new DBException(String.format("Unable to safe reference from object of type \"%s\" to object of type \"%s\" since this object is not persistent yet!",
+                        persistable.getClass().getName(), referencedObj.getClass().getName()));
+
+            bind(sql, idx, referencedObj.getDbId().getId());
+            break;
+        case OBJECT_NAME:
+            referencedObj = (IPersistable<?>) fld.get(persistable);
+            if (null == referencedObj) {
+                bindNull(sql, idx);
+                break;
+            }
+
+            bind(sql, idx, referencedObj.getClass().getName());
+            break;
+        case COLLECTION_REFERENCE:
+            Collection<?> referencedColl = (Collection<?>) fld.get(persistable);
+            if (null == referencedColl)
+                break;
+
+            bind(sql, idx, referencedColl.size());
+            break;
+        default:
+            break;
+        }
 	}
 	
 	public void bind(SQLiteStatement sql, T persistable)
@@ -433,7 +445,9 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	public T rowToObject(int pos, Cursor csr) throws DBException {
 		T obj = null;
 		SqlDataField field = null;
-		
+        long referencedObjectId = -1;
+        Field referencedObjectField = null;
+
 		try {
 			obj = _const.newInstance();
 			csr.moveToPosition(pos);
@@ -474,10 +488,23 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 					fld.set(obj, csr.getLong(colIndex));
 					break;
 				case OBJECT_REFERENCE:
-					long referencedObjectId = csr.getLong(colIndex);
-					IPersistable referencedObj = getPM().load(obj.getDbId(), (Class)fld.getType(), referencedObjectId);
-					fld.set(obj, referencedObj);
+					referencedObjectId = csr.getLong(colIndex);
+                    referencedObjectField = fld;
 					break;
+                case OBJECT_NAME:
+                    String objectName = csr.getString(colIndex);
+                    if (null != objectName) {
+                        if ((referencedObjectId > -1) && (referencedObjectField != null)) {
+                            Class clazz = getPM().getPersistentType(objectName);
+                            IPersistable referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
+                            referencedObjectField.set(obj, referencedObj);
+                        }
+                    }
+
+                    referencedObjectId = -1;
+                    referencedObjectField = null;
+
+                    break;
 				case COLLECTION_REFERENCE:
 					Collection lstItems = new ArrayList();
 					//TODO: If object is not lazily loaded omit the proxy-stuff ...
@@ -499,8 +526,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 					throw new DBException("Unknow data-type");
 				}
 			}
-			
-		} catch (Exception e) {
+        } catch (Exception e) {
 			if (field != null) {
 				throw new DBException(
 					String.format("Error converting value for Field \"%s\" in object of type \"%s\"", 
