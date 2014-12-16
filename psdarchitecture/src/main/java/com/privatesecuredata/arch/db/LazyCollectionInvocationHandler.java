@@ -26,7 +26,7 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 	public Cursor getCursor() {
 		if (null == cursor) {
 			try {
-				cursor = loader.getCursor(foreignKey);
+				cursor = loader.getCursor(foreignKey.getDbId());
 			} catch (Exception e) {
 				throw new DBException("Error getting data via cursor", e);
 			}

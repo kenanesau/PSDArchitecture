@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.db;
 
 import java.lang.reflect.Field;
+import java.util.List;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
@@ -20,44 +21,83 @@ public class IdCursorLoader implements ICursorLoader {
 	private PersistanceManager _pm;
 	private String _tableName;
 	private String _foreignKeyColumn;
+
 	private String _selectAllRawString;
 	private String _selectIdRawString;
+
+    public IdCursorLoader(PersistanceManager pm, Class<?> persistentType, Class<?> referencedType, List<SqlDataField> fields)
+    {
+        String table = DbNameHelper.getTableName(referencedType);
+        String foreignKeyColumn = DbNameHelper.getForeignKeyFieldName(persistentType);
+
+        init (pm, table, foreignKeyColumn, fields);
+    }
 	
 	public IdCursorLoader(PersistanceManager pm, String table, String foreignKeyColumn)
 	{
-		init(pm, table, foreignKeyColumn);
+		init(pm, table, foreignKeyColumn, null);
 	}
 	
 	public IdCursorLoader(PersistanceManager pm, Class<?> persistentType, Class<?> referencedType) 
 	{
 		String table = DbNameHelper.getTableName(referencedType);
-		String foreingKeyColumn = DbNameHelper.getForeignKeyFieldName(persistentType);
+		String foreignKeyColumn = DbNameHelper.getForeignKeyFieldName(persistentType);
 		
-		init(pm, table, foreingKeyColumn);
+		init(pm, table, foreignKeyColumn, null);
 	}
 	
-	protected void init(PersistanceManager pm, String table, String foreignKeyColumn)
+	protected void init(PersistanceManager pm, String table, String foreignKeyColumn, List<SqlDataField> fields)
 	{
 		this._pm = pm;
 		this._tableName = table;
 		this._foreignKeyColumn = foreignKeyColumn;
-		
-		_selectAllRawString = String.format("SELECT * FROM %s WHERE %s IS NULL", _tableName, _foreignKeyColumn);
-		_selectIdRawString = String.format("SELECT * FROM %s WHERE %s=", _tableName, _foreignKeyColumn);
+
+        if (null == fields) {
+            _selectAllRawString = String.format("SELECT * FROM %s WHERE %s IS NULL", _tableName, _foreignKeyColumn);
+            _selectIdRawString = String.format("SELECT * FROM %s WHERE %s=", _tableName, _foreignKeyColumn);
+        }
+        else {
+            StringBuilder sqlSelectAll = new StringBuilder("SELECT _id ");
+            StringBuilder sqlSelectId = new StringBuilder("SELECT _id ");
+
+            for(SqlDataField field : fields) {
+                sqlSelectAll.append(", ")
+                        .append(field.getName());
+                sqlSelectId.append(", ")
+                        .append(field.getName());
+            }
+
+            sqlSelectAll.append(" FROM ")
+                    .append(_tableName)
+                    .append(" WHERE ")
+                    .append(_foreignKeyColumn)
+                    .append(" IS NULL");
+
+            sqlSelectId.append(" FROM ")
+                    .append(_tableName)
+                    .append(" WHERE ")
+                    .append(_foreignKeyColumn)
+                    .append("=");
+
+            _selectAllRawString = sqlSelectAll.toString();
+            _selectIdRawString = sqlSelectId.toString();
+        }
+
 	}
 
 	@Override
-	public Cursor getCursor(IPersistable<?> foreignKey) {
-		String sqlQuery=null;
-		if (null == foreignKey) {
-			sqlQuery = _selectAllRawString;
-		}
-		else if (null != foreignKey.getDbId()) {
-			String param = Long.valueOf(foreignKey.getDbId().getId()).toString();
-			sqlQuery = _selectIdRawString.concat(param);
-		} else
-			throw new DBException("Foreign-key not yet saved to DB, so it is not possible to use it in a query!!!");
-		
-		return _pm.getDb().rawQuery(sqlQuery, new String[] {});
-	}
+    public Cursor getCursor(DbId<?> foreignKey)
+    {
+        String sqlQuery=null;
+        if (null == foreignKey) {
+            sqlQuery = _selectAllRawString;
+        }
+        else if (null != foreignKey) {
+            String param = Long.valueOf(foreignKey.getId()).toString();
+            sqlQuery = _selectIdRawString.concat(param);
+        } else
+            throw new DBException("Foreign-key not yet saved to DB, so it is not possible to use it in a query!!!");
+
+        return _pm.getDb().rawQuery(sqlQuery, new String[] {});
+    }
 }

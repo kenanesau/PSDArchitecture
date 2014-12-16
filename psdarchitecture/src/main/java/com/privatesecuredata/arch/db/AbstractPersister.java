@@ -19,11 +19,13 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 
 	public abstract String getTableName();
 	protected String getSelectAllSQLString() { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
-	
+    protected String getDelSqlString() { return String.format(DELSQLSTATEMENT, getTableName()); }
+    protected String getSelectSingleSqlString() { return String.format(SELECTSINGLESQLSTATEMENT, getTableName()); }
+
 	@Override
 	public void init(Object obj) {
 		setPM((PersistanceManager)obj);
-		String delStatement = String.format(DELSQLSTATEMENT, getTableName());
+		String delStatement = String.format(getDelSqlString(), getTableName());
 		this.delete = getDb().compileStatement(delStatement);
 	}
 	@Override
@@ -34,6 +36,7 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	public abstract void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;
 	@Override
 	public abstract T rowToObject(int pos, Cursor csr) throws DBException;
+
 	
 	protected SQLiteDatabase getDb() {
 		return pm.getDb();
@@ -70,8 +73,8 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 		
 	@Override
 	public T load(DbId<T> id) throws DBException {
-		Cursor csr = getDb().rawQuery(String.format(SELECTSINGLESQLSTATEMENT, getTableName()), 
-								new String[] { Long.toString(id.getId()) } );
+		Cursor csr = getDb().rawQuery(getSelectSingleSqlString(),
+                                      new String[] { Long.toString(id.getId()) } );
 		return rowToObject(0, csr);
 	}
 

@@ -36,6 +36,7 @@ public class SqlDataField {
 	private Field _field;
 	private boolean _mandatory = false;
 	private Class<?> _referencedType = null;
+    private String _id;
 	
 	protected SqlDataField() {}
 	
@@ -154,6 +155,9 @@ public class SqlDataField {
 	public Field getField() { return _field; }
     public void setField(Field fld) { _field = fld; }
 
+    public String getId() { return _id; }
+    public void setId(String id) { _id = id; }
+
 	public boolean isMandatory() {
 		return _mandatory;
 	}
@@ -162,10 +166,10 @@ public class SqlDataField {
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
-				.add("Table", ((_tableName == null) ? "null" : _tableName))
-				.add("FieldName", ((_name == null) ? "null" : _name))
-				.add("FieldType", ((_type == null) ? "null" : _type))
-				.add("SqlType", getSqlTypeString())
+				.add("table", ((_tableName == null) ? "null" : _tableName))
+				.add("fieldName", ((_name == null) ? "null" : _name))
+				.add("fieldType", ((_type == null) ? "null" : _type))
+				.add("sqlType", getSqlTypeString())
 				.toString();
 	}
 	

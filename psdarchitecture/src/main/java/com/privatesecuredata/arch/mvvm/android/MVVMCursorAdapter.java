@@ -30,6 +30,7 @@ public class MVVMCursorAdapter<M extends IPersistable<M>> extends BaseAdapter
 	Cursor data;
 	private IModelReaderStrategy<M> modelReaderStrategy;
 	private SectionIndexer indexer;
+    PersistanceManager pm;
 	
 	/**
 	 * Id of the Row-layout
@@ -46,6 +47,7 @@ public class MVVMCursorAdapter<M extends IPersistable<M>> extends BaseAdapter
 		this.ctx = ctx;
 		
 		persister = (IPersister<M>) pm.getPersister(modelClass);
+        this.pm = pm;
 	}
 	
 	public MVVMCursorAdapter(PersistanceManager pm, Class<M> modelClass, Context ctx, Cursor cursor)
@@ -111,9 +113,9 @@ public class MVVMCursorAdapter<M extends IPersistable<M>> extends BaseAdapter
 
 	@Override
 	public M getItem(int position) {
-		M item = null;;
+		M item = null;
 		try {
-			item = persister.rowToObject(position, data);
+			item = pm.load(persister, data, position);
 		}
 		finally {
 			return item;

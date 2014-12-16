@@ -13,7 +13,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Pair;
 
 import com.privatesecuredata.arch.db.annotations.DbField;
+import com.privatesecuredata.arch.db.annotations.DbPartialClass;
 import com.privatesecuredata.arch.db.annotations.Persister;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 /**
@@ -522,25 +524,44 @@ public class PersistanceManager {
 		Pair<Class<?>, Class<?>> key = new Pair<Class<?>, Class<?>>(referencingType, referencedType);
 		return cursorLoaderMap.get(key);
 	}
-	
+
+    /**
+     * Get a DB-Cursor with all DB-objects of type referencedType and the foreign-Key
+     * referencingType
+     *
+     * @param referencingType foreign-key-relation in the corresponding table of referencedType
+     * @param referencedType  the type which determines which db-table is searched
+     * @return the cursor
+     * @throws DBException
+     */
 	public Cursor getCursor(Class<?> referencingType, Class<?> referencedType) throws DBException
 	{
 		ICursorLoader loader = getLoader(referencingType, referencedType);
 		return (loader != null) ? loader.getCursor(null) : null;
 	}
+
+    public Cursor getCursor(DbId<?> referencingObjectId, Class<?> referencingType, Class<?> referencedType) throws DBException
+    {
+        ICursorLoader loader = getLoader(referencingType, referencedType);
+        return (loader != null) ? loader.getCursor(referencingObjectId) : null;
+    }
 	
 	public Cursor getCursor(IPersistable<?> referencingObject, Class<?> referencedType) throws DBException
 	{
 		ICursorLoader loader = getLoader(referencingObject.getClass(), referencedType);
-		return (loader != null) ? loader.getCursor(referencingObject) : null;
+		return (loader != null) ? loader.getCursor(referencingObject.getDbId()) : null;
 	}
 	
 	public void registerCursorLoader(Class<?> referencingType, Class<?> referencedType, ICursorLoader loader)
 	{
 		Pair<Class<?>, Class<?>> key = new Pair<Class<?>, Class<?>>(referencingType, referencedType);
-		
 		cursorLoaderMap.put(key, loader);
 	}
+
+    public void unregisterCursorLoader(Class<?> referencingType, Class<?> referencedType) {
+        Pair<Class<?>, Class<?>> key = new Pair<Class<?>, Class<?>>(referencingType, referencedType);
+        cursorLoaderMap.remove(key);
+    }
 	
 	public <T extends IPersistable<T>> Cursor getLoadAllCursor(Class<T> classObj) throws DBException
 	{
@@ -624,5 +645,33 @@ public class PersistanceManager {
 		
 		return lst;
 	}
+
+    public <T extends IPersistable<T>> void registerPartialPersister(Class<T> type) throws DBException {
+        try
+        {
+            DbPartialClass anno = type.getAnnotation(DbPartialClass.class);
+            if (null==anno)
+                throw new ArgumentException(String.format("Type %s does not have an DbPartialClass-Annotation!", type.getName()));
+
+            AutomaticPersister<?> fullPersister = (AutomaticPersister<?>)getPersister((Class)anno.type());
+            if (null==fullPersister)
+                throw new ArgumentException(String.format("Could not find a Persister for type %s", anno.type().getName()));
+
+            PartialClassReader<T> partialPersister = new PartialClassReader<T>(this, type, fullPersister);
+            persisterMap.put(type, partialPersister);
+        }
+        catch (Exception ex)
+        {
+            throw new DBException("Error registering new PartialClassReader", ex);
+        }
+   }
+
+   public <T extends IPersistable<T>> void unregisterPartialPersister(Class<T> type) {
+       PartialClassReader<T> partialPersister = (PartialClassReader<T>)getPersister(type);
+       if (null!=partialPersister)
+           partialPersister.unregisterCursorLoaders();
+
+      persisterMap.remove(type);
+   }
 }
  
