@@ -11,7 +11,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 public class MVVMFragment extends Fragment {
-private String pmUUID;
+    private String pmUUID;
 	
 	public PersistanceManager createPM(IDbDescription desc)
 	{

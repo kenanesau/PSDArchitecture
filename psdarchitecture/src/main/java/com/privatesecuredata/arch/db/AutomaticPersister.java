@@ -490,6 +490,11 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 						foreignType.getName(), getPersistentType().getName()));
 			}
 		}
+        else
+        {
+            throw new DBException(String.format("Could not find update Foreign-key-relation in type \"%s\" since there is no persistable object in the DbId!",
+                    getPersistentType().getName()));
+        }
 	}
 
 	@Override
@@ -502,10 +507,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		try {
 			obj = getConstructor().newInstance();
 			csr.moveToPosition(pos);
-
-			obj.setDbId(new DbId<T>(csr.getLong(0)));
-
-			//Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fieds
+            //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fieds
 			for (int colIndex=1; colIndex< getTableFieldsInternal().size() + 1; colIndex++)
 			{
 				field = getTableFieldsInternal().get(colIndex - 1);
@@ -577,6 +579,9 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 					throw new DBException("Unknow data-type");
 				}
 			}
+
+            getPM().assignDbId(obj, csr.getLong(0));
+
         } catch (Exception e) {
 			if (field != null) {
 				throw new DBException(

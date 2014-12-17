@@ -28,7 +28,7 @@ import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.FastListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
-public class MVVMListAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter 
+public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
 															implements IDataBinding, IViewModelChangedListener
 {
 	Class<M> modelType;
@@ -51,20 +51,20 @@ public class MVVMListAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAda
 	private Hashtable<Integer, TransientViewToModelAdapter<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToModelAdapter<?>>();
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
 	
-	public MVVMListAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx)
+	public MVVMFastListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx)
 	{
 		modelType = modelClass;
 		viewModelType = vmClass;
 		this.ctx = ctx;
 	}
 	
-	public MVVMListAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, List<M> lst)
+	public MVVMFastListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, List<M> lst)
 	{
 		this(modelClass, vmClass, ctx);		
 		setData(lst);
 	}
 	
-	public MVVMListAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, FastListViewModel<M, COMPLEXVM> lstVMs)
+	public MVVMFastListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, FastListViewModel<M, COMPLEXVM> lstVMs)
 	{
 		this(modelClass, vmClass, ctx);		
 		setData(lstVMs);

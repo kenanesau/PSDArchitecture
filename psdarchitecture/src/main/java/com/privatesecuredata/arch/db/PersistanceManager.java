@@ -367,7 +367,6 @@ public class PersistanceManager {
                 long id = persister.insert(persistable);
                 if (id >= 0) {
                     assignDbId(persistable, id);
-                    persistable.getDbId().setClean();
                 }
                 else
                     throw new DBException("Error inserting new row in database");

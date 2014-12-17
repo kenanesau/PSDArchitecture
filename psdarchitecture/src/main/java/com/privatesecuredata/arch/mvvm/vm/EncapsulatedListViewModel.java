@@ -19,20 +19,21 @@ import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
  * @author kenan
  *
  * @param <M> Type of Model
- * @param <E> Type of ViewModel encapsulating a single Model-object instance
+ * @param <VM> Type of ViewModel encapsulating a single Model-object instance
  * 
  * @see ViewModel
  * @see SimpleValueVM<>
  * @see IViewModel<>
  */
-public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<List<M>> {
+public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>> {
 	
 	/**
-	 * Interface encapsulte the list representation (eg. a DB-Cursor)
+	 * Interface which encapsulates the list representation (eg. a DB-Cursor)
 	 * 
 	 * @author kenan
 	 *
 	 * @param <M> Model item which was removed/added/updated from/to the list
+     * @see com.privatesecuredata.arch.db.CursorToListAdapter
 	 */
 	public interface IModelListCallback<M>
 	{
@@ -49,25 +50,34 @@ public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends Compl
 	
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
-	private Class<M> modelClass;
-	private Class<E> viewModelClass;
-	private Constructor<E> vmConstructor;
+	private Class<?> referencingType;
+    private Class<M> referencedType;
+	private Class<VM> vmType;
+	private Constructor<VM> vmConstructor;
 	private IModelListCallback<M> listCB;
 	
-	private HashMap<Integer, E> positionToViewModel = new HashMap<Integer, E>();
-	
-	public EncapsulatedListViewModel(Class<M> modelClazz, Class<E> vmClazz, IModelListCallback<M> listCB)
+	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
+
+    /**
+     *
+     * @param referencingType Type of the class referencing the model (The foreign key in DB-terms)
+     * @param referencedType
+     * @param vmType
+     * @param listCB
+     */
+	public EncapsulatedListViewModel(Class<?> referencingType, Class<M> referencedType, Class<VM> vmType, IModelListCallback<M> listCB)
 	{
 		super();
+        this.referencingType = referencingType;
 		this.listCB = listCB;
-		this.modelClass = modelClazz;
-		this.viewModelClass = vmClazz;
+		this.referencedType = referencedType;
+		this.vmType = vmType;
 		
-		if ( (null==modelClazz) || (null==vmClazz) || (null==listCB))
+		if ( (null==referencedType) || (null==vmType) || (null==listCB))
 			throw new ArgumentException("No parameter of this constructor is allowed to be null");
 		
 		try {
-			this.vmConstructor = viewModelClass.getConstructor(modelClass);
+			this.vmConstructor = this.vmType.getConstructor(this.referencedType);
 		}
 		catch (NoSuchMethodException ex)
 		{
@@ -77,13 +87,19 @@ public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends Compl
 	
 	public void init(Object parent)
 	{
-		listCB.init(parent.getClass(), parent, this.modelClass);
+		listCB.init(referencingType, parent, this.referencedType);
+        notifyChange();
 	}
+
+    public boolean add(VM vm)
+    {
+        this.registerChildVM(vm); //only registers if vm was not yet part of the parent-VM
+        return this.add(vm.getModel());
+    }
 
 	public boolean add(M object) {
 		boolean ret = newItems.add(object);
-		this.notifyChange();
-		
+
 		return ret;
 	}
 	
@@ -95,19 +111,16 @@ public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends Compl
 
 	public void add(int location, M object) {
 		newItems.add(location, object);
-		this.notifyChange();
 	}
 
 	public boolean addAll(Collection<? extends M> arg0) {
 		boolean ret = newItems.addAll(arg0);
-		this.notifyChange();
-		
+
 		return ret;
 	}
 
 	public boolean addAll(int arg0, Collection<? extends M> arg1) {
 		boolean ret = newItems.addAll(arg1);
-		this.notifyChange();
 
 		return ret;
 	}
@@ -122,10 +135,17 @@ public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends Compl
 
 	public boolean remove(M object) {
 		boolean ret = deletedItems.add((M) object);
-		notifyChange();
-		
+
 		return ret;
 	}
+
+    public M remove(int location) {
+        M item = get(location);
+        if (remove(item))
+            return item;
+        else
+            return null;
+    }
 
 	public boolean removeAll(Collection<M> arg0) {
 		Iterator<M> it = arg0.iterator();
@@ -139,7 +159,6 @@ public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends Compl
 			remove(obj);
 		}
 		
-		notifyChange();
 		return ret;
 	}
 
@@ -178,6 +197,7 @@ public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends Compl
 		
 		ViewModelCommitHelper.notifyCommit(this);
 		listCB.commitFinished();
+        notifyChange();
 	}
 
 	/**
@@ -186,9 +206,9 @@ public class EncapsulatedListViewModel<M, E extends IViewModel<M>> extends Compl
 	 * @param pos
 	 * @return ViewModel
 	 */
-	public E getViewModel(int pos)
+	public VM getViewModel(int pos)
 	{
-		E vm = null;
+		VM vm = null;
 		
 		try {
 			if (positionToViewModel.containsKey(pos))

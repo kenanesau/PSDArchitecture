@@ -8,35 +8,31 @@ import android.database.Cursor;
 
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
 
-public class VMListtoDBAdapter<M extends IPersistable<M>> implements IModelListCallback<M> {
-	
-	public interface ICursorListener {
-		void notifyCursorChanged(Cursor csr);
-	}
-	
+public class CursorToListAdapter<M extends IPersistable<M>> implements IModelListCallback<M>, ICursorChangedProvider
+{
 	private PersistanceManager pm;
 	private Cursor csr;
 	private IPersister<M> persister;
 	private Class<?> parentClazz;
 	private IPersistable<?> parent;
 	private Class<M> childClazz;
-	private List<ICursorListener> csrListeners = new ArrayList<ICursorListener>();
+	private List<ICursorChangedListener> csrListeners = new ArrayList<ICursorChangedListener>();
 	
-	public VMListtoDBAdapter(PersistanceManager _pm, ICursorListener listener) {
+	public CursorToListAdapter(PersistanceManager _pm, ICursorChangedListener listener) {
 		this(_pm);
-		addCursorListener(listener);
+		addCursorChangedListener(listener);
 	}
 	
-	public VMListtoDBAdapter(PersistanceManager _pm) {
+	public CursorToListAdapter(PersistanceManager _pm) {
 		this.pm = _pm;
 	}
 	
-	public boolean addCursorListener(ICursorListener listener)
+	public boolean addCursorChangedListener(ICursorChangedListener listener)
 	{
 		return csrListeners.add(listener);
 	}
 	
-	public boolean removeCursorListener(ICursorListener listener)
+	public boolean removeCursorChangedListener(ICursorChangedListener listener)
 	{
 		return csrListeners.remove(listener);
 	}
@@ -58,7 +54,7 @@ public class VMListtoDBAdapter<M extends IPersistable<M>> implements IModelListC
 
 	@Override
 	public M get(int pos) {
-		return persister.rowToObject(pos, csr);
+		return  pm.load(persister, csr, pos);
 	}
 
 	@Override
@@ -70,7 +66,7 @@ public class VMListtoDBAdapter<M extends IPersistable<M>> implements IModelListC
 	public void commitFinished() {
 		init(this.parentClazz, this.parent, this.childClazz);
 		
-		for(ICursorListener listener : this.csrListeners)
+		for(ICursorChangedListener listener : this.csrListeners)
 		{
 			listener.notifyCursorChanged(csr);
 		}
@@ -106,6 +102,4 @@ public class VMListtoDBAdapter<M extends IPersistable<M>> implements IModelListC
 	public List<M> getList() {
 		return pm.loadCursor(childClazz, csr);
 	}
-
-
 }
