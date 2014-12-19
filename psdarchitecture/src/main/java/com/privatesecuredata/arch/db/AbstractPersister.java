@@ -72,9 +72,9 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	}
 		
 	@Override
-	public T load(DbId<T> id) throws DBException {
+	public T load(long id) throws DBException {
 		Cursor csr = getDb().rawQuery(getSelectSingleSqlString(),
-                                      new String[] { Long.toString(id.getId()) } );
+                                      new String[] { Long.toString(id) } );
 		return rowToObject(0, csr);
 	}
 

@@ -23,11 +23,6 @@ public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
 	private LinkedList<DbId<?>> loadedChildren;
 	private LinkedList<DbId<?>> dirtyChildren;
 	
-//	public DbId(IPersister<? extends IPersistable> _persister)
-//	{
-//		this.persister = _persister;		
-//	}
-	
 	public DbId(long id)
 	{
 		this.id = id;
@@ -47,8 +42,8 @@ public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
 	public void setClean() { this.dirty = false; }
 	
 	public long getId() { return this.id; }
-	
-	public void addChild(DbId<?> childId)
+
+    public void addChild(DbId<?> childId)
 	{
 		childId.addDirtyChangedListener(this);
 		if (null == loadedChildren)

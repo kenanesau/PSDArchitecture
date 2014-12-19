@@ -24,7 +24,7 @@ public interface IPersister<T extends IPersistable<T>> extends ILoadCollection<T
 	long update(T persistable) throws DBException;
 	T rowToObject(int pos, Cursor csr) throws DBException;
 	Cursor getLoadAllCursor() throws DBException;
-	T load(DbId<T> id) throws DBException;	
+	T load(long id) throws DBException;
 	Collection<T> loadAll() throws DBException;
 	void delete(T persistable) throws DBException;
 	void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;

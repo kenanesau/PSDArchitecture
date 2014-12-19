@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,7 +11,6 @@ import java.util.List;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModel;
-import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 
 /**
  * A Viewmodel which is capable of encapsulating a List of models. The List itself is encapsulated 
@@ -25,7 +25,9 @@ import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
  * @see SimpleValueVM<>
  * @see IViewModel<>
  */
-public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>> {
+public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<EncapsulatedListViewModel.IModelListCallback<M>>
+                                                                    implements IListViewModel<M, VM>
+{
 	
 	/**
 	 * Interface which encapsulates the list representation (eg. a DB-Cursor)
@@ -55,7 +57,9 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	private Class<VM> vmType;
 	private Constructor<VM> vmConstructor;
 	private IModelListCallback<M> listCB;
-	
+    private boolean dataLoaded = false;
+    private Method modelSetter;
+
 	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
 
     /**
@@ -85,11 +89,39 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		}
 	}
 	
-	public void init(Object parent)
+	public void init(ComplexViewModel<?> parentVM, Method childModelGetter, Method childModelSetter)
 	{
-		listCB.init(referencingType, parent, this.referencedType);
-        notifyChange();
+		dataLoaded = false;
+        setModelAccess(parentVM.getModel(), childModelGetter, childModelSetter);
+
+        load();
 	}
+
+    public void init(Object parentModel)
+    {
+        this.dataLoaded = false; //since we've go new data...
+        setModelGetter(parentModel, null);
+        load();
+    }
+
+    protected void setModelAccess(Object model, Method getter, Method setter)
+    {
+        setModelGetter(model, getter);
+        this.modelSetter = setter;
+    }
+
+    protected Method getModelSetter() { return this.modelSetter; }
+
+    @Override
+    public void load()
+    {
+        if (!dataLoaded) {
+            listCB.init(referencingType, getParentModel(), this.referencedType);
+            dataLoaded = true;
+            setModel(listCB);
+            notifyModelChanged();
+        }
+    }
 
     public boolean add(VM vm)
     {
@@ -99,61 +131,69 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
 	public boolean add(M object) {
 		boolean ret = newItems.add(object);
-
+        notifyViewModelDirty();
 		return ret;
 	}
-	
-	@Override
-	public List<M> getModel() throws MVVMException 
+
+    @Override
+	public IModelListCallback<M> getModel() throws MVVMException
 	{
-		return listCB.getList();
+        load();
+		return super.getModel();
 	}
 
 	public void add(int location, M object) {
 		newItems.add(location, object);
+        notifyViewModelDirty();
 	}
 
 	public boolean addAll(Collection<? extends M> arg0) {
 		boolean ret = newItems.addAll(arg0);
-
+        notifyViewModelDirty();
 		return ret;
 	}
 
 	public boolean addAll(int arg0, Collection<? extends M> arg1) {
 		boolean ret = newItems.addAll(arg1);
-
+        notifyViewModelDirty();
 		return ret;
 	}
 
 	public M get(int location) {
+        load();
 		return listCB.get(location);
 	}
 
 	public boolean isEmpty() {
-		return ( (listCB.size()==0) && (this.newItems.size()==0) ); 
+		load();
+        return ( (listCB.size()==0) && (this.newItems.size()==0) );
 	}
 
 	public boolean remove(M object) {
 		boolean ret = deletedItems.add((M) object);
-
+        notifyViewModelDirty();
 		return ret;
 	}
 
     public M remove(int location) {
         M item = get(location);
-        if (remove(item))
+        if (remove(item)) {
+            notifyViewModelDirty();
             return item;
+        }
         else
+        {
             return null;
+        }
     }
 
-	public boolean removeAll(Collection<M> arg0) {
-		Iterator<M> it = arg0.iterator();
+	public boolean removeAll(Collection<?> arg0) {
+		Iterator<?> it = arg0.iterator();
 		boolean ret = false;
 		
 		while(it.hasNext())
 		{
-			M obj = it.next();
+			M obj = (M)it.next();
 			if (!ret)
 				ret = true;
 			remove(obj);
@@ -163,7 +203,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	}
 
 	public int size() {
-		return listCB.size();
+		load();
+        return listCB.size();
 	}
 
 	@Override
@@ -172,9 +213,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	};
 	
 	@Override
-	public void commit() {
+	public void commitData() {
 		if (!this.isDirty())
 			return;
+
+        load();
 		
 		List<M> changedChildren = new ArrayList<M>();
 		for(IViewModel<M> vm : positionToViewModel.values()) {
@@ -183,7 +226,10 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 				changedChildren.add(vm.getModel());
 			}
 		}
-		super.commit();
+        /**
+         * Commit all children
+         */
+		super.commitData();
 				
 		for (Iterator<M> iterator = deletedItems.iterator(); iterator.hasNext();) {
 			M item = iterator.next();
@@ -192,12 +238,12 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		deletedItems.clear();
 
 		newItems.addAll(changedChildren);
-		listCB.save(newItems);
-		newItems.clear();
+        if (newItems.size() > 0) {
+            listCB.save(newItems);
+            newItems.clear();
+        }
 		
-		ViewModelCommitHelper.notifyCommit(this);
 		listCB.commitFinished();
-        notifyChange();
 	}
 
 	/**

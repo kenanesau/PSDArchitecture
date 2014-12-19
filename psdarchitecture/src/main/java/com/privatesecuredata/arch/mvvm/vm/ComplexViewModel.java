@@ -12,13 +12,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.base.Objects;
-import com.privatesecuredata.arch.db.ILoadCollection;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
-import com.privatesecuredata.arch.db.LazyLoadCollectionProxy;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModel;
-import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
@@ -33,19 +30,45 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	private HashMap<Integer, IViewModel<?>> children = new HashMap<Integer, IViewModel<?>>(); 
 	private ArrayList<IViewModel<?>> childrenOrdered = new ArrayList<IViewModel<?>>();
 	private SimpleValueVM<Boolean> selected = new SimpleValueVM<Boolean>(false);
-	protected Method modelGetter = null;
-	protected Object parentModel = null;
+    private ListViewModelFactory vmFactory = null;
+	private Method modelGetter = null;
+	private Object parentModel = null;
 	
 	public ComplexViewModel()
 	{
 		super();
 	}
-	
+
+    public ComplexViewModel(ListViewModelFactory fac)
+    {
+        this();
+        this.vmFactory = fac;
+    }
+
 	public ComplexViewModel(Object parentModel, Method modelGetter)
 	{
+        this();
 		setModelGetter(parentModel, modelGetter);
 	}
-	
+
+    public ComplexViewModel(ListViewModelFactory fac, Object parentModel, Method modelGetter)
+    {
+        this(fac);
+        setModelGetter(parentModel, modelGetter);
+    }
+
+    protected ListViewModelFactory getViewModelFactory()
+    {
+        ListViewModelFactory factory = null;
+        if(null == this.vmFactory)
+            factory = ListViewModelFactory.getDefaultFactory();
+        else
+            factory = vmFactory;
+
+        return factory;
+    }
+
+
 	@Override
 	public MODEL getModel() throws MVVMException 
 	{
@@ -67,13 +90,22 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	 */
 	public void load()
 	{
-		if (null != modelGetter) {
+        /**
+         * If there is as modelGetter, this means the model was not loaded yet
+         * -> Load it and delete the modelgetter
+         */
+		if (null != getModelGetter()) {
 			try {
-				MODEL model = (MODEL)modelGetter.invoke(parentModel, (Object[])null);
+				MODEL model = (MODEL) getModelGetter().invoke(getParentModel(), (Object[]) null);
 				if ( ( null != model ) && ( Proxy.isProxyClass(model.getClass()) ) ) {
 					model  = loadProxyData(model);
 				}
 				setModel(model);
+
+                /**
+                 * delete _modelGetter -> all future calls of getModel() go directly to the
+                 * real Model
+                 */
 				setModelGetter(null, null);
 			}
 			catch(Exception ex)
@@ -92,11 +124,19 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	 */
 	protected void setModelGetter(Object parentModel, Method modelGetter)
 	{
-		this.modelGetter = modelGetter;
+        this.modelGetter = modelGetter;
 		this.parentModel = parentModel;
 	}
-	
-	public SimpleValueVM<Boolean> getSelectedVM() { return this.selected; }
+
+    protected Method getModelGetter() {
+        return this.modelGetter;
+    }
+
+    protected Object getParentModel() {
+        return parentModel;
+    }
+
+    public SimpleValueVM<Boolean> getSelectedVM() { return this.selected; }
 
 	public boolean isSelected() { return this.selected.get(); }
 	public void setSelected(boolean val) { this.selected.set(val); }
@@ -105,6 +145,10 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	{
 		this.children.put(System.identityHashCode(vm), vm);
 		this.childrenOrdered.add(vm);
+        if (vm instanceof ComplexViewModel)
+        {
+            ((ComplexViewModel)vm).vmFactory = this.vmFactory;
+        }
 	}
 	
 	private void delChild(IViewModel<?> vm) 
@@ -129,7 +173,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		if (!this.children.containsKey(System.identityHashCode(vm)))
 		{
 			addChild(vm);
-			vm.addChangedListener(this);
+			vm.addViewModelListener(this);
 		}
 		else 
 			throw new ArgumentException(String.format("You are trying to register a Viewmodel twice. ViewModel \"%s\" was already registered", vm.toString()));
@@ -143,12 +187,12 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	public void unregisterChildVM(IViewModel<?> vm) 
 	{
 		delChild(vm);
-		vm.delChangedListener(this);
+		vm.delViewModelListener(this);
 	}
 	
 	public HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL model)
 	{
-		HashMap<String, IViewModel<?>> childModels = new HashMap<String, IViewModel<?>>();
+		HashMap<String, IViewModel<?>> childViewModels = new HashMap<String, IViewModel<?>>();
 		setModel(model);
 
 		if (null != model)
@@ -160,17 +204,17 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 				try {
 					SimpleVmMapping simpleAnno = field.getAnnotation(SimpleVmMapping.class);
 					if (null != simpleAnno)
-						setSimpleModelMapping(childModels, field, simpleAnno);
+						setSimpleModelMapping(childViewModels, field, simpleAnno);
 					else 
 					{
 						ComplexVmMapping complexAnno = field.getAnnotation(ComplexVmMapping.class);
 						if (null != complexAnno)
-							setComplexModelMapping(childModels, field, complexAnno);
+							setComplexModelMapping(childViewModels, field, complexAnno);
 						else
 						{
 							ListVmMapping listAnno = field.getAnnotation(ListVmMapping.class);
 							if (null != listAnno)
-								setListModelMapping(childModels, field, listAnno);
+								setListModelMapping(childViewModels, field, listAnno);
 						}
 					}
 				} 
@@ -192,7 +236,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 			}
 		}
 				
-		return childModels;
+		return childViewModels;
 	}
 	
 	protected Method createGetter(Field field) throws NoSuchMethodException
@@ -212,22 +256,24 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected void setListModelMapping(HashMap<String, IViewModel<?>> childModels,
-			Field field, ListVmMapping listAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException 
+	protected void setListModelMapping(HashMap<String, IViewModel<?>> childViewModels,
+			Field field, ListVmMapping listAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException
 	{
-		Class<?> viewModelType = listAnno.vmClass();
-		Class<?> modelType = listAnno.modelClass();
-		Method childModelGetter = createGetter(field); 
-		FastListViewModel vm = new FastListViewModel(modelType, viewModelType);
+
+        Method childModelGetter = createGetter(field);
+        Method childModelSetter = null; //createSetter(field, childModelGetter.getReturnType());
+
+        IListViewModel<?, ?> vmList = getViewModelFactory().createListVM(this, field, listAnno);
+        ComplexViewModel<?> vm = (ComplexViewModel<?>)vmList;
+
 		if (listAnno.loadLazy()==false) {
-			List<?> childModel = (List<?>) childModelGetter.invoke(getModel(), (Object[])null);
-			vm.init(childModel);
+			vmList.init(this, childModelGetter, null);
 		}
 		else
 			vm.setModelGetter(getModel(), childModelGetter);
 		registerChildVM(vm);
 		
-		childModels.put(field.getName(), vm);
+		childViewModels.put(field.getName(), vm);
 	}
 	
 	protected void setComplexModelMapping(HashMap<String, IViewModel<?>> childModels,

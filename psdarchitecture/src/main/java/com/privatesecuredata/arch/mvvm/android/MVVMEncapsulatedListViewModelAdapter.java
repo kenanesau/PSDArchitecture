@@ -21,13 +21,11 @@ import com.privatesecuredata.arch.mvvm.ViewHolder;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel;
-import com.privatesecuredata.arch.mvvm.vm.FastListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.List;
 
 public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
 															implements IDataBinding, IViewModelChangedListener
@@ -71,10 +69,10 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 	{
 		if (null != this.data)
 		{
-			this.data.delChangedListener(this);
+			this.data.delViewModelListener(this);
 		}
 		this.data = data;
-		this.data.addChangedListener(this);
+		this.data.addViewModelListener(this);
 		this.notifyDataSetChanged();
 	}
 
@@ -115,14 +113,17 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View rowView = convertView;
-		M model = this.data.get(position); 
-		COMPLEXVM vm = null;
-		
+		M model = this.data.get(position);
+        COMPLEXVM vm = null;
+
 		if (null == rowView)
 		{
 			LayoutInflater inflater = (LayoutInflater)ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			rowView = inflater.inflate(getRowViewId(), parent, false);
-			
+
+            /**
+             * If there is a reader-Strategy -- use this
+             */
 			if (null != modelReaderStrategy)
 			{
 				ViewHolder<M> holder = new ViewHolder<M>(modelReaderStrategy, model);
@@ -139,7 +140,9 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 				rowView.setTag(holder);
 			}
 			else {
-				
+                /**
+                 * If not -> Use the MVVM (which is expensive)
+                 */
 				MVVMViewHolder<COMPLEXVM> holder = new MVVMViewHolder();
 
 				Enumeration<Integer> keys = view2ModelAdapters.keys();
@@ -222,15 +225,23 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 	}
 
 	/**
-	 * Called by underlying EncapsultedListViewModel when data has changed
+	 * Called by underlying EncapsulatedListViewModel when the VM has changed
 	 */
 	@Override
-	public void notifyChange(IViewModel<?> vm, IViewModel<?> originator) {
-		//notify (list)view of changed data -> redraw
-		this.notifyDataSetChanged();
+	public void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator) {
+
 	}
 
-	public void setModelReaderStrategy(IModelReaderStrategy<M> readerStrategy) {
+    /**
+     * Called by underlying EncapsulatedListViewModel when the Model has changed
+     */
+    @Override
+    public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
+        //notify (list)view of changed data -> redraw
+        this.notifyDataSetChanged();
+    }
+
+    public void setModelReaderStrategy(IModelReaderStrategy<M> readerStrategy) {
 		this.modelReaderStrategy = (IModelReaderStrategy<M>) readerStrategy;
 	}
 }

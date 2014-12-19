@@ -77,11 +77,11 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 	{
 		if (null != this.data)
 		{
-			this.data.delChangedListener(this);
+			this.data.delViewModelListener(this);
 		}
 		//data.load();
 		this.data = data;
-		this.data.addChangedListener(this);
+		this.data.addViewModelListener(this);
 		this.notifyDataSetChanged();
 	}
 	
@@ -239,12 +239,17 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 	 * Called by underlying ListViewModel when data has changed
 	 */
 	@Override
-	public void notifyChange(IViewModel<?> vm, IViewModel<?> originator) {
+	public void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator) {
 		//notify (list)view of changed data -> redraw
 		this.notifyDataSetChanged();
 	}
 
-	public void setModelReaderStrategy(IModelReaderStrategy<M> readerStrategy) {
+    @Override
+    public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
+
+    }
+
+    public void setModelReaderStrategy(IModelReaderStrategy<M> readerStrategy) {
 		this.modelReaderStrategy = (IModelReaderStrategy<M>) readerStrategy;
 	}
 }

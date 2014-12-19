@@ -559,18 +559,14 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 
                     break;
 				case COLLECTION_REFERENCE:
-					Collection lstItems = new ArrayList();
+                    int collSize = 0;
+                    if (!csr.isNull(colIndex))
+                        collSize = csr.getInt(colIndex);
+
 					//TODO: If object is not lazily loaded omit the proxy-stuff ...
-					if (!csr.isNull(colIndex))
-					{
-						int collSize = csr.getInt(colIndex);
-						if (0 != collSize)
-						{
-							//TODO: Get type of objects in collection...
-							ICursorLoader loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
-							lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class)field.getReferencedType(), obj, collSize, loader);
-						}
-					}
+                    //TODO: Get type of objects in collection...
+                    ICursorLoader loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
+                    Collection lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class)field.getReferencedType(), obj, collSize, loader);
 
 					fld.set(obj, lstItems);
 					break;

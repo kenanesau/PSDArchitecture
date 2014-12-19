@@ -3,9 +3,7 @@ package com.privatesecuredata.arch.db;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import android.database.Cursor;
-
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
 
 public class CursorToListAdapter<M extends IPersistable<M>> implements IModelListCallback<M>, ICursorChangedProvider
@@ -22,9 +20,9 @@ public class CursorToListAdapter<M extends IPersistable<M>> implements IModelLis
 		this(_pm);
 		addCursorChangedListener(listener);
 	}
-	
+
 	public CursorToListAdapter(PersistanceManager _pm) {
-		this.pm = _pm;
+        this.pm = _pm;
 	}
 	
 	public boolean addCursorChangedListener(ICursorChangedListener listener)
@@ -65,11 +63,15 @@ public class CursorToListAdapter<M extends IPersistable<M>> implements IModelLis
 	@Override
 	public void commitFinished() {
 		init(this.parentClazz, this.parent, this.childClazz);
-		
-		for(ICursorChangedListener listener : this.csrListeners)
-		{
-			listener.notifyCursorChanged(csr);
-		}
+
+        try {
+            for (ICursorChangedListener listener : this.csrListeners) {
+                listener.notifyCursorChanged(csr);
+            }
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
 	}
 
 	@Override
@@ -85,15 +87,14 @@ public class CursorToListAdapter<M extends IPersistable<M>> implements IModelLis
 		 * this was already done by the DBViewModelCommitListeners which
 		 * where triggered during super.commit() of the EncapsulatedListViewModel
 		 */
-//		for(M item : items)
-//		{
-//			IPersistable persistable = (IPersistable)item; 
-//			DbId<?> dbId = persistable.getDbId();
-//			if (null != dbId)
-//				dbId.setDirty();
-//		}
-		if (null != parent)
-			pm.saveAndUpdateForeignKey(items, parent.getDbId());
+		if (null != parent) {
+            DbId<?> dbId = parent.getDbId();
+            if (null == dbId) {
+                pm.save(parent);
+            }
+
+            pm.saveAndUpdateForeignKey(items, parent.getDbId());
+        }
 		else
 			pm.save(items);
 	}

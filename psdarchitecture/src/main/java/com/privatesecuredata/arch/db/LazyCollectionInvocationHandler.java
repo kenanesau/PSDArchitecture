@@ -10,8 +10,8 @@ import android.database.Cursor;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
-public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends IPersistable<V>> 
-	implements InvocationHandler
+public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends IPersistable<V>>
+	implements InvocationHandler, ICursorChangedListener
 {
 	IPersistable<?> foreignKey;
 	IPersister<V> persister;
@@ -19,7 +19,7 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 	Cursor cursor = null;
 	ICursorLoader loader;
 	int size = 0;
-	List<V> collProxy = null;
+	List<V> proxyList = null;
     boolean loaded = false;
 			
 
@@ -36,10 +36,12 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 	}
 	
 	public int size() {
-        if (!loaded)
-            return this.size;
+        if (loaded)
+            return proxyList.size();
+        else if (cursor != null)
+            return cursor.getCount();
         else
-            return collProxy.size();
+            return this.size;
     }
 	
 	public List<V> loadCollection() 
@@ -47,19 +49,19 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 		try {
             if (!loaded) {
                 Cursor cursor = getCursor();
-                collProxy = new ArrayList<V>(cursor.getCount());
+                proxyList = new ArrayList<V>(cursor.getCount());
                 for (int pos = 0; pos < cursor.getCount(); pos++)
-                    collProxy.add(pm.load(persister, cursor, pos));
+                    proxyList.add(pm.load(persister, cursor, pos));
                 loaded=true;
             }
 		} catch (Exception ex) {
 			throw new DBException("Error loading collection: ", ex);
 		}
-		return collProxy;
+		return proxyList;
 	}
 	
 	/**
-	 * Invocation-Handler to load collections of IPersistable object from an ICursorloader
+	 * Invocation-Handler to load collections of IPersistable objects from an ICursorloader
 	 * 
 	 * @param pm          The persistance Manager
 	 * @param type        The type of the IPersistable objects to load
@@ -72,13 +74,40 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 		this.foreignKey = foreignKey;
 		this.loader = loader;
 		this.persister = (IPersister<V>)pm.getPersister(type);
-		collProxy = new LazyLoadCollectionProxy<T, V>(this, pm, persister);
+		proxyList = new LazyLoadCollectionProxy<T, V>(this, pm, persister);
 		this.size = size;
 	}
+
+    /**
+     * Constructor of LazyCollectionInvocationHandler to directly give a Cursor to it
+     *
+     * @param pm          The persistance Manager
+     * @param type        The type of the IPersistable objects to load
+     * @param foreignKey  The foreign key (The referencing object)
+     * @param size        The cached size for the proxy
+     * @param csr         The cursor which is used for the proxied list of objects
+     */
+    public LazyCollectionInvocationHandler(PersistanceManager pm, Class<V> type, IPersistable<?> foreignKey, int size, Cursor csr) {
+        this.pm = pm;
+        this.foreignKey = foreignKey;
+        this.cursor = csr;
+        this.persister = (IPersister<V>)pm.getPersister(type);
+        proxyList = new LazyLoadCollectionProxy<T, V>(this, pm, persister);
+        this.size = size;
+    }
 	
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args)
 			throws Throwable {
-		return method.invoke(collProxy, args);
+		return method.invoke(proxyList, args);
 	}
+
+    @Override
+    public void notifyCursorChanged(Cursor csr) {
+        this.cursor = csr;
+        if (loaded) {
+            loaded = false;
+            loadCollection();
+        }
+    }
 }

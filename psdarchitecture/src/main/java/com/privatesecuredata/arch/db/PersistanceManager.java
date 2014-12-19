@@ -12,7 +12,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Pair;
 
-import com.privatesecuredata.arch.db.annotations.DbField;
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
 import com.privatesecuredata.arch.db.annotations.Persister;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -246,10 +245,7 @@ public class PersistanceManager {
 				{
 					long id = persister.insert(persistable);
 					if (id >= 0) {
-						dbId = new DbId<T>(id);
-						dbId.setObj(persistable);
-						persistable.setDbId(dbId);
-						dbId.setClean();
+                        assignDbId(persistable, id);
 					}
 					else
 						throw new DBException("Error inserting new row in database");
@@ -287,10 +283,7 @@ public class PersistanceManager {
             cursor.moveToPosition(pos);
             if (idx > -1) {
                 int id = cursor.getInt(idx);
-                dbId = new DbId<T>(id);
-                dbId.setObj(persistable);
-                dbId.setClean();
-                persistable.setDbId(dbId);
+                assignDbId(persistable, id);
             }
         }
 
@@ -308,11 +301,8 @@ public class PersistanceManager {
 	{
 		try {
 			IPersister<T> persister = getPersister(classObj);
-			DbId<T> dbId = new DbId<T>(id);
-			IPersistable<T> persistable = (IPersistable<T>) persister.load(dbId);
-			dbId.setObj(persistable);
-			persistable.setDbId(dbId);
-			dbId.setClean();
+			T persistable = persister.load(id);
+            assignDbId(persistable, id);
 			return (T) persistable;
 		} 
 		catch (Exception ex)
@@ -343,6 +333,7 @@ public class PersistanceManager {
 					updateForeignKey(persistable, foreignKey);
 				}
 			}
+
 			db.setTransactionSuccessful();
 		}
 		catch (Exception ex)
@@ -404,7 +395,7 @@ public class PersistanceManager {
         }
     }
 
-    public <T extends IPersistable<T>> void save(T persistable) throws DBException
+    public void save(IPersistable persistable) throws DBException
     {
         try {
             db.beginTransaction();
@@ -423,7 +414,7 @@ public class PersistanceManager {
             db.beginTransaction();
             try {
                 __saveNoTransaction(persistable);
-                __updateForeignKeyNoTransactin(persistable, foreignKey);
+                __updateForeignKeyNoTransaction(persistable, foreignKey);
                 db.setTransactionSuccessful();
             } catch (Exception ex) {
                 throw new DBException(
@@ -582,7 +573,7 @@ public class PersistanceManager {
 		return ret;
 	}
 
-    private <T extends IPersistable<T>> void __updateForeignKeyNoTransactin(T persistable, DbId<?> foreignKey) throws DBException
+    private <T extends IPersistable<T>> void __updateForeignKeyNoTransaction(T persistable, DbId<?> foreignKey) throws DBException
     {
         Class<T> classObj = (Class<T>) persistable.getClass();
         IPersister<T> persister = getPersister(classObj);
@@ -594,7 +585,7 @@ public class PersistanceManager {
 	{
 		try {
             db.beginTransaction();
-            __updateForeignKeyNoTransactin(persistable, foreignKey);
+            __updateForeignKeyNoTransaction(persistable, foreignKey);
             db.setTransactionSuccessful();
         }
         finally {

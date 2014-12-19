@@ -92,7 +92,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		newItems.add(object);
 		boolean ret = items.add(object);
 		
-		this.notifyChange();
+		this.notifyViewModelDirty();
 		
 		return ret;
 	}
@@ -102,7 +102,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		registerChildVM(object);
 		newItems.add(location, object);
 		items.add(location, object);
-		this.notifyChange();
+		this.notifyViewModelDirty();
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		for(IViewModel<?> vm : arg0)
 			registerChildVM(vm);
 		
-		this.notifyChange();
+		this.notifyViewModelDirty();
 		
 		return ret;
 	}
@@ -124,7 +124,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		for(IViewModel<?> vm : arg1)
 			registerChildVM(vm);
 		
-		this.notifyChange();
+		this.notifyViewModelDirty();
 		
 		return ret;
 	}
@@ -137,7 +137,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 			unregisterChildVM(vm);
 		items.clear();
 		
-		this.notifyChange();
+		this.notifyViewModelDirty();
 	}
 
 	@Override
@@ -190,7 +190,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		E item = items.remove(location);
 		deletedItems.add(item);
 		unregisterChildVM(item);
-		notifyChange();
+		notifyViewModelDirty();
 		return item;
 	}
 
@@ -201,7 +201,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		{
 			deletedItems.add((E) object);
 			unregisterChildVM((IViewModel<?>)object);
-			notifyChange();
+			notifyViewModelDirty();
 		}
 		return ret;
 	}
@@ -218,7 +218,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 			deletedItems.add((E)obj);
 		}
 		
-		notifyChange();
+		notifyViewModelDirty();
 		return ret;
 	}
 
@@ -234,7 +234,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 			deletedItems.addAll(_deletedItems);
 		}
 		
-		notifyChange();
+		notifyViewModelDirty();
 		return ret;
 	}
 
@@ -243,7 +243,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		E item = items.set(location, object);
 		unregisterChildVM(item);
 		deletedItems.add(item);
-		notifyChange();
+		notifyViewModelDirty();
 		return item;
 	}
 

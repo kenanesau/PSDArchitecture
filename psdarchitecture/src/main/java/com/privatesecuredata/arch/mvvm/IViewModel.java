@@ -14,10 +14,12 @@ public interface IViewModel<MODEL> extends IViewModelChangedListener {
 	 */
 	public abstract MODEL getModel();
 
-	public abstract void addChangedListener(IViewModelChangedListener listener);
-	public abstract void delChangedListener(IViewModelChangedListener listener);
-	public abstract void notifyChange(IViewModel<?> changedModel, IViewModel<?> originator);
-	public abstract void notifyChange();
+	public abstract void addViewModelListener(IViewModelChangedListener listener);
+	public abstract void delViewModelListener(IViewModelChangedListener listener);
+	public abstract void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator);
+	public abstract void notifyViewModelDirty();
+    public abstract void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator);
+    public abstract void notifyModelChanged();
 
 	public abstract boolean isDirty();
 	public abstract void setDirty();

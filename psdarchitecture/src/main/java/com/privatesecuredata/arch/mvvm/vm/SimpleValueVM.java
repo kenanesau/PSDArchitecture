@@ -41,7 +41,7 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 		{
 			this.setDirty();
 			this.data = newData;
-			notifyChange(this, this);
+			notifyViewModelDirty(this, this);
 		}
 	}
 	
@@ -83,7 +83,7 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 		if (!data.equals(getModel()))
 		{
 			this.data = getModel();
-			notifyChange(this, this);
+			notifyViewModelDirty(this, this);
 		}
 	}
 	

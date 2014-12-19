@@ -31,30 +31,44 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 
 	
 	@Override
-	public void addChangedListener(IViewModelChangedListener listener)
+	public void addViewModelListener(IViewModelChangedListener listener)
 	{
 		this.changeListeners.add(listener);
 	}
 	
 	@Override
-	public void delChangedListener(IViewModelChangedListener listener)
+	public void delViewModelListener(IViewModelChangedListener listener)
 	{
 		this.changeListeners.remove(listener);
 	}
 	
 	@Override
-	public void notifyChange(IViewModel<?> changedModel, IViewModel<?> originator) 
+	public void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator)
 	{
 		this.setDirty();
 		for(IViewModelChangedListener listener : changeListeners)
-			listener.notifyChange(this, originator);
+			listener.notifyViewModelDirty(this, originator);
 	}
 	
 	@Override
-	public void notifyChange()
+	public void notifyViewModelDirty()
 	{
-		this.notifyChange(this, this);
+		this.notifyViewModelDirty(this, this);
 	}
+
+    @Override
+    public void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator)
+    {
+        this.setClean();
+        for(IViewModelChangedListener listener : changeListeners)
+            listener.notifyModelChanged(this, originator);
+    }
+
+    @Override
+    public void notifyModelChanged()
+    {
+        this.notifyModelChanged(this, this);
+    }
 	
 	
 	@Override
@@ -73,6 +87,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	public void commit() 
 	{
 		this.commitData();
+        this.notifyModelChanged();
 		ViewModelCommitHelper.notifyCommit(this);
 	}
 	

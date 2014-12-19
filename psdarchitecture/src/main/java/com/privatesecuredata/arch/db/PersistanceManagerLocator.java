@@ -9,10 +9,7 @@ public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
 	private static HashMap<IDbDescription, PersistanceManager> pmMap = new HashMap<IDbDescription, PersistanceManager>();
 	
-	private PersistanceManagerLocator() 
-	{
-		ViewModelCommitHelper.addGlobalCommitListener(new DBViewModelCommitListener());
-	}
+	private PersistanceManagerLocator() {}
 	
 	public static PersistanceManagerLocator getInstance()
 	{

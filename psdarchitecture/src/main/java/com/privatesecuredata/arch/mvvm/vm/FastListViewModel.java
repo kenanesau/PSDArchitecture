@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,12 +26,13 @@ import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
  * @author kenan
  *
  * @param <M> Type of Model
- * @param <E> Type of ViewModel encapsulating a single Model-object instance
+ * @param <VM> Type of ViewModel encapsulating a single Model-object instance
  * @see ViewModel
- * @see SimpleViewModel<T>
- * @see IModel<T>
+ * @see com.privatesecuredata.arch.mvvm.vm.SimpleValueVM<>
+ * @see com.privatesecuredata.arch.mvvm.IViewModel<>
  */
-public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<List<M>> implements List<M> {
+public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>> implements List<M>, IListViewModel<M, VM>
+{
 	
 	public interface ICommitItemCallback<M>
 	{
@@ -43,21 +45,21 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
 	private Class<M> modelClass;
-	private Class<E> viewModelClass;
-	private Constructor<E> vmConstructor;
+	private Class<VM> viewModelClass;
+	private Constructor<VM> vmConstructor;
 	private ICommitItemCallback<M> itemCB;
 	private boolean initialized = false;
 	
-	private HashMap<Integer, E> positionToViewModel = new HashMap<Integer, E>();
+	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
 	private IViewModel<?> parentVM;
 
-	public FastListViewModel(IViewModel<?> parentVM, Class<M> modelClazz, Class<E> vmClazz)
+	public FastListViewModel(IViewModel<?> parentVM, Class<M> modelClazz, Class<VM> vmClazz)
 	{
 		this(modelClazz, vmClazz);
 		this.parentVM = parentVM;
 	}
 	
-	public FastListViewModel(Class<M> modelClazz, Class<E> vmClazz)
+	public FastListViewModel(Class<M> modelClazz, Class<VM> vmClazz)
 	{
 		super();
 		this.modelClass = modelClazz;
@@ -74,8 +76,14 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 			throw new ArgumentException("Unable to find a valid constructor for the model", ex);
 		}
 	}
-	
-	public void init(Collection<M> modelItems)
+
+    public void init(ComplexViewModel<?> parentVM, Method childModelGetter, Method setter)
+    {
+        setModelGetter(parentVM.getModel(), childModelGetter);
+        init(getModel());
+    }
+
+    public void init(Collection<M> modelItems)
 	{
 		init(new ArrayList<M>(modelItems));
 	}
@@ -95,47 +103,52 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 		}
 	}
 
+    @Override
+    public List<M> getModel() throws MVVMException
+    {
+        List<M> model = super.getModel();
+        if ( (!initialized) && (null != model) ) {
+            if (Proxy.isProxyClass(model.getClass()))
+            {
+                model = loadProxyData(model);
+            }
+
+            init(model);
+        }
+
+        return model;
+    }
+
 	@Override
-	public boolean add(M object) {
-		newItems.add(object);
+	public boolean add(Object object) {
+		newItems.add((M)object);
 		
 		boolean ret = false;
 		if (!initialized)
-			ret = getItems().add(object);
+			ret = getItems().add((M)object);
 		
-		this.notifyChange();
+		this.notifyViewModelDirty();
 		
 		return ret;
 	}
+
+    @Override
+    public boolean add(VM viewModel) {
+        return this.add(viewModel.getModel());
+    }
 	
-	@Override
-	public List<M> getModel() throws MVVMException 
-	{
-		List<M> model = super.getModel();
-		if ( (!initialized) && (null != model) ) {
-			if (Proxy.isProxyClass(model.getClass()))
-			{
-				model = loadProxyData(model);
-			} 
-			
-			init(model);
-		}
-
-		return model;
-	}
-
 	@Override
 	public void add(int location, M object) {
 		newItems.add(location, object);
 		getItems().add(location, object);
-		this.notifyChange();
+		this.notifyViewModelDirty();
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends M> arg0) {
 		newItems.addAll(arg0);
 		boolean ret = getItems().addAll(arg0);
-		this.notifyChange();
+		this.notifyViewModelDirty();
 		
 		return ret;
 	}
@@ -145,7 +158,7 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 		newItems.addAll(arg1);
 		boolean ret = getItems().addAll(arg0, arg1);
 		
-		this.notifyChange();
+		this.notifyViewModelDirty();
 		return ret;
 	}
 
@@ -155,7 +168,7 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 		newItems.clear();
 		getItems().clear();
 		
-		this.notifyChange();
+		this.notifyViewModelDirty();
 	}
 
 	@Override
@@ -207,17 +220,17 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 	public M remove(int location) {
 		M item = getItems().remove(location);
 		deletedItems.add(item);
-		notifyChange();
+		notifyViewModelDirty();
 		return item;
 	}
 
-	@Override
+    @Override
 	public boolean remove(Object object) {
 		boolean ret = getItems().remove(object);
 		if (ret == true)
 		{
 			deletedItems.add((M) object);
-			notifyChange();
+			notifyViewModelDirty();
 		}
 		return ret;
 	}
@@ -229,11 +242,11 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 		
 		while(it.hasNext())
 		{
-			Object obj = it.next();
-			deletedItems.add((M)obj);
+			M obj = (M)it.next();
+			deletedItems.add(obj);
 		}
 		
-		notifyChange();
+		notifyViewModelDirty();
 		return ret;
 	}
 
@@ -247,7 +260,7 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 			deletedItems.addAll(_deletedItems);
 		}
 		
-		notifyChange();
+		notifyViewModelDirty();
 		return ret;
 	}
 
@@ -255,7 +268,7 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 	public M set(int location, M object) {
 		M item = getItems().set(location, object);
 		deletedItems.add(item);
-		notifyChange();
+		notifyViewModelDirty();
 		return item;
 	}
 
@@ -327,9 +340,9 @@ public class FastListViewModel<M, E extends IViewModel<M>> extends ComplexViewMo
 	 * @param pos
 	 * @return ViewModel
 	 */
-	public E getViewModel(int pos)
+	public VM getViewModel(int pos)
 	{
-		E vm = null;
+		VM vm = null;
 		
 		try {
 			if (positionToViewModel.containsKey(pos))

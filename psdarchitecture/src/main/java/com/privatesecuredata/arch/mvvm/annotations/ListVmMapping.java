@@ -8,7 +8,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ListVmMapping {
-	Class<?> modelClass();
-	Class<?> vmClass();
+    Class<?> parentType();
+	Class<?> modelType();
+	Class<?> vmType();
 	boolean loadLazy() default true;
 }

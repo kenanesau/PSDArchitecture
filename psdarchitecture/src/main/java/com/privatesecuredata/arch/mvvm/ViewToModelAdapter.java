@@ -231,10 +231,10 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	public SimpleValueVM<T> getVM() { return vm; }
 	public void setVM(SimpleValueVM<T> _vm) {
 		if (null != this.vm)
-			this.vm.delChangedListener(this);
+			this.vm.delViewModelListener(this);
 
 		this.vm = _vm;
-		this.vm.addChangedListener(this);
+		this.vm.addViewModelListener(this);
 	}
 
 	/**
@@ -250,15 +250,19 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 		this.writeViewCmd.set(v, this.getVM().get());		
 	}
 
-	/**
-	 * A ViewModel changed and the corresponding View has to be updatet...
-	 */
 	@Override
-	public void notifyChange(IViewModel<?> vm, IViewModel<?> originator) 
+	public void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator)
 	{
-		SimpleValueVM<T> simpleVM = getVM(); 
-		setVMUpdatesView();
-		writeViewCmd.set(this.view, simpleVM.get());
-		resetVMUpdatesView();
-	}	
+	}
+
+    /**
+     * A Model changed and the corresponding View has to be updatet...
+     */
+    @Override
+    public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
+        SimpleValueVM<T> simpleVM = getVM();
+        setVMUpdatesView();
+        writeViewCmd.set(this.view, simpleVM.get());
+        resetVMUpdatesView();
+    }
 }
