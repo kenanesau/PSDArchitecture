@@ -110,4 +110,6 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
             loadCollection();
         }
     }
+
+    public boolean isLoaded() { return this.loaded; }
 }

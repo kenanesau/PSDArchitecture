@@ -3,7 +3,7 @@ package com.privatesecuredata.arch.mvvm.android;
 
 import java.util.ArrayList;
 
-import com.privatesecuredata.arch.mvvm.IViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 

@@ -1,18 +1,19 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
 import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IViewModel;
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
+import com.privatesecuredata.arch.mvvm.MVVM;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * Created by kenan on 12/17/14.
  */
 public interface IListViewModel<M, VM extends IViewModel<M>> {
-    void init(ComplexViewModel<?> parentVM, Method childModelGetter, Method childModelSetter);
+    void init(ComplexViewModel<?> parentVM, Field modelField);
     boolean add(VM vm);
     boolean add(M object);
     boolean addAll(Collection<? extends  M> arg0);
@@ -23,4 +24,31 @@ public interface IListViewModel<M, VM extends IViewModel<M>> {
     M remove(int location);
     boolean removeAll(Collection<?> arg0);
     int size();
+    public VM getViewModel(int pos);
+    ComplexViewModel<?> getParentViewModel();
+
+    public abstract void addViewModelListener(IViewModelChangedListener listener);
+    public abstract void delViewModelListener(IViewModelChangedListener listener);
+    public abstract void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator);
+    public abstract void notifyViewModelDirty();
+    public abstract void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator);
+    public abstract void notifyModelChanged();
+
+    public abstract boolean isDirty();
+    public abstract void setDirty();
+    public abstract void setClean();
+
+    /**
+     * commit all changes from the ViewModel to the Model;
+     */
+    public abstract void commit();
+
+    /**
+     * reload data from Model to ViewModel
+     */
+    public abstract void reload();
+
+    public abstract List<M> getModel() throws MVVMException;
+
+    public MVVM getMVVM();
 }

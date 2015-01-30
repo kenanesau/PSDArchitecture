@@ -14,8 +14,12 @@ import android.util.Pair;
 
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
 import com.privatesecuredata.arch.db.annotations.Persister;
+import com.privatesecuredata.arch.db.vmGlue.DBViewModelCommitListener;
+import com.privatesecuredata.arch.db.vmGlue.DbListViewModelFactory;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
+import com.privatesecuredata.arch.mvvm.MVVM;
+import com.privatesecuredata.arch.mvvm.vm.IListViewModelFactory;
 
 /**
  * 
@@ -30,7 +34,7 @@ import com.privatesecuredata.arch.exceptions.DBException;
  *
  */
 public class PersistanceManager {
-	private Hashtable<Class<?>, IPersister<? extends IPersistable<?>>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable<?>>>();
+	private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
     private Hashtable<String, Class<?>> classNameMap = new Hashtable<String, Class<?>>();
 	private Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader>();
 	private SQLiteDatabase db;
@@ -91,7 +95,7 @@ public class PersistanceManager {
 	
 				if (!this.initialized)
 				{
-					for(IPersister<? extends IPersistable<?>> persister : persisterMap.values())
+					for(IPersister<? extends IPersistable> persister : persisterMap.values())
 					{
 						try {
 							persister.init(this);
@@ -309,30 +313,62 @@ public class PersistanceManager {
 		{
 			throw new DBException(
 					String.format("Error loading object of type=%s, id=%d", 
-							classObj.getName(), id));
+							classObj.getName(), id), ex);
 		}
 	}
+
+    private <T extends IPersistable> Class<?> __saveAndUpdateForeignKeyNoTransaction(Collection<T> persistables, DbId<?> foreignKey) throws Exception
+    {
+        Class<?> type = null;
+        try {
+
+            if (!persistables.isEmpty()) {
+                T persistable = persistables.iterator().next();
+                type = persistable.getClass();
+            }
+
+            for (T persistable : persistables) {
+
+                DbId<?> dbId = persistable.getDbId();
+                if ((null == dbId) || (dbId.getDirty())) {
+                    save(persistable);
+                    updateForeignKey(persistable, foreignKey);
+                }
+            }
+        }
+        finally {
+            return type;
+        }
+    }
+
+    public <T extends IPersistable> void saveAndUpdateForeignKey(Collection<T> persistables, IPersistable foreignKey) throws DBException
+    {
+        Class<?> type=null;
+        try {
+            db.beginTransaction();
+            DbId<?> foreignDbId = foreignKey.getDbId();
+            if ( (null == foreignDbId) || (foreignDbId.getDirty()) )
+                __saveNoTransaction(foreignKey);
+            type = __saveAndUpdateForeignKeyNoTransaction(persistables, foreignDbId);
+
+            db.setTransactionSuccessful();
+        }
+        catch (Exception ex)
+        {
+            throw new DBException(String.format("Error saving and updating foreign persistable for an list of objects of type=%s",
+                    ( (null!=type) ? type.getName() : "unknown")));
+        }
+        finally {
+            db.endTransaction();
+        }
+    }
 	
 	public <T extends IPersistable> void saveAndUpdateForeignKey(Collection<T> persistables, DbId<?> foreignKey) throws DBException
 	{
-		Class<?> type = null;
+		Class<?> type=null;
 		try {
 			db.beginTransaction();
-			if (!persistables.isEmpty()) {
-				T persistable = persistables.iterator().next();
-				type = persistable.getClass();
-			}
-				
-			for (T persistable : persistables)
-			{
-				
-				DbId<?> dbId = persistable.getDbId(); 
-				if ( (null == dbId) || (dbId.getDirty()) )
-				{
-					save(persistable);
-					updateForeignKey(persistable, foreignKey);
-				}
-			}
+            type = __saveAndUpdateForeignKeyNoTransaction(persistables, foreignKey);
 
 			db.setTransactionSuccessful();
 		}
@@ -346,15 +382,15 @@ public class PersistanceManager {
 		}
 	}
 
-    private <T extends IPersistable<T>> void __saveNoTransaction(T persistable) throws DBException
+    private <T extends IPersistable> void __saveNoTransaction(T persistable) throws DBException
     {
 
-        DbId<T> dbId = persistable.getDbId();
+        DbId<?> dbId = persistable.getDbId();
         if (null == dbId)
         {
             try {
-                Class<T> classObj = (Class<T>) persistable.getClass();
-                IPersister<T> persister = getPersister(classObj);
+                Class classObj = (Class) persistable.getClass();
+                IPersister persister = getPersister(classObj);
                 long id = persister.insert(persistable);
                 if (id >= 0) {
                     assignDbId(persistable, id);
@@ -390,12 +426,12 @@ public class PersistanceManager {
                 throw new DBException(
                         String.format("Error updating an object of type=%s, id=%d",
                                 persistable.getClass().getName(),
-                                dbId.getId()));
+                                dbId.getId()), ex);
             }
         }
     }
 
-    public void save(IPersistable persistable) throws DBException
+    public  <T extends IPersistable> void save(T persistable) throws DBException
     {
         try {
             db.beginTransaction();
@@ -663,5 +699,13 @@ public class PersistanceManager {
 
       persisterMap.remove(type);
    }
+
+    public MVVM createMVVM() {
+        MVVM mvvm = MVVM.createMVVM(this);
+        IListViewModelFactory factory = new DbListViewModelFactory(this);
+        mvvm.setListViewModelFactory(factory);
+        mvvm.addGlobalCommitListener(new DBViewModelCommitListener());
+        return mvvm;
+    }
 }
  

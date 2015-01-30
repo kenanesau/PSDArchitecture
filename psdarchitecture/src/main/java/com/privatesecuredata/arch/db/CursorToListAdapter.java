@@ -6,6 +6,12 @@ import java.util.List;
 import android.database.Cursor;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
 
+/**
+ * This implementataion of IModelListCallback encapsulates a cursor. It directly writes
+ * all changes done to the database.
+ *
+ * @param <M>
+ */
 public class CursorToListAdapter<M extends IPersistable<M>> implements IModelListCallback<M>, ICursorChangedProvider
 {
 	private PersistanceManager pm;
@@ -81,19 +87,14 @@ public class CursorToListAdapter<M extends IPersistable<M>> implements IModelLis
 
 	@Override
 	public void save(Collection<M> items) {
-		
+
 		/**
 		 * We don't need to set the persistable items to dirty() since
 		 * this was already done by the DBViewModelCommitListeners which
-		 * where triggered during super.commit() of the EncapsulatedListViewModel
+		 * where triggered during commit() of the parent ComplexViewModel
 		 */
 		if (null != parent) {
-            DbId<?> dbId = parent.getDbId();
-            if (null == dbId) {
-                pm.save(parent);
-            }
-
-            pm.saveAndUpdateForeignKey(items, parent.getDbId());
+            pm.saveAndUpdateForeignKey(items, parent);
         }
 		else
 			pm.save(items);

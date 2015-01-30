@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.IViewModel;
-import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
+import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * A Viewmodel which is capable of encapsulating Lists of models.
@@ -43,8 +42,9 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 	private Constructor<E> vmConstructor;
 	private ICommitItemCallback itemCB;
 
-	public ListViewModel(Class<M> modelClazz, Class<E> vmClazz) 
+	public ListViewModel(MVVM mvvm, Class<M> modelClazz, Class<E> vmClazz)
 	{
+        super(mvvm);
 		this.modelClass = modelClazz;
 		this.viewModelClass = vmClazz;
 		
@@ -52,7 +52,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 			throw new ArgumentException("No parameter of this constructor is allowed to be null");
 		
 		try {
-			this.vmConstructor = viewModelClass.getConstructor(modelClass);
+			this.vmConstructor = viewModelClass.getConstructor(MVVM.class, modelClass);
 		}
 		catch (NoSuchMethodException ex)
 		{
@@ -75,7 +75,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 			while(it.hasNext())
 			{
 				M model = it.next();
-				E vm = vmConstructor.newInstance(model);
+				E vm = vmConstructor.newInstance(getMVVM(), model);
 				registerChildVM(vm);
 				items.add(vm);
 			}
@@ -287,7 +287,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 				itemCB.addItem(vm);
 		}
 		newItems.clear();
-		ViewModelCommitHelper.notifyCommit(this);
+        getMVVM().notifyCommit(this);
 	}
 
 	public void unregisterItemCallback() {

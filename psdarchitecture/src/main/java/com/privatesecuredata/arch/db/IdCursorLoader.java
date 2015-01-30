@@ -38,10 +38,10 @@ public class IdCursorLoader implements ICursorLoader {
 		init(pm, table, foreignKeyColumn, null);
 	}
 	
-	public IdCursorLoader(PersistanceManager pm, Class<?> persistentType, Class<?> referencedType) 
+	public IdCursorLoader(PersistanceManager pm, Class<?> referencingType, Class<?> referencedType)
 	{
 		String table = DbNameHelper.getTableName(referencedType);
-		String foreignKeyColumn = DbNameHelper.getForeignKeyFieldName(persistentType);
+		String foreignKeyColumn = DbNameHelper.getForeignKeyFieldName(referencingType);
 		
 		init(pm, table, foreignKeyColumn, null);
 	}

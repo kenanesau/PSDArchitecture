@@ -1,7 +1,8 @@
 package com.privatesecuredata.arch.mvvm;
 
 import android.view.View;
-import android.widget.TextView;
+
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 /**
  * 

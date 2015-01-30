@@ -4,9 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
-import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
+import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * @author kenan
@@ -20,11 +19,11 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	private Collection<IViewModelChangedListener> changeListeners = new ArrayList<IViewModelChangedListener>();
 	private boolean isDirty = false;
 	private MODEL model;
-	
-	/**
+
+    /**
 	 * Sets the model
 	 */
-	protected void setModel (MODEL m) { this.model = m; }
+	public void setModel (MODEL m) { this.model = m; }
 	
 	@Override
 	public MODEL getModel() throws MVVMException { return this.model; }
@@ -70,7 +69,6 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
         this.notifyModelChanged(this, this);
     }
 	
-	
 	@Override
 	public boolean isDirty() { return this.isDirty; }
 	@Override
@@ -88,7 +86,6 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	{
 		this.commitData();
         this.notifyModelChanged();
-		ViewModelCommitHelper.notifyCommit(this);
 	}
 	
 	/**
@@ -101,4 +98,6 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	public abstract boolean equals(Object o);
 	@Override
 	public abstract String toString();
+
+
 }

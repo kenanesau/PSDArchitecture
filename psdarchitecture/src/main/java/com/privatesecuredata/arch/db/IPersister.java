@@ -18,7 +18,7 @@ import android.database.Cursor;
  * @param <T> Type of the persistable class
  * @see IPersistable
  */
-public interface IPersister<T extends IPersistable<T>> extends ILoadCollection<T> {
+public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 	void init(Object obj) throws DBException;
 	long insert(T persistable) throws DBException;
 	long update(T persistable) throws DBException;

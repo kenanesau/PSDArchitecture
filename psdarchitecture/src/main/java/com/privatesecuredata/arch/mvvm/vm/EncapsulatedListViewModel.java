@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,8 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IViewModel;
+import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * A Viewmodel which is capable of encapsulating a List of models. The List itself is encapsulated 
@@ -25,11 +25,13 @@ import com.privatesecuredata.arch.mvvm.IViewModel;
  * @see SimpleValueVM<>
  * @see IViewModel<>
  */
-public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<EncapsulatedListViewModel.IModelListCallback<M>>
+public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
                                                                     implements IListViewModel<M, VM>
 {
-	
-	/**
+
+    private List<M> changedChildren;
+
+    /**
 	 * Interface which encapsulates the list representation (eg. a DB-Cursor)
 	 * 
 	 * @author kenan
@@ -69,9 +71,9 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
      * @param vmType
      * @param listCB
      */
-	public EncapsulatedListViewModel(Class<?> referencingType, Class<M> referencedType, Class<VM> vmType, IModelListCallback<M> listCB)
+	public EncapsulatedListViewModel(MVVM mvvm, Class<?> referencingType, Class<M> referencedType, Class<VM> vmType, IModelListCallback<M> listCB)
 	{
-		super();
+		super(mvvm);
         this.referencingType = referencingType;
 		this.listCB = listCB;
 		this.referencedType = referencedType;
@@ -81,44 +83,46 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 			throw new ArgumentException("No parameter of this constructor is allowed to be null");
 		
 		try {
-			this.vmConstructor = this.vmType.getConstructor(this.referencedType);
+			this.vmConstructor = this.vmType.getConstructor(MVVM.class, this.referencedType);
 		}
 		catch (NoSuchMethodException ex)
 		{
-			throw new ArgumentException("Unable to find a valid constructor for the model", ex);
+			throw new ArgumentException(String.format("Unable to find a valid constructor for the model of type \"%s\"", this.referencedType.getName()), ex);
 		}
 	}
 	
-	public void init(ComplexViewModel<?> parentVM, Method childModelGetter, Method childModelSetter)
+	public void init(ComplexViewModel<?> parentVM, Field modelField)
 	{
 		dataLoaded = false;
-        setModelAccess(parentVM.getModel(), childModelGetter, childModelSetter);
+        setParentViewModel(parentVM);
+        setModelAccess(parentVM, modelField);
 
         load();
 	}
 
-    public void init(Object parentModel)
+    public void init(ComplexViewModel<?> parentModel)
     {
         this.dataLoaded = false; //since we've go new data...
         setModelGetter(parentModel, null);
         load();
     }
 
-    protected void setModelAccess(Object model, Method getter, Method setter)
+    protected void setModelAccess(ComplexViewModel<?> model, Field modelField)
     {
-        setModelGetter(model, getter);
-        this.modelSetter = setter;
+        setModelGetter(model, modelField);
     }
 
     protected Method getModelSetter() { return this.modelSetter; }
 
+    /**
+     * get the cursor from the database (with CursorToListAdapter)
+     */
     @Override
     public void load()
     {
         if (!dataLoaded) {
             listCB.init(referencingType, getParentModel(), this.referencedType);
             dataLoaded = true;
-            setModel(listCB);
             notifyModelChanged();
         }
     }
@@ -135,12 +139,12 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		return ret;
 	}
 
-    @Override
+    /*@Override
 	public IModelListCallback<M> getModel() throws MVVMException
 	{
         load();
 		return super.getModel();
-	}
+	}*/
 
 	public void add(int location, M object) {
 		newItems.add(location, object);
@@ -217,9 +221,13 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		if (!this.isDirty())
 			return;
 
+        /**
+         * It can happen that we have made changes without getting the cursor before
+         * (eg. add without reading before)
+         */
         load();
-		
-		List<M> changedChildren = new ArrayList<M>();
+
+        changedChildren = new ArrayList<M>();
 		for(IViewModel<M> vm : positionToViewModel.values()) {
 			if(vm.isDirty())
 			{
@@ -230,21 +238,27 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
          * Commit all children
          */
 		super.commitData();
-				
-		for (Iterator<M> iterator = deletedItems.iterator(); iterator.hasNext();) {
-			M item = iterator.next();
-			listCB.remove(item);
-		}
-		deletedItems.clear();
-
-		newItems.addAll(changedChildren);
-        if (newItems.size() > 0) {
-            listCB.save(newItems);
-            newItems.clear();
-        }
-		
-		listCB.commitFinished();
 	}
+
+    public void save()
+    {
+        load();
+        for (Iterator<M> iterator = deletedItems.iterator(); iterator.hasNext();) {
+            M item = iterator.next();
+            listCB.remove(item);
+        }
+        deletedItems.clear();
+
+        if (null!= changedChildren) {
+            newItems.addAll(changedChildren);
+            if (newItems.size() > 0) {
+                listCB.save(newItems);
+                newItems.clear();
+            }
+        }
+
+        listCB.commitFinished();
+    }
 
 	/**
 	 * Return a ViewModel of a Model at the specified position.
@@ -263,7 +277,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 			{
 				M model = get(pos);
 				if (null != model) {
-					vm = vmConstructor.newInstance(model);
+					vm = vmConstructor.newInstance(getMVVM(), model);
 					registerChildVM(vm);
 					positionToViewModel.put(pos, vm);
 				}
@@ -278,5 +292,4 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
 		return vm;
 	}
-
 }

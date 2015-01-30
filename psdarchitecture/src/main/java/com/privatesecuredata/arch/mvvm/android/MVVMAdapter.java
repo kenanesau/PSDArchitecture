@@ -5,7 +5,7 @@ import java.util.Hashtable;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.IDataBinding;
 import com.privatesecuredata.arch.mvvm.IGetModelCommand;
-import com.privatesecuredata.arch.mvvm.IViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 
 import android.view.View;

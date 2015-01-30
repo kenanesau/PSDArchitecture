@@ -3,6 +3,7 @@ package com.privatesecuredata.arch.db;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -436,6 +437,15 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
                 Collection<?> others = (Collection<?>) rel.getField().get(persistable);
                 if (null == others)
                     continue;
+                if(Proxy.isProxyClass(others.getClass()))
+                {
+                    LazyCollectionInvocationHandler handler = (LazyCollectionInvocationHandler)Proxy.getInvocationHandler(others);
+                    /**
+                     * If there was no change -> skip it
+                     */
+                    if (!handler.isLoaded())
+                        continue;
+                }
 
                 for(Object other : others)
                 {
@@ -507,6 +517,8 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		try {
 			obj = getConstructor().newInstance();
 			csr.moveToPosition(pos);
+            getPM().assignDbId(obj, csr.getLong(0));
+
             //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fieds
 			for (int colIndex=1; colIndex< getTableFieldsInternal().size() + 1; colIndex++)
 			{
@@ -575,8 +587,6 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 					throw new DBException("Unknow data-type");
 				}
 			}
-
-            getPM().assignDbId(obj, csr.getLong(0));
 
         } catch (Exception e) {
 			if (field != null) {

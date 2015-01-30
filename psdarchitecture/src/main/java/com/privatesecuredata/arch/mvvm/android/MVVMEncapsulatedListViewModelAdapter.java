@@ -14,7 +14,7 @@ import com.privatesecuredata.arch.mvvm.IGetModelCommand;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
-import com.privatesecuredata.arch.mvvm.IViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.TransientViewToModelAdapter;
 import com.privatesecuredata.arch.mvvm.ViewHolder;

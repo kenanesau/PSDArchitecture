@@ -9,7 +9,6 @@ import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.CommitException;
 import com.privatesecuredata.arch.mvvm.CommitCommand;
 import com.privatesecuredata.arch.mvvm.ICommitCommand;
-import com.privatesecuredata.arch.mvvm.IViewModel;
 
 public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	private T data;

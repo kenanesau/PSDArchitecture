@@ -16,7 +16,8 @@ import android.widget.ListView;
 
 import com.privatesecuredata.arch.mvvm.IDataBinding;
 import com.privatesecuredata.arch.mvvm.IGetModelCommand;
-import com.privatesecuredata.arch.mvvm.IViewModel;
+import com.privatesecuredata.arch.mvvm.MVVM;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
@@ -58,10 +59,10 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 		this.ctx = ctx;
 	}
 	
-	public MVVMFastListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, List<M> lst)
+	public MVVMFastListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, MVVM mvvm, List<M> lst)
 	{
 		this(modelClass, vmClass, ctx);		
-		setData(lst);
+		setData(mvvm, lst);
 	}
 	
 	public MVVMFastListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, FastListViewModel<M, COMPLEXVM> lstVMs)
@@ -85,9 +86,9 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 		this.notifyDataSetChanged();
 	}
 	
-	protected void setData(List<M> lst)
+	protected void setData(MVVM mvvm, List<M> lst)
 	{
-		FastListViewModel<M, COMPLEXVM> lstVM = new FastListViewModel<M, COMPLEXVM>(modelType, viewModelType);
+		FastListViewModel<M, COMPLEXVM> lstVM = new FastListViewModel<M, COMPLEXVM>(mvvm, modelType, viewModelType);
 		lstVM.init(lst);
 		setData(lstVM);
 	}

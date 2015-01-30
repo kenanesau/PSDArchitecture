@@ -3,7 +3,6 @@ package com.privatesecuredata.arch.db;
 import java.util.HashMap;
 import android.content.Context;
 import com.privatesecuredata.arch.exceptions.DBException;
-import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
 
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;

@@ -1,4 +1,7 @@
-package com.privatesecuredata.arch.mvvm;
+package com.privatesecuredata.arch.mvvm.vm;
+
+import com.privatesecuredata.arch.exceptions.MVVMException;
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
 /**
  * Interface, implemented by all ViewModels
@@ -12,7 +15,7 @@ public interface IViewModel<MODEL> extends IViewModelChangedListener {
 	/**   
 	 * @return Returns the model
 	 */
-	public abstract MODEL getModel();
+	public abstract MODEL getModel() throws MVVMException;
 
 	public abstract void addViewModelListener(IViewModelChangedListener listener);
 	public abstract void delViewModelListener(IViewModelChangedListener listener);

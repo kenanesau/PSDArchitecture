@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -12,8 +13,7 @@ import java.util.ListIterator;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IViewModel;
-import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
+import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * A Viewmodel which is capable of encapsulating Lists of models.
@@ -29,7 +29,7 @@ import com.privatesecuredata.arch.mvvm.ViewModelCommitHelper;
  * @param <VM> Type of ViewModel encapsulating a single Model-object instance
  * @see ViewModel
  * @see com.privatesecuredata.arch.mvvm.vm.SimpleValueVM<>
- * @see com.privatesecuredata.arch.mvvm.IViewModel<>
+ * @see IViewModel <>
  */
 public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>> implements List<M>, IListViewModel<M, VM>
 {
@@ -49,19 +49,19 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	private Constructor<VM> vmConstructor;
 	private ICommitItemCallback<M> itemCB;
 	private boolean initialized = false;
-	
-	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
-	private IViewModel<?> parentVM;
 
-	public FastListViewModel(IViewModel<?> parentVM, Class<M> modelClazz, Class<VM> vmClazz)
+	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
+	private ComplexViewModel<?> parentVM;
+
+	public FastListViewModel(MVVM mvvm, ComplexViewModel<?> parentVM, Class<M> modelClazz, Class<VM> vmClazz)
 	{
-		this(modelClazz, vmClazz);
+        this(mvvm, modelClazz, vmClazz);
 		this.parentVM = parentVM;
 	}
 	
-	public FastListViewModel(Class<M> modelClazz, Class<VM> vmClazz)
+	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class<VM> vmClazz)
 	{
-		super();
+        super(mvvm);
 		this.modelClass = modelClazz;
 		this.viewModelClass = vmClazz;
 		
@@ -69,17 +69,17 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 			throw new ArgumentException("No parameter of this constructor is allowed to be null");
 		
 		try {
-			this.vmConstructor = viewModelClass.getConstructor(modelClass);
+			this.vmConstructor = viewModelClass.getConstructor(MVVM.class, modelClass);
 		}
 		catch (NoSuchMethodException ex)
 		{
-			throw new ArgumentException("Unable to find a valid constructor for the model", ex);
+			throw new ArgumentException(String.format("Unable to find a valid constructor for the model of type \"%s\"", viewModelClass.getName()), ex);
 		}
 	}
 
-    public void init(ComplexViewModel<?> parentVM, Method childModelGetter, Method setter)
+    public void init(ComplexViewModel<?> parentVM, Field modelField)
     {
-        setModelGetter(parentVM.getModel(), childModelGetter);
+        setModelGetter(parentVM, modelField);
         init(getModel());
     }
 
@@ -314,8 +314,8 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 				itemCB.addItem(parentVM, item);
 		}
 		newItems.clear();
-		
-		ViewModelCommitHelper.notifyCommit(this);
+
+        MVVM.getMVVM(this).notifyCommit(this);
 	}
 
 	public void unregisterItemCallback() {
@@ -351,7 +351,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 			{
 				M model = get(pos);
 				if (null != model) {
-					vm = vmConstructor.newInstance(model);
+					vm = vmConstructor.newInstance(getMVVM(), model);
 					registerChildVM(vm);
 					positionToViewModel.put(pos, vm);
 				}
@@ -367,7 +367,12 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		return vm;
 	}
 
-	private ArrayList<M> getItems() {
+    @Override
+    public ComplexViewModel<?> getParentViewModel() {
+        return this.parentVM;
+    }
+
+    private ArrayList<M> getItems() {
 		if (!initialized)
 			getModel();
 		
