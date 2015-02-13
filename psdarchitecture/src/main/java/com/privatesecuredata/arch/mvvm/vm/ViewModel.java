@@ -84,8 +84,10 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	@Override
 	public void commit() 
 	{
-		this.commitData();
-        this.notifyModelChanged();
+        if (this.isDirty()) {
+            this.commitData();
+            this.notifyModelChanged();
+        }
 	}
 	
 	/**

@@ -89,10 +89,15 @@ public class CursorToListAdapter<M extends IPersistable<M>> implements IModelLis
 	public void save(Collection<M> items) {
 
 		/**
-		 * We don't need to set the persistable items to dirty() since
-		 * this was already done by the DBViewModelCommitListeners which
-		 * where triggered during commit() of the parent ComplexViewModel
-		 */
+		 * We need to set the persistable list-items to dirty().
+         **/
+        for(IPersistable item : items)
+        {
+            DbId<?> dbId = item.getDbId();
+            if (null != dbId)
+                dbId.setDirty();
+        }
+
 		if (null != parent) {
             pm.saveAndUpdateForeignKey(items, parent);
         }

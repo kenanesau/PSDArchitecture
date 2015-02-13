@@ -28,9 +28,6 @@ import com.privatesecuredata.arch.mvvm.MVVM;
 public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
                                                                     implements IListViewModel<M, VM>
 {
-
-    private List<M> changedChildren;
-
     /**
 	 * Interface which encapsulates the list representation (eg. a DB-Cursor)
 	 * 
@@ -113,6 +110,10 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     }
 
     protected Method getModelSetter() { return this.modelSetter; }
+
+    public IModelListCallback<M> getModelListCallback() {
+        return this.listCB;
+    }
 
     /**
      * get the cursor from the database (with CursorToListAdapter)
@@ -215,8 +216,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	public boolean isDirty() {
 		return ( (newItems.size()>0) || (deletedItems.size()>0) || super.isDirty());
 	};
-	
-	@Override
+
+    @Override
 	public void commitData() {
 		if (!this.isDirty())
 			return;
@@ -227,17 +228,49 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
          */
         load();
 
-        changedChildren = new ArrayList<M>();
+        /**
+         * first commit() ist called -- here we have to save all changed child-VMs
+         * later the DBViewModelCommitListener calls save() on this List-VM -- then those
+         * VMs saved in the changedChildren-list are also saved to the DB...
+         */
 		for(IViewModel<M> vm : positionToViewModel.values()) {
 			if(vm.isDirty())
 			{
-				changedChildren.add(vm.getModel());
+                newItems.add(vm.getModel());
 			}
 		}
+
         /**
          * Commit all children
          */
-		super.commitData();
+        List<IListViewModel> listVMs = new ArrayList<IListViewModel>();
+        List<IViewModel<?>> children = getChildrenOrdered();
+        if (null != children) {
+            for (IViewModel<?> vm : children) {
+                if (vm instanceof IListViewModel) {
+                    listVMs.add((IListViewModel) vm);
+                    continue;
+                }
+
+                if (vm instanceof ComplexViewModel) {
+                    // Disable global notify since the children of a list are saved to DB when the
+                    // whole list is saved
+                    ((ComplexViewModel) vm).disableGlobalNotify();
+                    vm.commit();
+                    ((ComplexViewModel) vm).enableGlobalNotify();
+                }
+            }
+        }
+
+        /**
+         * Commit the lists AFTER everything else since there could be a foreign key relation
+         * in the DB -> Ensure that the rest of the parent-model is already clean.
+         */
+        for(IListViewModel listVM : listVMs) {
+            listVM.commit();
+        }
+
+        this.setClean();
 	}
 
     public void save()
@@ -249,12 +282,9 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         }
         deletedItems.clear();
 
-        if (null!= changedChildren) {
-            newItems.addAll(changedChildren);
-            if (newItems.size() > 0) {
-                listCB.save(newItems);
-                newItems.clear();
-            }
+        if (newItems.size() > 0) {
+            listCB.save(newItems);
+            newItems.clear();
         }
 
         listCB.commitFinished();

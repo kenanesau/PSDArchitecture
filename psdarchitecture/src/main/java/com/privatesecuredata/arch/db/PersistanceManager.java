@@ -347,8 +347,11 @@ public class PersistanceManager {
         try {
             db.beginTransaction();
             DbId<?> foreignDbId = foreignKey.getDbId();
-            if ( (null == foreignDbId) || (foreignDbId.getDirty()) )
+            if ( (null == foreignDbId) || (foreignDbId.getDirty()) ) {
                 __saveNoTransaction(foreignKey);
+                foreignDbId = foreignKey.getDbId();
+            }
+
             type = __saveAndUpdateForeignKeyNoTransaction(persistables, foreignDbId);
 
             db.setTransactionSuccessful();

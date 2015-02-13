@@ -36,6 +36,7 @@ public class PersistanceManagerLocator {
 		PersistanceManager pm = pmMap.get(dbDesc);
 		if (!pm.isInitialized())
 			pm.initialize(ctx, dbDesc);
+
 		return pm;
 	}
 	

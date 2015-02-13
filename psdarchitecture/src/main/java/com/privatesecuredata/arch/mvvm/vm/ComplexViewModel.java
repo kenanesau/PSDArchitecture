@@ -34,7 +34,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	private Field modelField = null;
 	private ComplexViewModel<?> parentViewModel = null;
     private List<IListViewModel> listVMs = new ArrayList<IListViewModel>();
-    private HashMap<String, IViewModel<?>> childVMs;
+    private HashMap<String, IViewModel<?>> nameViewModelMapping;
     private MVVM mvvm;
     private boolean globalNotify = true;
 
@@ -60,7 +60,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         this(mvvm);
 
         //setModelAndRegisterChildren needs this.mvvm set...
-        this.childVMs = setModelAndRegisterChildren(model);
+        this.nameViewModelMapping = setModelAndRegisterChildren(model);
     }
 /*
     public ComplexViewModel(ListViewModelFactory fac)
@@ -102,9 +102,9 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         return this.mvvm;
     }
 
-    protected HashMap<String, IViewModel<?>> getChildViewModels()
+    protected HashMap<String, IViewModel<?>> getNameViewModelMapping()
     {
-        return this.childVMs;
+        return this.nameViewModelMapping;
     }
 
 	/**
@@ -175,8 +175,11 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		this.childrenOrdered.add(vm);
         if (vm instanceof ComplexViewModel)
         {
-            ((ComplexViewModel)vm).vmFactory = this.vmFactory;
-            ((ComplexViewModel)vm).setHandle(getHandle());
+            ComplexViewModel complexVM=(ComplexViewModel)vm;
+
+            complexVM.vmFactory = this.vmFactory;
+            complexVM.setHandle(getHandle());
+            complexVM.setParentViewModel(this);
         }
 	}
 	
@@ -186,7 +189,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		this.childrenOrdered.remove(vm);
 	}
 	
-	private List<IViewModel<?>> getChildrenOrdered()
+	protected List<IViewModel<?>> getChildrenOrdered()
 	{
 		return this.childrenOrdered;			
 	}
@@ -388,11 +391,10 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
     @Override
     public void commit() {
+        boolean wasDirty = this.isDirty();
         super.commit();
-        if (isGlobalNotifyEnabled())
-            getMVVM().notifyCommit(this);
-        else
-            enableGlobalNotify();
+        if ( (wasDirty) && (isGlobalNotifyEnabled()) )
+                getMVVM().notifyCommit(this);
     }
 
 	/**
