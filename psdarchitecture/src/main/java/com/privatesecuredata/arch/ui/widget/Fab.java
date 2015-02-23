@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Outline;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -23,6 +24,7 @@ public class Fab extends FrameLayout
 	private ImageView _defaultImageView;
 	private Animator _defaultAnimator;
 	private int _color;
+    private boolean _disableOutline;
 	
 	public Fab(Context context) {
 		this(context, null, 0, 0);
@@ -47,18 +49,20 @@ public class Fab extends FrameLayout
 		
 		Resources res = context.getResources();
 
-		_color = getResources().getColor(R.color.accent);
-		this.setBackgroundColor(_color);
-		
-		if (attrs!=null) {
+		_color = getResources().getColor(R.color.accent_light);
+
+		if (attrs != null) {
 			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.Fab, 0, 0);
 			
 			int defaultDrawableId = a.getResourceId(R.styleable.Fab_icon_default, R.drawable.ic_action_add_small);
 			_defaultDrawable = res.getDrawable(defaultDrawableId);
 			getDefaultImageView().setImageDrawable(_defaultDrawable);
+            getDefaultImageView().setColorFilter(_color, PorterDuff.Mode.DST);
 			
 			int defaultAnimationId = a.getResourceId(R.styleable.Fab_default_animation, R.animator.fab_animation_default);
 			_defaultAnimator = (Animator) AnimatorInflater.loadAnimator(context, defaultAnimationId);
+
+            _disableOutline = a.getBoolean(R.styleable.Fab_disable_outline, false);
 
 			a.recycle();
 		}
@@ -72,16 +76,22 @@ public class Fab extends FrameLayout
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        
-        setOutlineProvider(new ViewOutlineProvider() {
-			
-			@Override
-			public void getOutline(View view, Outline outline) {
-		        outline.setOval(0, 0, view.getWidth(), view.getHeight());
-			}
-		});
-        
-        setClipToOutline(true);
+
+        if (!_disableOutline) {
+            setOutlineProvider(new ViewOutlineProvider() {
+
+                @Override
+                public void getOutline(View view, Outline outline) {
+                    outline.setOval(0, 0, view.getWidth(), view.getHeight());
+                }
+            });
+
+            setClipToOutline(true);
+        }
+    }
+
+    protected void onSizeChangedNoOutline(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
     }
     
     protected void doAnimation()

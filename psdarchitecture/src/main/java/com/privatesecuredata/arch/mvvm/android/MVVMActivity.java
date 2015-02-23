@@ -1,8 +1,8 @@
 package com.privatesecuredata.arch.mvvm.android;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 
 import com.privatesecuredata.arch.db.IDbDescription;
 import com.privatesecuredata.arch.db.PersistanceManager;
@@ -10,7 +10,7 @@ import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.DataHive;
 
-public class MVVMActivity extends Activity {
+public class MVVMActivity extends FragmentActivity {
 	public static final String TAG_PERSISTANCE_MANAGER = "pm";
 	private String pmUUID;
 	

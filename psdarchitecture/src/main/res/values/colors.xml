@@ -10,4 +10,5 @@
     <color name="accent">#64dd17</color>
     <color name="accent_light">#ffff00</color>
     <color name="background_light">#FFFFFF</color>
+    <color name="black">#000000</color>
 </resources>
