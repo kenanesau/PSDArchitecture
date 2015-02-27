@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.db;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
@@ -317,24 +318,28 @@ public class PersistanceManager {
 		}
 	}
 
-    private <T extends IPersistable> Class<?> __saveAndUpdateForeignKeyNoTransaction(Collection<T> persistables, DbId<?> foreignKey) throws Exception
+    private <T extends IPersistable> Class<T> __saveAndUpdateForeignKeyNoTransaction(IPersister<T> persister, Collection<T> persistables, DbId<?> foreignKey) throws Exception
     {
-        Class<?> type = null;
+        Class<T> type = null;
         try {
 
             if (!persistables.isEmpty()) {
                 T persistable = persistables.iterator().next();
-                type = persistable.getClass();
+                type = (Class<T>)persistable.getClass();
             }
 
             for (T persistable : persistables) {
 
                 DbId<?> dbId = persistable.getDbId();
                 if ((null == dbId) || (dbId.getDirty())) {
-                    save(persistable);
-                    updateForeignKey(persistable, foreignKey);
+                    __saveNoTransaction(persister, persistable);
+                    __updateForeignKeyNoTransaction(persister, persistable, foreignKey);
                 }
             }
+
+            /**
+             * The size of the collection-proxy is updated from the Cursors-Listener in the DBListeViewModelFactory...
+             */
         }
         finally {
             return type;
@@ -343,7 +348,7 @@ public class PersistanceManager {
 
     public <T extends IPersistable> void saveAndUpdateForeignKey(Collection<T> persistables, IPersistable foreignKey) throws DBException
     {
-        Class<?> type=null;
+        Class<T> type=null;
         try {
             db.beginTransaction();
             DbId<?> foreignDbId = foreignKey.getDbId();
@@ -352,7 +357,13 @@ public class PersistanceManager {
                 foreignDbId = foreignKey.getDbId();
             }
 
-            type = __saveAndUpdateForeignKeyNoTransaction(persistables, foreignDbId);
+            if (!persistables.isEmpty()) {
+                T persistable = persistables.iterator().next();
+                type = (Class<T>)persistable.getClass();
+            }
+            IPersister<T> persister = getPersister(type);
+
+            type = __saveAndUpdateForeignKeyNoTransaction(persister, persistables, foreignDbId);
 
             db.setTransactionSuccessful();
         }
@@ -368,10 +379,16 @@ public class PersistanceManager {
 	
 	public <T extends IPersistable> void saveAndUpdateForeignKey(Collection<T> persistables, DbId<?> foreignKey) throws DBException
 	{
-		Class<?> type=null;
+		Class<T> type=null;
 		try {
 			db.beginTransaction();
-            type = __saveAndUpdateForeignKeyNoTransaction(persistables, foreignKey);
+            if (!persistables.isEmpty()) {
+                T persistable = persistables.iterator().next();
+                type = (Class<T>)persistable.getClass();
+            }
+            IPersister<T> persister = getPersister(type);
+
+            type = __saveAndUpdateForeignKeyNoTransaction(persister, persistables, foreignKey);
 
 			db.setTransactionSuccessful();
 		}
@@ -387,13 +404,18 @@ public class PersistanceManager {
 
     private <T extends IPersistable> void __saveNoTransaction(T persistable) throws DBException
     {
+        Class<T> type = (Class<T>)persistable.getClass();
+        IPersister<T> persister = getPersister(type);
+        __saveNoTransaction(persister, persistable);
+    }
+
+    private <T extends IPersistable> void __saveNoTransaction(IPersister<T> persister, T persistable) throws DBException
+    {
 
         DbId<?> dbId = persistable.getDbId();
         if (null == dbId)
         {
             try {
-                Class classObj = (Class) persistable.getClass();
-                IPersister persister = getPersister(classObj);
                 long id = persister.insert(persistable);
                 if (id >= 0) {
                     assignDbId(persistable, id);
@@ -415,9 +437,6 @@ public class PersistanceManager {
                 return;
 
             try {
-                Class<T> classObj = (Class<T>) persistable.getClass();
-                IPersister<T> persister = getPersister(classObj);
-
                 long rowsAffected = persister.update(persistable);
                 if (rowsAffected != 1)
                     throw new DBException(String.format("Update of \"%s\" was not successful", persistable.getClass().getName()));
@@ -438,7 +457,10 @@ public class PersistanceManager {
     {
         try {
             db.beginTransaction();
-            __saveNoTransaction(persistable);
+            Class classObj = (Class) persistable.getClass();
+            IPersister persister = getPersister(classObj);
+
+            __saveNoTransaction(persister, persistable);
             db.setTransactionSuccessful();
         }
         finally
@@ -452,7 +474,10 @@ public class PersistanceManager {
         if ((null == dbId) || (dbId.getDirty())) {
             db.beginTransaction();
             try {
-                __saveNoTransaction(persistable);
+                Class classObj = (Class) persistable.getClass();
+                IPersister<T> persister = getPersister(classObj);
+
+                __saveNoTransaction(persister, persistable);
                 __updateForeignKeyNoTransaction(persistable, foreignKey);
                 db.setTransactionSuccessful();
             } catch (Exception ex) {
@@ -612,12 +637,17 @@ public class PersistanceManager {
 		return ret;
 	}
 
+    private <T extends IPersistable<T>> void __updateForeignKeyNoTransaction(IPersister<T> persister, T persistable, DbId<?> foreignKey) throws DBException
+    {
+        persister.updateForeignKey(persistable, foreignKey);
+    }
+
     private <T extends IPersistable<T>> void __updateForeignKeyNoTransaction(T persistable, DbId<?> foreignKey) throws DBException
     {
         Class<T> classObj = (Class<T>) persistable.getClass();
         IPersister<T> persister = getPersister(classObj);
 
-        persister.updateForeignKey(persistable, foreignKey);
+        __updateForeignKeyNoTransaction(persister, persistable, foreignKey);
     }
 
 	public <T extends IPersistable<T>> void updateForeignKey(T persistable, DbId<?> foreignKey) throws DBException
@@ -709,6 +739,20 @@ public class PersistanceManager {
         mvvm.setListViewModelFactory(factory);
         mvvm.addGlobalCommitListener(new DBViewModelCommitListener());
         return mvvm;
+    }
+
+    /**
+     * Update the size of the collection which is saved in each "parent" object.
+     *
+     * @param persistable The parent which contains the list
+     * @param field       The field within the parent which holds the list
+     * @param childItems  The new / updated list of child items
+     */
+    public void updateCollectionProxySize(IPersistable<?> persistable, Field field, Collection childItems) {
+        Class type = persistable.getClass();
+        IPersister<?> persister = getPersister(type);
+
+        persister.updateCollectionProxySize(persistable, field, childItems);
     }
 }
  

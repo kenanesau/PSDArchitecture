@@ -1,7 +1,9 @@
 package com.privatesecuredata.arch.db;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
@@ -16,17 +18,24 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	
 	private PersistanceManager pm;
 	private SQLiteStatement delete;
+    private String tableName;
 
-	public abstract String getTableName();
+    /**
+     * Update-Statements for the item counts for the foreign key relations
+     */
+    private Hashtable<Field, SQLiteStatement> _foreignListCountUpdateStatements;
+
+
 	protected String getSelectAllSQLString() { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
     protected String getDelSqlString() { return String.format(DELSQLSTATEMENT, getTableName()); }
     protected String getSelectSingleSqlString() { return String.format(SELECTSINGLESQLSTATEMENT, getTableName()); }
 
 	@Override
 	public void init(Object obj) {
-		setPM((PersistanceManager)obj);
+        setPM((PersistanceManager) obj);
 		String delStatement = String.format(getDelSqlString(), getTableName());
 		this.delete = getDb().compileStatement(delStatement);
+        this._foreignListCountUpdateStatements = new Hashtable<Field, SQLiteStatement>();
 	}
 	@Override
 	public abstract long insert(T persistable) throws DBException;
@@ -36,6 +45,15 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	public abstract void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;
 	@Override
 	public abstract T rowToObject(int pos, Cursor csr) throws DBException;
+
+    protected void addUpdateProxyStatement(Field field, SQLiteStatement update)
+    {
+        _foreignListCountUpdateStatements.put(field, update);
+    }
+    protected SQLiteStatement getUpdateProxyStatement(Field field)
+    {
+        return _foreignListCountUpdateStatements.get(field);
+    }
 
 	
 	protected SQLiteDatabase getDb() {
@@ -111,4 +129,42 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
                     ((persistable==null) ? "null" : persistable.getClass().getName()),
                     _id));
 	}
+
+    @Override
+    public long updateCollectionProxySize(IPersistable persistable, Field field, Collection coll) throws DBException {
+        SQLiteStatement update = getUpdateProxyStatement(field);
+        /** Get table field name from parameters (childType + collection or a Field???) */
+        update.bindLong(1, coll.size());
+        update.bindLong(2, persistable.getDbId().getId());
+        int rowsAffected = update.executeUpdateDelete();
+
+        return rowsAffected;
+    }
+
+    protected void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+    protected String getTableName() {
+        return this.tableName;
+    }
+
+    /**
+     * Creates the SQL-Statement for updating the list-count for a list of childs in the database
+     *
+     * @return SQL-Statement (update)
+     */
+    protected SQLiteStatement createUpdateListCountStatement(String tableName, SqlDataField field)
+    {
+        StringBuilder sql = new StringBuilder("UPDATE ")
+                .append(tableName)
+                .append(" SET ");
+
+        sql.append(field.getName());
+        sql.append("=? ");
+        sql.append("WHERE _id=?");
+
+        SQLiteStatement updateStatement = getDb().compileStatement(sql.toString());
+
+        return updateStatement;
+    }
 }

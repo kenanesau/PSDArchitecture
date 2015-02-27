@@ -25,15 +25,15 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	SQLiteStatement insert;
 	SQLiteStatement update;
 	
-	private String _tableName;
 	private List<SqlDataField> _tableFields = new ArrayList<SqlDataField>();
+    private List<SqlDataField> _proxyCntFields;
 	
 	/**
 	 * ID-Fields in the table of the current persister which point to rows in other tables
 	 * (Counter-part of an OneToMany- or an OneToOne-Relation of another Persister 
 	 */
 	private Hashtable<Class<?>, SqlForeignKeyField> _foreignKeyFields;
-	
+
 	/**
 	 * List of Fields to be filled in an persistable and the corresponding types 
 	 */
@@ -49,14 +49,14 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 
     public AutomaticPersister(PersistanceManager pm, Class<T> persistentType) throws Exception
 	{
-		_tableName = DbNameHelper.getTableName(persistentType);
+		setTableName(DbNameHelper.getTableName(persistentType));
 		setPersistentType(persistentType);
 		Field[] fields = persistentType.getDeclaredFields();
 		setConstructor(persistentType.getConstructor((Class<?>[])null));
 		_lstThisToOneRelations = new ArrayList<ObjectRelation>();
 		_lstOneToManyRelations = new ArrayList<ObjectRelation>();
 		_foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
-		
+
 		setPM(pm);
 		Annotation[] annos = persistentType.getAnnotations();
 		for(Annotation anno : annos)
@@ -66,7 +66,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 				DbForeignKeyField dbAnno = (DbForeignKeyField) anno;
 				Class<?> foreignKeyType = dbAnno.foreignType();
 				
-				SqlForeignKeyField sqlForeignKeyField = new SqlForeignKeyField(_tableName, foreignKeyType); 
+				SqlForeignKeyField sqlForeignKeyField = new SqlForeignKeyField(getTableName(), foreignKeyType);
 				if (dbAnno.isMandatory())
 					sqlForeignKeyField.setMandatory();
 				Class<?> key = foreignKeyType; //sqlForeignKeyField.createHashtableKey();
@@ -98,16 +98,28 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			
 			// At the moment DbThisToMany-Annotations are always saved as a foreign-key in the table of the referenced object
 			DbThisToMany oneToManyAnno = field.getAnnotation(DbThisToMany.class);
+
 			if (null != oneToManyAnno) {
 				field.setAccessible(true);
-				getOneToManyRelations().add(new ObjectRelation(field, getPersistentType()));
+                ObjectRelation objRel = new ObjectRelation(field, getPersistentType());
+				getOneToManyRelations().add(objRel);
 				
 				Class<?> referencedType = oneToManyAnno.referencedType();
 				ICursorLoader loader = new IdCursorLoader(getPM(), persistentType, referencedType);
 				getPM().registerCursorLoader(persistentType, referencedType, loader);
 				
 				// Add table-field for the collection-proxy-size
-				addSqlField(new SqlDataField(field, referencedType));
+                SqlDataField collectionProxySizeFld = new SqlDataField(field, referencedType);
+				addSqlField(collectionProxySizeFld);
+
+                if (null == _proxyCntFields)
+                    _proxyCntFields = new ArrayList<SqlDataField>();
+
+                /**
+                 * save the SQLData-field to create an update-statement for the proxy-fields
+                 * later during init().
+                 */
+                _proxyCntFields.add(collectionProxySizeFld);
 			}
 		}
 
@@ -171,11 +183,6 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
         return _lstOneToManyRelations;
     }
 	
-	@Override
-	public String getTableName() {
-		return _tableName;
-	}
-
 	/**
 	 * Creates the SQL-Statement for inserting a new row to the database
 	 * 
@@ -238,8 +245,8 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		
 		return sql.toString();
 	}
-	
-	/**
+
+    /**
 	 * Creates the SQL-Statement for creating the database
 	 * 
 	 * @return SQL-Statement (create)
@@ -287,8 +294,8 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 
 		return sql.toString();
 	}
-	
-	@Override
+
+    @Override
 	public void init(Object obj) throws DBException {
 		super.init(obj);
 		setPM((PersistanceManager)obj);
@@ -304,7 +311,18 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
                 fld.compileUpdateStatement(getDb());
             }
         }
-	}
+
+        if (null != _proxyCntFields) {
+            for (SqlDataField collectionProxySizeFld : _proxyCntFields) {
+                // Create an update-Statement for the collection-proxy-size
+                SQLiteStatement updateListCountStatement = createUpdateListCountStatement(getTableName(), collectionProxySizeFld);
+                addUpdateProxyStatement(collectionProxySizeFld.getField(), updateListCountStatement);
+            }
+
+            _proxyCntFields.clear();
+            _proxyCntFields = null;
+        }
+    }
 	
 	public void bind(SQLiteStatement sql, int idx, SqlDataField sqlField, T persistable) throws IllegalAccessException, IllegalArgumentException
 	{

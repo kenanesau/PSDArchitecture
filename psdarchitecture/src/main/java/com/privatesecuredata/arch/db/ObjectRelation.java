@@ -6,7 +6,7 @@ public class ObjectRelation {
 	private Field _fld;
 	private IPersister _persister;
     private Class<?> _referencedType;
-	
+
 	public ObjectRelation(Field fld, Class<?> referencedType)
 	{
 		_fld = fld;

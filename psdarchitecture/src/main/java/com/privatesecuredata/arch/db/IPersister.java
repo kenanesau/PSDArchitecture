@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.db;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 
 import com.privatesecuredata.arch.exceptions.DBException;
@@ -28,4 +29,5 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 	Collection<T> loadAll() throws DBException;
 	void delete(T persistable) throws DBException;
 	void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;
+    long updateCollectionProxySize(IPersistable persistable, Field field, Collection coll) throws DBException;
 }
