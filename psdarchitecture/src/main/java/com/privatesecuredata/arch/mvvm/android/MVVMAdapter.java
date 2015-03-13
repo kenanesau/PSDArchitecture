@@ -4,7 +4,7 @@ import java.util.Hashtable;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.IDataBinding;
-import com.privatesecuredata.arch.mvvm.IGetModelCommand;
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 
@@ -26,7 +26,7 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBindin
 	}
 	
 	
-	public <T> void addModelMapping(Class<T> type, int viewId, IGetModelCommand<T> getModelCmd)
+	public <T> void addModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
 	{
 		ViewToModelAdapter<T> adapter = (ViewToModelAdapter<T>)view2ModelAdapters.get(viewId);
 		if (null==adapter) {

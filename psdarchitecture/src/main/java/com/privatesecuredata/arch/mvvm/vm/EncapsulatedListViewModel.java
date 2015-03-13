@@ -87,8 +87,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 			throw new ArgumentException(String.format("Unable to find a valid constructor for the model of type \"%s\"", this.referencedType.getName()), ex);
 		}
 	}
-	
-	public void init(ComplexViewModel<?> parentVM, Field modelField)
+
+    public void init(ComplexViewModel<?> parentVM, Field modelField)
 	{
 		dataLoaded = false;
         setParentViewModel(parentVM);

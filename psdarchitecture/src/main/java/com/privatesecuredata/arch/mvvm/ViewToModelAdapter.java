@@ -1,6 +1,8 @@
 package com.privatesecuredata.arch.mvvm;
 
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
+import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 import android.text.Editable;
@@ -23,10 +25,11 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	private OnFocusChangeListener focusChangeListener;
 	private OnAttachStateChangeListener attachStateChangedListener;
 	private View.OnClickListener chkButtonListener;
+    private IWidgetValueReceiver widgetValueReceiver;
 	private SimpleValueVM<T> vm;
 	private boolean vmUpdatesView = false;
 	
-	public ViewToModelAdapter(Class<T> _dataType, IGetModelCommand<T> _getModelCmd) 
+	public ViewToModelAdapter(Class<T> _dataType, IGetVMCommand<T> _getModelCmd)
 	{
 		super(_dataType);
 		setGetModelCommand(_getModelCmd);
@@ -66,7 +69,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 					
 					setWriteViewCommand((IWriteViewCommand<T>) writeCmpBtnCmd);
 				} 
-				else 
+				else
 				{
 					IWriteViewCommand<T> writeCmd = new IWriteViewCommand<T>() {
 							@Override
@@ -76,7 +79,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 							}
 						};
 				
-						setWriteViewCommand(writeCmd);
+					setWriteViewCommand(writeCmd);
 				}
 			}
 			
@@ -105,7 +108,48 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 					setReadViewCommand(readViewCmd);
 				}
 			}
-		}
+		} else {
+            if (needsWriteViewCommand()) {
+
+                if (view instanceof IWidgetValueAccessor) {
+                    IWriteViewCommand<Object> writeCmd = new IWriteViewCommand<Object>() {
+                        @Override
+                        public void set(View view, Object val) {
+                            if (!isVMUpdatesView() && (null != val))
+                                ((IWidgetValueAccessor) view).setValue(val);
+                        }
+                    };
+
+                    setWriteViewCommand((IWriteViewCommand<T>) writeCmd);
+                }
+            }
+
+            if (needsReadViewCommand())
+            {
+                if (view instanceof IWidgetValueAccessor)
+                {
+                    IReadViewCommand<Object> readCmd = new IReadViewCommand<Object>() {
+                        @Override
+                        public Object get(View view) {
+                            return ((IWidgetValueAccessor)view).getValue();
+                        }
+                    };
+
+                    setReadViewCommand((IReadViewCommand<T>) readCmd);
+
+                    IWidgetValueAccessor accessor = (IWidgetValueAccessor)view;
+                    IWidgetValueReceiver widgetValueReceiver =
+                            new IWidgetValueReceiver() {
+                                @Override
+                                public void notifyWidgetChanged(IWidgetValueAccessor accessor) {
+                                    vm.set(ViewToModelAdapter.this.getReadViewCommand().get(ViewToModelAdapter.this.view));
+                                }
+                            };
+
+                    accessor.registerValueChanged(widgetValueReceiver);
+                }
+            }
+        }
 		
 		txtWatch = new TextWatcher() {
 			
@@ -198,12 +242,12 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 		{
 			EditText txtView = (EditText)this.view; 
 			txtView.removeTextChangedListener(txtWatch);
-		}
-		if ( (this.view instanceof Checkable) && (this.view instanceof Button) ) 
-		{
+		} else if ( (this.view instanceof Checkable) && (this.view instanceof Button) ) {
 			Button chkView = (Button)this.view;
 			chkView.setOnClickListener(null);
-		}
+		} else if (this.view instanceof IWidgetValueAccessor) {
+            ((IWidgetValueAccessor)view).unregisterValueChanged(widgetValueReceiver);
+        }
 	}
 	
 	public void init(View _view, IViewModel<?> complexVM)
@@ -235,7 +279,9 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 			this.vm.delViewModelListener(this);
 
 		this.vm = _vm;
-		this.vm.addViewModelListener(this);
+
+        if (null != this.vm)
+		    this.vm.addViewModelListener(this);
 	}
 
 	/**
@@ -248,7 +294,10 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	public void updateView(View v, IViewModel<?> complexVM) 
 	{
 		this.setVM(this.getModelCmd.getVM(complexVM));
-		this.writeViewCmd.set(v, this.getVM().get());		
+        SimpleValueVM vm = this.getVM();
+
+        if (null != vm)
+		    this.writeViewCmd.set(v, this.getVM().get());
 	}
 
 	@Override

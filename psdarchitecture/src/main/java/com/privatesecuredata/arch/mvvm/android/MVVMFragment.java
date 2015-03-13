@@ -6,7 +6,7 @@ import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.DataHive;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 

@@ -9,13 +9,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.privatesecuredata.arch.R;
+import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
+import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by kenan on 2/20/15.
  */
-public class NumberSelector extends FrameLayout {
-    private int _number;
+public class NumberSelector extends FrameLayout
+                            implements IWidgetValueAccessor {
+    private long _number;
     private TextView _txtNumber;
+    private ArrayList<IWidgetValueReceiver> valueReceivers = new ArrayList<IWidgetValueReceiver>();
 
     public NumberSelector(Context context) {
         this(context, null, 0, 0);
@@ -52,14 +59,17 @@ public class NumberSelector extends FrameLayout {
         });
     }
 
-    public void setNumber(int _num)
+    public void setNumber(long _num)
     {
         _number = _num;
         if (null != _txtNumber)
-            _txtNumber.setText(new Integer(_number).toString());
+            _txtNumber.setText(new Long(_number).toString());
+
+        for(IWidgetValueReceiver rec : this.valueReceivers)
+            rec.notifyWidgetChanged(this);
     }
 
-    public int getNumber()
+    public long getNumber()
     {
         return _number;
     }
@@ -70,5 +80,25 @@ public class NumberSelector extends FrameLayout {
 
     public void onButtonDownClick(View v) {
         setNumber(getNumber() - 1);
+    }
+
+    @Override
+    public void registerValueChanged(IWidgetValueReceiver valueReceiver) {
+        this.valueReceivers.add(valueReceiver);
+    }
+
+    @Override
+    public void unregisterValueChanged(IWidgetValueReceiver valueReceiver) {
+        this.valueReceivers.remove(valueReceiver);
+    }
+
+    @Override
+    public void setValue(Object val) {
+        setNumber((long)val);
+    }
+
+    @Override
+    public Object getValue() {
+        return getNumber();
     }
 }

@@ -17,4 +17,8 @@
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
 
+    <style name="PsdTitle">
+        <item name="android:textSize">26sp</item>
+    </style>
+
 </resources>

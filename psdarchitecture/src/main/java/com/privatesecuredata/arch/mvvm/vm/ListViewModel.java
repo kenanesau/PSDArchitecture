@@ -59,8 +59,8 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 			throw new ArgumentException("Unable to find a valid constructor for the model", ex);
 		}
 	}
-	
-	/**
+
+    /**
 	 * Initialise the ViewModel. This creates a ViewModel-Wrapper around each Model, puts them 
 	 * into a List and registers them as childs of this ViewModel.
 	 * 

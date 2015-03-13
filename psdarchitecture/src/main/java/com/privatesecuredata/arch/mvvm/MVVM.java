@@ -13,7 +13,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 /**
  * Created by kenan on 12/21/14.
@@ -85,15 +84,10 @@ public class MVVM {
         return (T)cfgObjs.get(mvvm.getHandle(), null);
     }
 
-    public static <T> T getCfgObj(ComplexViewModel vm)
-    {
-        return (T)cfgObjs.get(vm.getHandle(), null);
-    }
-
     public int getHandle() {return _handle; }
     private void setHandle(int handle) { _handle = handle; }
 
-    public <V extends ComplexViewModel<?>> V createVM (Object model) throws ArgumentException
+    public <V extends ComplexViewModel<?>, M> V createVM (M model) throws ArgumentException
     {
         V vm = null;
 

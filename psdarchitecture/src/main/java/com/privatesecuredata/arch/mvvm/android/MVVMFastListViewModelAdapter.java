@@ -15,7 +15,7 @@ import android.widget.Checkable;
 import android.widget.ListView;
 
 import com.privatesecuredata.arch.mvvm.IDataBinding;
-import com.privatesecuredata.arch.mvvm.IGetModelCommand;
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
@@ -114,7 +114,7 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 	
 	protected int getRowViewId() { return this.rowViewId; }
 	
-	public <T> void addModelMapping(Class<T> type, int viewId, IGetModelCommand<T> getModelCmd)
+	public <T> void addModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
 	{
 		TransientViewToModelAdapter<T> adapter = (TransientViewToModelAdapter<T>)view2ModelAdapters.get(viewId);
 		if (null==adapter) {
@@ -225,7 +225,7 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 	{ 
 		this.selectionViewId = id;
 		
-		this.addModelMapping(Boolean.class, id, new IGetModelCommand<Boolean>() {
+		this.addModelMapping(Boolean.class, id, new IGetVMCommand<Boolean>() {
 			@Override
 			public SimpleValueVM<Boolean> getVM(IViewModel<?> vm) {
 				if (vm instanceof ComplexViewModel<?>)

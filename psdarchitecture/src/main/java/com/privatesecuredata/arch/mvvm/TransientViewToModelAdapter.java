@@ -30,10 +30,10 @@ public class TransientViewToModelAdapter<T> {
 	protected IReadViewCommand<T> readViewCmd;
 	protected IWriteViewCommand<T> writeViewCmd;
 	
-	protected IGetModelCommand<T> getModelCmd;
+	protected IGetVMCommand<T> getModelCmd;
 	
-	public void setGetModelCommand(IGetModelCommand<T> cmd) { this.getModelCmd = cmd; }
-	public IGetModelCommand<T> getGetModelCommand() { return this.getModelCmd; }
+	public void setGetModelCommand(IGetVMCommand<T> cmd) { this.getModelCmd = cmd; }
+	public IGetVMCommand<T> getGetModelCommand() { return this.getModelCmd; }
 	public void setReadViewCommand(IReadViewCommand<T> cmd) { this.readViewCmd = cmd; }
 	public void setWriteViewCommand(IWriteViewCommand<T> cmd) { this.writeViewCmd = cmd; }
 	public IReadViewCommand<T> getReadViewCommand() { return this.readViewCmd; }
@@ -52,7 +52,7 @@ public class TransientViewToModelAdapter<T> {
 	}
 	
 	public void setCommands(IReadViewCommand<T> rdViewCmd, IWriteViewCommand<T> wrViewCmd,
-							IGetModelCommand<T> getModelCmd)
+							IGetVMCommand<T> getModelCmd)
 	{
 		this.setViewCommands(rdViewCmd, wrViewCmd);
 		this.setGetModelCommand(getModelCmd);

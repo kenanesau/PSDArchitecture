@@ -11,8 +11,8 @@
 
         <com.privatesecuredata.arch.ui.widget.Fab
             android:id="@+id/psdarch_number_selector_btn_up"
-            android:layout_width="@dimen/large_fab"
-            android:layout_height="@dimen/large_fab"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:visibility="visible"
             android:elevation="@dimen/elevation"
             android:background="@drawable/upper_rounded_button"
@@ -23,7 +23,7 @@
             android:layout_marginBottom="@dimen/raster2"
             />
 
-        <TextView android:layout_width="@dimen/large_fab"
+        <TextView android:layout_width="72dp"
             android:id="@+id/psdarch_number_selector_txt_number"
             android:layout_height="wrap_content"
             android:textSize="22sp"

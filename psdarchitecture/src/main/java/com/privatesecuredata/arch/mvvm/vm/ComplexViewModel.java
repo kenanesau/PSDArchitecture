@@ -26,7 +26,7 @@ import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
  * ViewModel-Class for all "complex" object-trees. This means it is a ViewModel which can have 
  * child-ViewModels.  
  */
-public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
+public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	private HashMap<Integer, IViewModel<?>> children = new HashMap<Integer, IViewModel<?>>(); 
 	private ArrayList<IViewModel<?>> childrenOrdered = new ArrayList<IViewModel<?>>();
 	private SimpleValueVM<Boolean> selected = new SimpleValueVM<Boolean>(false);
@@ -60,7 +60,8 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         this(mvvm);
 
         //setModelAndRegisterChildren needs this.mvvm set...
-        this.nameViewModelMapping = setModelAndRegisterChildren(model);
+        if (null != model)
+            this.nameViewModelMapping = setModelAndRegisterChildren(model);
     }
 /*
     public ComplexViewModel(ListViewModelFactory fac)
@@ -87,8 +88,8 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		load();
 		return super.getModel();
 	}
-	
-	protected MODEL loadProxyData(MODEL model)
+
+   	protected MODEL loadProxyData(MODEL model)
 	{
 		InvocationHandler handler = Proxy.getInvocationHandler(model);
 		if (handler instanceof LazyCollectionInvocationHandler)
@@ -101,6 +102,19 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     {
         return this.mvvm;
     }
+
+    /**
+     * doMappings() is called whenever setModelAndRegisterChildren() is called
+     * (getModel() -> load() -> setModelAndRegisterChildren() -> doMappings())
+     *
+     * This method has to be overwritten if you want to support lazy loading and you want
+     * to set/update your Model <-> VM-mappings after loading.
+     *
+     * If you don't want to support lazy loading just set your mappings in your VM-constructor.
+     *
+     * @param childVMs
+     */
+    protected void doMappings(HashMap<String, IViewModel<?>> childVMs) {}
 
     protected HashMap<String, IViewModel<?>> getNameViewModelMapping()
     {
@@ -125,13 +139,13 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                     if ((null != model) && (Proxy.isProxyClass(model.getClass()))) {
                         model = loadProxyData(model);
                     }
-                    setModel(model);
-
                     /**
                      * delete _modelGetter -> all future calls of getModel() go directly to the
-                     * real Model
+                     * real Model. DO THIS BEFORE SETMODELANDREGISTER -> StackOverflow otherwise
                      */
                     setModelGetter(null, null);
+
+                    setModelAndRegisterChildren(model);
                 }
 			}
 			catch(Exception ex)
@@ -140,7 +154,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 			}
 		}
 	}
-	
+
 	/**
 	 * This function is used by the functions set setComplexModelMapping() and  setListModelMapping()
 	 * to enable lazy loading on the child model.
@@ -221,8 +235,17 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		delChild(vm);
 		vm.delViewModelListener(this);
 	}
-	
-	public HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL model)
+
+    /**
+     * This method analyses all the mapping-annotations and returns a Hashmap of all
+     * Modelnames to their VMs. Overwrite doMappings to get the Hashmap with name->VM-mappings.
+     *
+     * @param model The model
+     * @return Hashmap containing all mappings from model-name to view-model
+     *
+     * @see {@link #doMappings(HashMap<String, IViewModel>)}
+     */
+	private HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL model)
 	{
 		HashMap<String, IViewModel<?>> childViewModels = new HashMap<String, IViewModel<?>>();
         if (null != getModel())
@@ -271,6 +294,7 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             }
         }
 
+        doMappings(childViewModels);
 		return childViewModels;
 	}
 	
@@ -316,30 +340,31 @@ public class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	protected void setComplexModelMapping(HashMap<String, IViewModel<?>> childModels,
 			Field field, ComplexVmMapping complexAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException 
 	{
-		if (complexAnno.loadLazy()==false) {
+        Class<?> modelType = field.getType();
+
+		if (complexAnno.loadLazy() == false) {
 			Class<?> viewModelType = complexAnno.viewModelClass();
-			Method childModelGetter = createGetter(field); 
+			Method childModelGetter = createGetter(field);
 			Object childModel = childModelGetter.invoke(getModel(), (Object[])null);
-			Class<?> modelType = field.getType();
-			Constructor<?> complexVMConstructor = viewModelType.getConstructor(modelType);
-			ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(childModel);
+			Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
+			ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), childModel);
 			registerChildVM(vm);
-			
+
 			childModels.put(field.getName(), vm);
 		}
 		else {
 			try {
 				Class<?> viewModelType = complexAnno.viewModelClass();
 
-				Constructor<?> complexVMConstructor = viewModelType.getConstructor();
-				ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance();
+				Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
+				ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), null);
 				vm.setModelGetter(this, field);
 				
 				childModels.put(field.getName(), vm);
 			}
 			catch (NoSuchMethodException ex)
 			{
-				throw new MVVMException("Could not find default-constructor. When you are using lazy initialization you have to provide a default constructor!", ex);
+				throw new MVVMException("Could not find default-constructor.", ex);
 			}
 			catch (Exception ex)
 			{
