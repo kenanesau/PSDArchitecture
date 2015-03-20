@@ -14,12 +14,12 @@ import java.util.LinkedList;
  * @param <T> Persistable type
  * @see IPersistable
  */
-public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
+public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	private boolean dirty = true;
 	private long id = -1;
 	private IDirtyChangedListener dirtyListener;
 	
-	private IPersistable<T> persistableObj;
+	private T persistableObj;
 	private LinkedList<DbId<?>> loadedChildren;
 	private LinkedList<DbId<?>> dirtyChildren;
 	
@@ -28,11 +28,11 @@ public class DbId<T extends IPersistable<T>> implements IDirtyChangedListener {
 		this.id = id;
 	}
 	
-	public void setObj(IPersistable<?> persObj)
+	public void setObj(T persObj)
 	{
-		this.persistableObj = (IPersistable<T>) persObj;
+		this.persistableObj = persObj;
 	}
-	public IPersistable<T> getObj()
+	public T getObj()
 	{
 		return persistableObj;
 	}

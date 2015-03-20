@@ -21,7 +21,7 @@ import com.privatesecuredata.arch.exceptions.DBException;
  * @param <V>
  */
 public class LazyLoadCollectionProxy<T extends Collection<V>, 
-		V extends IPersistable<V>> extends AbstractList<V>
+		V extends IPersistable> extends AbstractList<V>
 		implements ILoadCollection<V>
 {
 	private IPersister<V> persister;

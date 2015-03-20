@@ -158,7 +158,7 @@ public class PersistanceManager {
 				throw new Exception("No annotation of type Persister");
 				
 			Constructor<?> ctor = persisterClass.getConstructor();
-			IPersister<? extends IPersistable<?>> persisterObj = (IPersister<? extends IPersistable<?>>) ctor.newInstance();
+			IPersister<? extends IPersistable> persisterObj = (IPersister<? extends IPersistable>) ctor.newInstance();
 
             addPersisterToMap(persisterAnnotation.persists(), persisterObj);
 		}
@@ -175,7 +175,7 @@ public class PersistanceManager {
 	 */
 	public void addPersistentType(Class<?> persistentType) {
 		try {
-			IPersister<? extends IPersistable<?>> persisterObj = new AutomaticPersister(this, persistentType);
+			IPersister<? extends IPersistable> persisterObj = new AutomaticPersister(this, persistentType);
 					
 			addPersisterToMap(persistentType, persisterObj);
 		}
@@ -194,12 +194,17 @@ public class PersistanceManager {
         return classNameMap.get(className);
     }
 
-	public <T extends IPersistable<T>> IPersister<T> getPersister(Class<T> classObj)
+    public IPersister getIPersister(Class classObj)
+    {
+        return (IPersister)persisterMap.get(classObj);
+    }
+
+	public <T extends IPersistable> IPersister<T> getPersister(Class<T> classObj)
 	{
 		return (IPersister<T>)persisterMap.get(classObj);
 	}
-	
-	public <T extends IPersistable<T>> IPersister<T> getPersister(IPersistable<T> persistable)
+
+    public <T extends IPersistable> IPersister<T> getPersister(IPersistable persistable)
 	{
 		return (IPersister<T>)getPersister(persistable.getClass());
 	}
@@ -219,7 +224,8 @@ public class PersistanceManager {
 			{
 				AutomaticPersister<?> persister = (AutomaticPersister)this.getPersister(persistentType);
 				String createSQL = persister.getCreateStatement();
-				db.execSQL(createSQL);
+                if (null != createSQL)
+				    db.execSQL(createSQL);
 			}
 			db.setTransactionSuccessful();
 		}
@@ -233,7 +239,7 @@ public class PersistanceManager {
 		onCreate(db);
 	}
 	
-	public <T extends IPersistable<T>> void save(Collection<T> coll) throws DBException
+	public <T extends IPersistable> void save(Collection<T> coll) throws DBException
 	{
 		if ( (null == coll) || (coll.size() == 0) )
 			return;
@@ -272,7 +278,7 @@ public class PersistanceManager {
 		}
 	}
 
-    public <T extends IPersistable<T>> T load(IPersister<T> persister, Cursor cursor, int pos) throws DBException
+    public <T extends IPersistable> T load(IPersister<T> persister, Cursor cursor, int pos) throws DBException
     {
         T persistable = persister.rowToObject(pos, cursor);
 
@@ -295,14 +301,14 @@ public class PersistanceManager {
         return persistable;
     }
 
-	public <T extends IPersistable<T>> T load(DbId<?> fathersId, Class<T> classObj, long id) throws DBException
+	public <T extends IPersistable> T load(DbId<?> fathersId, Class<T> classObj, long id) throws DBException
 	{
-		IPersistable<T> persistable = load(classObj, id);
+		IPersistable persistable = load(classObj, id);
 		fathersId.addChild(persistable.getDbId());
 		return (T) persistable;
 	}
 	
-	public <T extends IPersistable<T>> T load(Class<T> classObj, long id) throws DBException
+	public <T extends IPersistable> T load(Class<T> classObj, long id) throws DBException
 	{
 		try {
 			IPersister<T> persister = getPersister(classObj);
@@ -553,7 +559,7 @@ public class PersistanceManager {
 //		}
 //	}
 	
-	public <T extends IPersistable<T>> void delete(T persistable) throws DBException
+	public <T extends IPersistable> void delete(T persistable) throws DBException
 	{
 		DbId<T> dbId = persistable.getDbId();
 		
@@ -600,7 +606,7 @@ public class PersistanceManager {
         return (loader != null) ? loader.getCursor(referencingObjectId) : null;
     }
 	
-	public Cursor getCursor(IPersistable<?> referencingObject, Class<?> referencedType) throws DBException
+	public Cursor getCursor(IPersistable referencingObject, Class<?> referencedType) throws DBException
 	{
 		ICursorLoader loader = getLoader(referencingObject.getClass(), referencedType);
 		return (loader != null) ? loader.getCursor(referencingObject.getDbId()) : null;
@@ -617,13 +623,13 @@ public class PersistanceManager {
         cursorLoaderMap.remove(key);
     }
 	
-	public <T extends IPersistable<T>> Cursor getLoadAllCursor(Class<T> classObj) throws DBException
+	public <T extends IPersistable> Cursor getLoadAllCursor(Class<T> classObj) throws DBException
 	{
 		IPersister<T> persister = getPersister(classObj);
 		return persister.getLoadAllCursor();
 	}
 	
-	public <T extends IPersistable<T>> Collection<T> loadAll(Class<T> classObj) throws DBException
+	public <T extends IPersistable> Collection<T> loadAll(Class<T> classObj) throws DBException
 	{
 		IPersister<T> persister = getPersister(classObj);
 		Collection<T> ret = persister.loadAll();
@@ -637,12 +643,12 @@ public class PersistanceManager {
 		return ret;
 	}
 
-    private <T extends IPersistable<T>> void __updateForeignKeyNoTransaction(IPersister<T> persister, T persistable, DbId<?> foreignKey) throws DBException
+    private <T extends IPersistable> void __updateForeignKeyNoTransaction(IPersister<T> persister, T persistable, DbId<?> foreignKey) throws DBException
     {
         persister.updateForeignKey(persistable, foreignKey);
     }
 
-    private <T extends IPersistable<T>> void __updateForeignKeyNoTransaction(T persistable, DbId<?> foreignKey) throws DBException
+    private <T extends IPersistable> void __updateForeignKeyNoTransaction(T persistable, DbId<?> foreignKey) throws DBException
     {
         Class<T> classObj = (Class<T>) persistable.getClass();
         IPersister<T> persister = getPersister(classObj);
@@ -650,7 +656,7 @@ public class PersistanceManager {
         __updateForeignKeyNoTransaction(persister, persistable, foreignKey);
     }
 
-	public <T extends IPersistable<T>> void updateForeignKey(T persistable, DbId<?> foreignKey) throws DBException
+	public <T extends IPersistable> void updateForeignKey(T persistable, DbId<?> foreignKey) throws DBException
 	{
 		try {
             db.beginTransaction();
@@ -662,12 +668,12 @@ public class PersistanceManager {
         }
     }
 	
-	public <T extends IPersistable<T>> DbId<T> assignDbId(T persistable, long id)
+	public <T extends IPersistable> DbId<T> assignDbId(T persistable, long id)
 	{
 		return assignDbId(persistable, id, true);
 	}
 	
-	public <T extends IPersistable<T>> DbId<T> assignDbId(T persistable, long id, boolean isClean)
+	public <T extends IPersistable> DbId<T> assignDbId(T persistable, long id, boolean isClean)
 	{
 		if (null == persistable.getDbId())
 		{
@@ -692,7 +698,7 @@ public class PersistanceManager {
 		this.db.close();
 	}
 
-	public <T extends IPersistable<T>> ArrayList<T> loadCursor(Class<T> clazz, Cursor cursor) throws DBException {
+	public <T extends IPersistable> ArrayList<T> loadCursor(Class<T> clazz, Cursor cursor) throws DBException {
 		IPersister<T> persister = (IPersister<T>) getPersister(clazz);
 		int cnt = cursor.getCount();
 		ArrayList<T> lst = new ArrayList<T>(cnt);
@@ -705,7 +711,7 @@ public class PersistanceManager {
 		return lst;
 	}
 
-    public <T extends IPersistable<T>> void registerPartialPersister(Class<T> type) throws DBException {
+    public <T extends IPersistable> void registerPartialPersister(Class<T> type) throws DBException {
         try
         {
             DbPartialClass anno = type.getAnnotation(DbPartialClass.class);
@@ -725,7 +731,7 @@ public class PersistanceManager {
         }
    }
 
-   public <T extends IPersistable<T>> void unregisterPartialPersister(Class<T> type) {
+   public <T extends IPersistable> void unregisterPartialPersister(Class<T> type) {
        PartialClassReader<T> partialPersister = (PartialClassReader<T>)getPersister(type);
        if (null!=partialPersister)
            partialPersister.unregisterCursorLoaders();
@@ -748,7 +754,7 @@ public class PersistanceManager {
      * @param field       The field within the parent which holds the list
      * @param childItems  The new / updated list of child items
      */
-    public void updateCollectionProxySize(IPersistable<?> persistable, Field field, Collection childItems) {
+    public void updateCollectionProxySize(IPersistable persistable, Field field, Collection childItems) {
         Class type = persistable.getClass();
         IPersister<?> persister = getPersister(type);
 

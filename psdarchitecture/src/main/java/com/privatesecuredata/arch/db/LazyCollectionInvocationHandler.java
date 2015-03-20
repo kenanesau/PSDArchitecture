@@ -10,10 +10,10 @@ import android.database.Cursor;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
-public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends IPersistable<V>>
+public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends IPersistable>
 	implements InvocationHandler, ICursorChangedListener
 {
-	IPersistable<?> foreignKey;
+	IPersistable foreignKey;
 	IPersister<V> persister;
 	PersistanceManager pm;
 	Cursor cursor = null;
@@ -69,7 +69,7 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
 	 * @param size        The cached size for the proxy
 	 * @param loader      The ICursorLoader for loading 
 	 */
-	public LazyCollectionInvocationHandler(PersistanceManager pm, Class<V> type, IPersistable<?> foreignKey, int size, ICursorLoader loader) {
+	public LazyCollectionInvocationHandler(PersistanceManager pm, Class<V> type, IPersistable foreignKey, int size, ICursorLoader loader) {
 		this.pm = pm;
 		this.foreignKey = foreignKey;
 		this.loader = loader;
@@ -87,7 +87,7 @@ public class LazyCollectionInvocationHandler<T extends Collection<V>, V extends 
      * @param size        The cached size for the proxy
      * @param csr         The cursor which is used for the proxied list of objects
      */
-    public LazyCollectionInvocationHandler(PersistanceManager pm, Class<V> type, IPersistable<?> foreignKey, int size, Cursor csr) {
+    public LazyCollectionInvocationHandler(PersistanceManager pm, Class<V> type, IPersistable foreignKey, int size, Cursor csr) {
         this.pm = pm;
         this.foreignKey = foreignKey;
         this.cursor = csr;

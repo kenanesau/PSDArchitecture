@@ -27,8 +27,8 @@ public class DBViewModelCommitListener implements IViewModelCommitListener {
             Object obj = vm.getModel();
             PersistanceManager pm = MVVM.getCfgObj(((ComplexViewModel)vm).getMVVM());
 
-            if (obj instanceof IPersistable<?>) {
-                IPersistable<?> persistable = (IPersistable<?>) obj;
+            if (obj instanceof IPersistable) {
+                IPersistable persistable = (IPersistable) obj;
                 DbId<?> dbId = persistable.getDbId();
 
                 if (null != dbId)

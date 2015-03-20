@@ -109,7 +109,7 @@ public class MVVM {
             throw new ArgumentException("Error accessing method!", ex);
         }
         catch (InvocationTargetException ex) {
-            throw new ArgumentException("Error invoking method!", ex);
+            throw new ArgumentException("Error invoking constructor!", ex);
         }
         catch (NoSuchMethodException ex) {
             throw new ArgumentException("Could not find constructor", ex);

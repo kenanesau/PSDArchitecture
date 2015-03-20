@@ -53,7 +53,7 @@ public class DbListViewModelFactory implements IListViewModelFactory {
 
     public interface IModelListCbGetter
     {
-        <V extends IPersistable<V>> CursorToListAdapter<V> getCb();
+        <V extends IPersistable> CursorToListAdapter<V> getCb();
     }
 
     IModelListCbGetter getter;
@@ -63,7 +63,7 @@ public class DbListViewModelFactory implements IListViewModelFactory {
         final Class<?> modelType = listAnno.modelType();
         final Class<?> parentModelType = listAnno.parentType();
         IListViewModel<?, ?> listVM;
-        final IPersistable<?> model = (IPersistable<?>)parentVM.getModel();
+        final IPersistable model = (IPersistable)parentVM.getModel();
         if (null == model) {
             listVM = new FastListViewModel(this.mvvm, modelType, viewModelType);
         }

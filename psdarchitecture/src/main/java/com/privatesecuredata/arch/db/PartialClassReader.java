@@ -10,7 +10,7 @@ import java.util.HashMap;
 /**
  * Created by kenan on 12/16/14.
  */
-public class PartialClassReader<T extends IPersistable<T>> extends AutomaticPersister<T> {
+public class PartialClassReader<T extends IPersistable> extends AutomaticPersister<T> {
     AutomaticPersister<?> _fullPersister;
     String _selectAllSqlString;
     String _selectSingleSqlString;

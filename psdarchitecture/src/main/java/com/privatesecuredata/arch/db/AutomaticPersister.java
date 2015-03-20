@@ -20,7 +20,7 @@ import com.privatesecuredata.arch.db.annotations.DbThisToMany;
 import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.DBException;
 
-public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersister<T> {
+public class AutomaticPersister<T extends IPersistable> extends AbstractPersister<T> {
 	
 	SQLiteStatement insert;
 	SQLiteStatement update;
@@ -38,11 +38,8 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	 * List of Fields to be filled in an persistable and the corresponding types 
 	 */
 	private List<ObjectRelation> _lstThisToOneRelations;
-	
 	private List<ObjectRelation> _lstOneToManyRelations;
-	
 	private Constructor<T> _const;
-	
 	private Class<T> _persistentType;
 
     protected AutomaticPersister() {}
@@ -123,9 +120,30 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 			}
 		}
 
+        /*
 		if (getTableFieldsInternal().isEmpty())
 			throw new Exception(String.format("No DBField-annotation found in type \"%s\"", persistentType.getName()));
+			*/
 	}
+
+    public void extendsPersister(AutomaticPersister<?> parentPersister)
+    {
+        for(SqlDataField fld : parentPersister.getTableFieldsInternal())
+            _tableFields.add(fld);
+
+        if (parentPersister._proxyCntFields != null) {
+            for (SqlDataField fld : parentPersister._proxyCntFields)
+                _proxyCntFields.add(fld);
+        }
+
+        _foreignKeyFields.putAll(parentPersister._foreignKeyFields);
+
+        for(ObjectRelation rel : parentPersister._lstThisToOneRelations)
+            _lstThisToOneRelations.add(rel);
+
+        for(ObjectRelation rel : parentPersister._lstOneToManyRelations)
+            _lstOneToManyRelations.add(rel);
+    }
 
     protected List<SqlDataField> getTableFieldsInternal() {
         return _tableFields;
@@ -190,6 +208,9 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	 */
 	protected String getInsertStatement()
 	{
+        if (getTableFieldsInternal().isEmpty())
+            return null;
+
 		StringBuilder sql = new StringBuilder("INSERT INTO ")
 			.append(getTableName())
 			.append(" ( ");
@@ -227,6 +248,9 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	 */
 	protected String getUpdateStatement()
 	{
+        if (getTableFieldsInternal().isEmpty())
+            return null;
+
 		StringBuilder sql = new StringBuilder("UPDATE ")
 			.append(getTableName())
 			.append(" SET ");
@@ -253,6 +277,9 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	 */
 	protected String getCreateStatement()
 	{
+        if (getTableFieldsInternal().isEmpty())
+            return null;
+
 		StringBuilder sql = new StringBuilder("CREATE TABLE ")
 			.append(getTableName())
 			.append(" ( ")
@@ -360,7 +387,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
             bind(sql, idx, fld.getLong(persistable));
             break;
         case OBJECT_REFERENCE:
-            IPersistable<?> referencedObj = (IPersistable<?>) fld.get(persistable);
+            IPersistable referencedObj = (IPersistable) fld.get(persistable);
             if (null == referencedObj)
             {
                 bindNull(sql, idx);
@@ -375,7 +402,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
             bind(sql, idx, referencedObj.getDbId().getId());
             break;
         case OBJECT_NAME:
-            referencedObj = (IPersistable<?>) fld.get(persistable);
+            referencedObj = (IPersistable) fld.get(persistable);
             if (null == referencedObj) {
                 bindNull(sql, idx);
                 break;
@@ -467,7 +494,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 
                 for(Object other : others)
                 {
-                    getPM().saveAndUpdateForeignKey((IPersistable<?>)other, dbId);
+                    getPM().saveAndUpdateForeignKey((IPersistable)other, dbId);
                 }
             }
         }
@@ -485,7 +512,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 		
 		int rowsAffected = update.executeUpdateDelete();
 
-        DbId<T> dbId = persistable.getDbId();
+        DbId<?> dbId = persistable.getDbId();
         saveAndUpdateForeignKeyRelations(persistable, dbId);
 
 		return rowsAffected;
@@ -494,7 +521,7 @@ public class AutomaticPersister<T extends IPersistable<T>> extends AbstractPersi
 	@Override
 	public void updateForeignKey(T persistable, DbId<?> foreignId)
 			throws DBException {
-		IPersistable<?> foreignObj = foreignId.getObj();
+		IPersistable foreignObj = foreignId.getObj();
 		if (null != foreignObj)
 		{
 			Class<?> foreignType = foreignObj.getClass();

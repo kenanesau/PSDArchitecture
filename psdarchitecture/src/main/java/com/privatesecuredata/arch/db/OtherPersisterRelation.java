@@ -3,7 +3,7 @@ package com.privatesecuredata.arch.db;
 import java.lang.reflect.Field;
 
 public class OtherPersisterRelation {
-	private IPersistable<?> _other;
+	private IPersistable _other;
 	private IPersister<?> _otherPersister;
 	private PersistanceManager _pm;
 	
@@ -12,7 +12,7 @@ public class OtherPersisterRelation {
 		_pm = pm;
 	}
 	
-	public <T extends IPersistable<T>> IPersister<T> getPersister(Class<?> persistable) {
+	public <T extends IPersistable> IPersister<T> getPersister(Class<?> persistable) {
 		
 		if (null == _otherPersister)
 		{

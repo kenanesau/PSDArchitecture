@@ -2,6 +2,8 @@ package com.privatesecuredata.arch.db;
 
 import java.util.HashMap;
 import android.content.Context;
+
+import com.privatesecuredata.arch.db.annotations.DbExtends;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 public class PersistanceManagerLocator {
@@ -29,6 +31,23 @@ public class PersistanceManagerLocator {
 			
 			for(Class<?> classObj : dbDesc.getPersistentTypes())
 				pm.addPersistentType(classObj);
+
+            /**
+             * Work on the extends-relationships
+             */
+            for(Class<?> persistentType : dbDesc.getPersistentTypes()) {
+                DbExtends anno = persistentType.getAnnotation(DbExtends.class);
+
+                if (null != anno) {
+                    AutomaticPersister persister = (AutomaticPersister)pm.getIPersister(persistentType);
+                    if (null == persister)
+                        throw new DBException(String.format("Could not find persister for type \"%s\"", persistentType.getName()));
+                    AutomaticPersister parentPersister = (AutomaticPersister)pm.getIPersister(anno.extendedType());
+                    if (null == parentPersister)
+                        throw new DBException(String.format("Could not find persister for parent of extends-relationship of type \"%s\"!", anno.extendedType().getName()));
+                    persister.extendsPersister(parentPersister);
+                }
+            }
 		}
 	}
 
@@ -39,7 +58,7 @@ public class PersistanceManagerLocator {
 
 		return pm;
 	}
-	
+
 	public PersistanceManager getPM(IDbDescription dbDesc)
 	{
 		return pmMap.get(dbDesc);

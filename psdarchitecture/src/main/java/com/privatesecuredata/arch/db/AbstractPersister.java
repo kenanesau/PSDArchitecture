@@ -11,7 +11,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
-public abstract class AbstractPersister<T extends IPersistable<T>> implements IPersister<T> {
+public abstract class AbstractPersister<T extends IPersistable> implements IPersister<T> {
 	protected static final String DELSQLSTATEMENT = "DELETE from %s where _id=?";
 	protected static final String SELECTSINGLESQLSTATEMENT = "SELECT * from %s where _id=?";
 	protected static final String SELECTALLSQLSTATEMENT = "SELECT * from %s";
@@ -34,7 +34,13 @@ public abstract class AbstractPersister<T extends IPersistable<T>> implements IP
 	public void init(Object obj) {
         setPM((PersistanceManager) obj);
 		String delStatement = String.format(getDelSqlString(), getTableName());
-		this.delete = getDb().compileStatement(delStatement);
+        try {
+            this.delete = getDb().compileStatement(delStatement);
+        }
+        catch (Exception ex)
+        {
+            // table does not exist, if persistent type has no fields to persist -> that's fine.
+        }
         this._foreignListCountUpdateStatements = new Hashtable<Field, SQLiteStatement>();
 	}
 	@Override

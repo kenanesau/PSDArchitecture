@@ -6,10 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for "normal" object relations (reference from object a to object b)
+ * Annotation for marking the extends-relationship to the father-class
+ *
+ * Created by kenan on 3/13/15.
  */
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DbThisToOne {
-	boolean isMandatory() default false;
+public @interface DbExtends {
+    Class<?> extendedType();
 }

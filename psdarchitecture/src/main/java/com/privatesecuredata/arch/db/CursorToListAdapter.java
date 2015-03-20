@@ -12,13 +12,13 @@ import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCa
  *
  * @param <M>
  */
-public class CursorToListAdapter<M extends IPersistable<M>> implements IModelListCallback<M>, ICursorChangedProvider
+public class CursorToListAdapter<M extends IPersistable> implements IModelListCallback<M>, ICursorChangedProvider
 {
 	private PersistanceManager pm;
 	private Cursor csr;
 	private IPersister<M> persister;
 	private Class<?> parentClazz;
-	private IPersistable<?> parent;
+	private IPersistable parent;
 	private Class<M> childClazz;
 	private List<ICursorChangedListener> csrListeners = new ArrayList<ICursorChangedListener>();
 	
@@ -48,11 +48,11 @@ public class CursorToListAdapter<M extends IPersistable<M>> implements IModelLis
 		if (null==parent)
 			this.csr = pm.getCursor(parentClazz, childClazz);
 		else
-			this.csr = pm.getCursor((IPersistable<?>)parent, childClazz);
+			this.csr = pm.getCursor((IPersistable)parent, childClazz);
 		
 		persister = pm.getPersister(childClazz);
 		this.parentClazz = parentClazz;
-		this.parent = (IPersistable<?>) parent;
+		this.parent = (IPersistable) parent;
 		this.childClazz = childClazz;
 	}
 

@@ -23,7 +23,7 @@ import com.privatesecuredata.arch.mvvm.TransientViewToModelAdapter;
 import com.privatesecuredata.arch.mvvm.ViewHolder;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
-public class MVVMCursorAdapter<M extends IPersistable<M>> extends BaseAdapter
+public class MVVMCursorAdapter<M extends IPersistable> extends BaseAdapter
 {
 	Class<M> modelType;
 	private final Context ctx;
