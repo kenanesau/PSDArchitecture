@@ -12,9 +12,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
 public abstract class AbstractPersister<T extends IPersistable> implements IPersister<T> {
-	protected static final String DELSQLSTATEMENT = "DELETE from %s where _id=?";
-	protected static final String SELECTSINGLESQLSTATEMENT = "SELECT * from %s where _id=?";
-	protected static final String SELECTALLSQLSTATEMENT = "SELECT * from %s";
+	protected static final String DELSQLSTATEMENT = "DELETE from %s WHERE _id=?";
+	protected static final String SELECTSINGLESQLSTATEMENT = "SELECT * FROM %s WHERE _id=?";
+	protected static final String SELECTALLSQLSTATEMENT = "SELECT * FROM %s";
 	
 	private PersistanceManager pm;
 	private SQLiteStatement delete;
@@ -106,6 +106,17 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	public Cursor getLoadAllCursor() {
 		return getDb().rawQuery(getSelectAllSQLString(), null);
 	}
+
+    public Cursor getFilteredCursor(String fieldName, CharSequence constraint)
+    {
+        StringBuilder sb = new StringBuilder(getSelectAllSQLString());
+        sb.append(" WHERE ");
+        sb.append(fieldName);
+        sb.append(" = ");
+        sb.append(constraint);
+
+        return getDb().rawQuery(sb.toString(), null);
+    }
 
 	@Override
 	public Collection<T> loadAll() throws DBException {

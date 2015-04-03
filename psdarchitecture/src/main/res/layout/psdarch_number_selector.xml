@@ -34,8 +34,8 @@
 
         <com.privatesecuredata.arch.ui.widget.Fab
             android:id="@+id/psdarch_number_selector_btn_down"
-            android:layout_width="@dimen/large_fab"
-            android:layout_height="@dimen/large_fab"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:visibility="visible"
             android:elevation="@dimen/elevation"
             android:background="@drawable/lower_rounded_button"

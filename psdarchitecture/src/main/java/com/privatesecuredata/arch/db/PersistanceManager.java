@@ -596,6 +596,11 @@ public class PersistanceManager {
      */
 	public Cursor getCursor(Class<?> referencingType, Class<?> referencedType) throws DBException
 	{
+        if (referencingType == null)
+        {
+            return getLoadAllCursor(referencedType);
+        }
+
 		ICursorLoader loader = getLoader(referencingType, referencedType);
 		return (loader != null) ? loader.getCursor(null) : null;
 	}
@@ -623,9 +628,9 @@ public class PersistanceManager {
         cursorLoaderMap.remove(key);
     }
 	
-	public <T extends IPersistable> Cursor getLoadAllCursor(Class<T> classObj) throws DBException
+	public <T extends IPersistable> Cursor getLoadAllCursor(Class<?> classObj) throws DBException
 	{
-		IPersister<T> persister = getPersister(classObj);
+		IPersister persister = getIPersister(classObj);
 		return persister.getLoadAllCursor();
 	}
 	

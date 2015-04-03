@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.BaseAdapter;
 import android.widget.Checkable;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ListView;
 
 import com.privatesecuredata.arch.mvvm.IDataBinding;
@@ -28,7 +30,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
-															implements IDataBinding, IViewModelChangedListener
+															implements IDataBinding, IViewModelChangedListener, Filterable
 {
 	Class<M> modelType;
 	Class<COMPLEXVM> viewModelType;
@@ -48,8 +50,9 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 
 	private Hashtable<Integer, TransientViewToModelAdapter<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToModelAdapter<?>>();
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
+    private String filteredColumn = null;
 
-	public MVVMEncapsulatedListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx)
+    public MVVMEncapsulatedListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx)
 	{
 		modelType = modelClass;
 		viewModelType = vmClass;
@@ -73,12 +76,14 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 		}
 		this.data = data;
 		this.data.addViewModelListener(this);
+        if (null != filteredColumn)
+            this.data.setFilteredColumn(filteredColumn);
 		this.notifyDataSetChanged();
 	}
 
     @Override
 	public int getCount() {
-		return data.size();
+		return data == null ? 0 : data.size();
 	}
 
 	@Override
@@ -244,4 +249,17 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
     public void setModelReaderStrategy(IModelReaderStrategy<M> readerStrategy) {
 		this.modelReaderStrategy = (IModelReaderStrategy<M>) readerStrategy;
 	}
+
+    @Override
+    public Filter getFilter() {
+        return null == data ? null : data.getFilter();
+    }
+
+    public void setFilteredColumn(String filteredColumn)
+    {
+        if (null == data)
+            this.filteredColumn = filteredColumn;
+        else
+            data.setFilteredColumn(filteredColumn);
+    }
 }

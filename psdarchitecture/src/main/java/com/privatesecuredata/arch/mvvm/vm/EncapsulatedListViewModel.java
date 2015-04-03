@@ -1,5 +1,8 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import android.widget.Filter;
+import android.widget.Filterable;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -26,7 +29,8 @@ import com.privatesecuredata.arch.mvvm.MVVM;
  * @see IViewModel<>
  */
 public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
-                                                                    implements IListViewModel<M, VM>
+                                                                    implements IListViewModel<M, VM>,
+                                                                    Filterable
 {
     /**
 	 * Interface which encapsulates the list representation (eg. a DB-Cursor)
@@ -36,8 +40,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	 * @param <M> Model item which was removed/added/updated from/to the list
      * @see com.privatesecuredata.arch.db.CursorToListAdapter
 	 */
-	public interface IModelListCallback<M>
-	{
+	public interface IModelListCallback<M> extends Filterable {
 		void init(Class<?> parentClazz, Object parent, Class<M> childClazz);
 		M get(int pos);
 		int size();
@@ -47,6 +50,9 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		void save(Collection<M> items);
 		
 		List<M> getList();
+        Filter getFilter();
+        String getFilteredColumn();
+        void setFilteredColumn(String filteredColumn);
 	}
 	
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
@@ -322,4 +328,19 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
 		return vm;
 	}
+
+    @Override
+    public Filter getFilter() {
+        return listCB.getFilter();
+    }
+
+    public void setFilteredColumn(String filteredColumn)
+    {
+        listCB.setFilteredColumn(filteredColumn);
+    }
+
+    public String getFilteredColumn()
+    {
+        return listCB.getFilteredColumn();
+    }
 }
