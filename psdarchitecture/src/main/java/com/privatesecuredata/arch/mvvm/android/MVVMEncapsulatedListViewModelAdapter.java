@@ -29,6 +29,12 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+/**
+ * ListAdapter to enable the display of ListViewModels based on a database cursor in an Android ListView
+ *
+ * @param <M> Type of Model
+ * @param <COMPLEXVM> Type of ViewModel
+ */
 public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
 															implements IDataBinding, IViewModelChangedListener, Filterable
 {

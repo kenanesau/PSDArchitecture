@@ -32,6 +32,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                                                                     implements IListViewModel<M, VM>,
                                                                     Filterable
 {
+
     /**
 	 * Interface which encapsulates the list representation (eg. a DB-Cursor)
 	 * 
@@ -53,6 +54,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         Filter getFilter();
         String getFilteredColumn();
         void setFilteredColumn(String filteredColumn);
+
+        public void registerForDataChange(IDataChangedListener provider);
 	}
 	
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
@@ -79,6 +82,13 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		super(mvvm);
         this.referencingType = referencingType;
 		this.listCB = listCB;
+        this.listCB.registerForDataChange(new IDataChangedListener() {
+            @Override
+            public void notifyDataChanged() {
+                /** Tell the ListAdapter to update the View **/
+                EncapsulatedListViewModel.this.notifyModelChanged();
+            }
+        });
 		this.referencedType = referencedType;
 		this.vmType = vmType;
 		
@@ -343,4 +353,5 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     {
         return listCB.getFilteredColumn();
     }
+
 }

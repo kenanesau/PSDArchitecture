@@ -112,8 +112,10 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
         StringBuilder sb = new StringBuilder(getSelectAllSQLString());
         sb.append(" WHERE ");
         sb.append(fieldName);
-        sb.append(" = ");
-        sb.append(constraint);
+        sb.append(" LIKE ");
+        sb.append("'%");
+        sb.append(constraint.toString());
+        sb.append("%'");
 
         return getDb().rawQuery(sb.toString(), null);
     }

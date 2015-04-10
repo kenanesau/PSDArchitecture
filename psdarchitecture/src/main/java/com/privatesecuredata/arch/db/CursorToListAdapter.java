@@ -7,10 +7,14 @@ import android.database.Cursor;
 import android.widget.Filter;
 import com.privatesecuredata.arch.exceptions.DBException;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
+import com.privatesecuredata.arch.mvvm.vm.IDataChangedListener;
 
 /**
- * This implementation of IModelListCallback encapsulates a cursor. It directly writes
- * all changes done to the database.
+ * This implementation of IModelListCallback encapsulates a cursor. It directly writes all changes
+ * done to the database. The main purpose of this is to hide the database specific stuff to the
+ * upper ViewModel-Layer.
+ *
+ * Usually this type is used within an EncapsulatedListViewModel.
  *
  * @param <M>
  */
@@ -18,6 +22,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 {
 	private PersistanceManager pm;
 	private Cursor csr;
+    private IDataChangedListener listener;
 	private IPersister<M> persister;
 	private Class<?> parentClazz;
 	private IPersistable parent;
@@ -88,7 +93,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
             }
         }
         catch(Exception e) {
-            e.printStackTrace();
+            throw new DBException("Error notifying cursor changes to listeners", e);
         }
         finally {
             if (null != oldCursor)
@@ -149,6 +154,8 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
             for (ICursorChangedListener listener : this.csrListeners) {
                 listener.notifyCursorChanged(csr);
             }
+
+            listener.notifyDataChanged();
         }
         catch(Exception e) {
             e.printStackTrace();
@@ -166,5 +173,10 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     public void setFilteredColumn(String filteredColumn)
     {
         this.filteredColumn = filteredColumn;
+    }
+
+    @Override
+    public void registerForDataChange(IDataChangedListener listener) {
+        this.listener = listener;
     }
 }
