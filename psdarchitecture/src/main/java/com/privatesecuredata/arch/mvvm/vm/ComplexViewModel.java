@@ -255,6 +255,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
         setModel(model);
 
+        for (IListViewModel listVM : this.listVMs)
+            unregisterChildVM((ComplexViewModel)listVM);
         this.listVMs.clear();
         Field[] fields = model.getClass().getDeclaredFields();
 
@@ -267,10 +269,10 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                 else
                 {
                     ComplexVmMapping complexAnno = field.getAnnotation(ComplexVmMapping.class);
-                    if (null != complexAnno)
+                    if (null != complexAnno) {
                         setComplexModelMapping(childViewModels, field, complexAnno);
-                    else
-                    {
+                    }
+                    else {
                         ListVmMapping listAnno = field.getAnnotation(ListVmMapping.class);
                         if (null != listAnno)
                             setListModelMapping(childViewModels, field, listAnno);
@@ -338,39 +340,52 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	}
 	
 	protected void setComplexModelMapping(HashMap<String, IViewModel<?>> childModels,
-			Field field, ComplexVmMapping complexAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException 
-	{
-        Class<?> modelType = field.getType();
+			Field field, ComplexVmMapping complexAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+        try {
+            Class<?> modelType = field.getType();
 
-		if (complexAnno.loadLazy() == false) {
-			Class<?> viewModelType = complexAnno.viewModelClass();
-			Method childModelGetter = createGetter(field);
-			Object childModel = childModelGetter.invoke(getModel(), (Object[])null);
-			Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
-			ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), childModel);
-			registerChildVM(vm);
+            if (complexAnno.loadLazy() == false) {
+                Class<?> viewModelType;
+                Method childModelGetter = createGetter(field);
+                Object childModel = childModelGetter.invoke(getModel(), (Object[]) null);
 
-			childModels.put(field.getName(), vm);
-		}
-		else {
-			try {
-				Class<?> viewModelType = complexAnno.viewModelClass();
+                if (childModel != null) {
+                    modelType = childModel.getClass();
+                    ComplexVmMapping anno = modelType.getAnnotation(ComplexVmMapping.class);
+                    if (null == anno)
+                        throw new ArgumentException(
+                                String.format("Type \"%s\" does not have a ComplexVmMapping-Annotation. Please provide one!", modelType.getName()));
+                    viewModelType = anno.viewModelClass();
+                } else {
+                    viewModelType = complexAnno.viewModelClass();
+                }
 
-				Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
-				ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), null);
-				vm.setModelGetter(this, field);
-				
-				childModels.put(field.getName(), vm);
-			}
-			catch (NoSuchMethodException ex)
-			{
-				throw new MVVMException("Could not find default-constructor.", ex);
-			}
-			catch (Exception ex)
-			{
-				throw new MVVMException("Error setting up the model-getter", ex);
-			}
-		}
+                Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
+                ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), childModel);
+                registerChildVM(vm);
+
+                childModels.put(field.getName(), vm);
+            } else {
+                // Do we need to register a VM here?? create a VM when it is needed!!!
+
+                Class<?> viewModelType = complexAnno.viewModelClass();
+
+                Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
+                ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), null);
+                vm.setModelGetter(this, field);
+
+                childModels.put(field.getName(), vm);
+                registerChildVM(vm); //This was missing!?!?!
+            }
+        }
+        catch (NoSuchMethodException ex)
+        {
+            throw new MVVMException("Could not find default-constructor.", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new MVVMException("Error setting up the model-getter", ex);
+        }
 	}
 
 	protected void setSimpleModelMapping(HashMap<String, IViewModel<?>> childModels, 
