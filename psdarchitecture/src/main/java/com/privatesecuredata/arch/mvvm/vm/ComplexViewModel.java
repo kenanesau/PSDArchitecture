@@ -448,7 +448,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		
 		this.setClean();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		int hashCode = 1; 

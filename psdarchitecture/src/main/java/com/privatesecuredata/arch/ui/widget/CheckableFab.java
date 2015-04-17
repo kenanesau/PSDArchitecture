@@ -7,30 +7,18 @@ import android.animation.AnimatorInflater;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
-import android.animation.TypeEvaluator;
-import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.content.res.XmlResourceParser;
-import android.graphics.Color;
-import android.graphics.Outline;
 import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.AttributeSet;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewAnimationUtils;
-import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
-import android.view.animation.PathInterpolator;
 import android.widget.Checkable;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 public class CheckableFab extends Fab implements Checkable {
@@ -76,16 +64,16 @@ public class CheckableFab extends Fab implements Checkable {
 		_checkedImageView = (ImageView)findViewById(R.id.psdarch_checked_fab_icon);
 		
 		if (attrs!=null) {
-			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.Fab, 0, 0);
+			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_fab, 0, 0);
 			
-			int checkedDrawableId = a.getResourceId(R.styleable.Fab_icon_checked, R.drawable.ic_action_done);
+			int checkedDrawableId = a.getResourceId(R.styleable.psdarch_fab_icon_checked, R.drawable.ic_action_done);
 			_checkedDrawable = res.getDrawable(checkedDrawableId);
 			_checkedImageView.setImageDrawable(_checkedDrawable);
 			
-			int iconOutAnimationId = a.getResourceId(R.styleable.Fab_icon_in_animation, R.animator.fab_animate_icon_out);
+			int iconOutAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_in_animation, R.animator.fab_animate_icon_out);
 			_iconOutAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconOutAnimationId);
 			
-			int iconInAnimationId = a.getResourceId(R.styleable.Fab_icon_out_animation, R.animator.fab_animate_icon_in);
+			int iconInAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_out_animation, R.animator.fab_animate_icon_in);
 			_iconInAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconInAnimationId);
 			
 			a.recycle();

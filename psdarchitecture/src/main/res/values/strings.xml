@@ -1,5 +1,7 @@
 <resources>
 
     <string name="app_name">PSDArchitecture</string>
+    <string name="psdarch_dialog_titlebar_title">Title</string>
+    <string name="psdarch_dialog_titlebar_txt_ok">Save</string>
 
 </resources>

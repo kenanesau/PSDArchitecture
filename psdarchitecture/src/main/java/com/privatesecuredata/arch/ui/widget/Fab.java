@@ -39,7 +39,7 @@ public class Fab extends FrameLayout
 	}
 
 	public Fab(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-		super(context, attrs, defStyleAttr);
+		super(context, attrs, defStyleAttr, defStyleRes);
 		
 		setClickable(true);
 		setFocusable(true);
@@ -52,17 +52,17 @@ public class Fab extends FrameLayout
 		_color = getResources().getColor(R.color.accent_light);
 
 		if (attrs != null) {
-			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.Fab, 0, 0);
+			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_fab, 0, 0);
 			
-			int defaultDrawableId = a.getResourceId(R.styleable.Fab_icon_default, R.drawable.ic_action_add_small);
+			int defaultDrawableId = a.getResourceId(R.styleable.psdarch_fab_icon_default, R.drawable.ic_action_add_small);
 			_defaultDrawable = res.getDrawable(defaultDrawableId);
 			getDefaultImageView().setImageDrawable(_defaultDrawable);
             getDefaultImageView().setColorFilter(_color, PorterDuff.Mode.DST);
 			
-			int defaultAnimationId = a.getResourceId(R.styleable.Fab_default_animation, R.animator.fab_animation_default);
+			int defaultAnimationId = a.getResourceId(R.styleable.psdarch_fab_default_animation, R.animator.fab_animation_default);
 			_defaultAnimator = (Animator) AnimatorInflater.loadAnimator(context, defaultAnimationId);
 
-            _disableOutline = a.getBoolean(R.styleable.Fab_disable_outline, false);
+            _disableOutline = a.getBoolean(R.styleable.psdarch_fab_disable_outline, false);
 
 			a.recycle();
 		}
