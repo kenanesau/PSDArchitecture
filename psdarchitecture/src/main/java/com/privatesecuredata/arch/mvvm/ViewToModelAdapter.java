@@ -101,7 +101,26 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 					IReadViewCommand<T> readViewCmd = new IReadViewCommand<T>() {
 						@Override
 						public T get(View view) {
-							return dataType.cast(((TextView) view).getText().toString());
+                            String strVal = ((TextView) view).getText().toString();
+
+                            if (dataType==String.class)
+                            {
+                                return dataType.cast(strVal);
+                            }
+                            if (dataType==Integer.class)
+                            {
+                                return dataType.cast(Integer.parseInt(strVal));
+                            }
+                            if (dataType==Float.class)
+                            {
+                                return dataType.cast(Float.parseFloat(strVal));
+                            }
+                            if (dataType==Double.class)
+                            {
+                                return dataType.cast(Double.parseDouble(strVal));
+                            }
+
+                            return null;
 						}
 					};
 					
