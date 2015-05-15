@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm;
 
+import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
@@ -102,25 +103,33 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 						@Override
 						public T get(View view) {
                             String strVal = ((TextView) view).getText().toString();
+							if ((null == strVal)  || strVal.isEmpty())
+								throw new MVVMException("String value is null or empty");
 
-                            if (dataType==String.class)
-                            {
-                                return dataType.cast(strVal);
-                            }
-                            if (dataType==Integer.class)
-                            {
-                                return dataType.cast(Integer.parseInt(strVal));
-                            }
-                            if (dataType==Float.class)
-                            {
-                                return dataType.cast(Float.parseFloat(strVal));
-                            }
-                            if (dataType==Double.class)
-                            {
-                                return dataType.cast(Double.parseDouble(strVal));
-                            }
+							try {
+								if (dataType==String.class)
+								{
+									return dataType.cast(strVal);
+								}
+								if (dataType==Integer.class)
+								{
+									return dataType.cast(Integer.parseInt(strVal));
+								}
+								if (dataType==Float.class)
+								{
+									return dataType.cast(Float.parseFloat(strVal));
+								}
+								if (dataType==Double.class)
+								{
+									return dataType.cast(Double.parseDouble(strVal));
+								}
 
-                            return null;
+								return null;
+							}
+							catch (Exception ex)
+							{
+								throw new MVVMException(String.format("Error converting string '%s'-value!", dataType.getSimpleName()), ex);
+							}
 						}
 					};
 					
@@ -182,7 +191,13 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 			public void afterTextChanged(Editable s) {
 				if ( !isVMUpdatesView() && canWriteToModel() ) 
 				{
-					vm.set(ViewToModelAdapter.this.getReadViewCommand().get(ViewToModelAdapter.this.view));
+					try {
+						vm.set(ViewToModelAdapter.this.getReadViewCommand().get(ViewToModelAdapter.this.view));
+					}
+					catch(MVVMException ex)
+					{
+						//Unreadable value -- for the moment do nothing
+					}
 				}
 			}
 		};
