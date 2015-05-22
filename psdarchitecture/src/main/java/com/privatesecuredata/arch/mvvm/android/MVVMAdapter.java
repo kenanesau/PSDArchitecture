@@ -17,11 +17,11 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBindin
 	
 	public MVVMAdapter(View mainView, COMPLEXVM vm) {
 		if (null == mainView)
-			throw new ArgumentException("Parameter \"Activity\" must not be null");
+			throw new ArgumentException("Parameter \"mainView\" must not be null");
 		this.mainView = mainView;
 		
 		if (null == mainView)
-			throw new ArgumentException("Parameter \"COMPLEXVM\" must not be null");
+			throw new ArgumentException("Parameter \"vm\" must not be null");
 		this.vm = vm;
 	}
 	

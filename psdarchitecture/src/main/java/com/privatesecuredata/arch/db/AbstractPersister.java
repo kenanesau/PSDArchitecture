@@ -33,14 +33,15 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	@Override
 	public void init(Object obj) {
         setPM((PersistanceManager) obj);
-		String delStatement = String.format(getDelSqlString(), getTableName());
-        try {
-            this.delete = getDb().compileStatement(delStatement);
-        }
-        catch (Exception ex)
-        {
-            // table does not exist, if persistent type has no fields to persist -> that's fine.
-        }
+
+		Cursor cursor = getDb().rawQuery("SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = '"+getTableName()+"'", null);
+		if ( (null != cursor) && (cursor.getCount() > 0) ) {
+			String delStatement = String.format(getDelSqlString(), getTableName());
+			this.delete = getDb().compileStatement(delStatement);
+		}
+		if (null != cursor)
+			cursor.close();
+
         this._foreignListCountUpdateStatements = new Hashtable<Field, SQLiteStatement>();
 	}
 	@Override
