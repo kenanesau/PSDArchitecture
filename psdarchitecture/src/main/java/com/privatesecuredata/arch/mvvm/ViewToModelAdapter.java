@@ -30,17 +30,17 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	private SimpleValueVM<T> vm;
 	private boolean vmUpdatesView = false;
 	
-	public ViewToModelAdapter(Class<T> _dataType, IGetVMCommand<T> _getModelCmd)
+	public ViewToModelAdapter(Class<T> type, IGetVMCommand<T> getVMCommand)
 	{
-		super(_dataType);
-		setGetModelCommand(_getModelCmd);
+		super(type);
+		setGetVMCommand(getVMCommand);
 	}
 	
 	public ViewToModelAdapter(TransientViewToModelAdapter<T> other)
 	{
 		super(other.dataType);
 		
-		this.setGetModelCommand(other.getGetModelCommand());
+		this.setGetVMCommand(other.getGetVMCommand());
 		this.setReadViewCommand(other.getReadViewCommand());
 		this.setWriteViewCommand(other.getWriteViewCommand());
 	}
@@ -284,17 +284,17 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
         }
 	}
 	
-	public void init(View _view, IViewModel<?> complexVM)
+	public void init(View view, IViewModel<?> complexVM)
 	{
 		if (null != this.view)
 			unregisterListeners();
-		this.view = _view;
+		this.view = view;
 		if (needsViewCommands())
-			detectViewCommands(_view);
+			detectViewCommands(view);
 		
 		//Most important two lines in the whole code: Register for VM-changes->View is updated automagically
-		if (null != this.getGetModelCommand())
-			this.setVM( this.getGetModelCommand().getVM(complexVM) );
+		if (null != this.getGetVMCommand())
+			this.setVM( this.getGetVMCommand().getVM(complexVM) );
 	}
 	
 	public boolean isViewChanged() {
@@ -327,7 +327,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	@Override
 	public void updateView(View v, IViewModel<?> complexVM) 
 	{
-		this.setVM(this.getModelCmd.getVM(complexVM));
+		this.setVM(this.getSimpleVMCmd.getVM(complexVM));
         SimpleValueVM vm = this.getVM();
 
         if (null != vm)
@@ -337,6 +337,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	@Override
 	public void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator)
 	{
+        this.writeViewCmd.set(this.view, this.getVM().get());
 	}
 
     /**

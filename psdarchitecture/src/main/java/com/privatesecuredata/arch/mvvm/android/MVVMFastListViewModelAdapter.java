@@ -114,14 +114,14 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 	
 	protected int getRowViewId() { return this.rowViewId; }
 	
-	public <T> void addModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
+	public <T> void setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
 	{
 		TransientViewToModelAdapter<T> adapter = (TransientViewToModelAdapter<T>)view2ModelAdapters.get(viewId);
 		if (null==adapter) {
 			adapter=new TransientViewToModelAdapter<T>(type);
 			view2ModelAdapters.put(viewId, adapter);
 		}
-		adapter.setGetModelCommand(getModelCmd);
+		adapter.setGetVMCommand(getModelCmd);
 	}
 	
 	/**
@@ -225,11 +225,11 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 	{ 
 		this.selectionViewId = id;
 		
-		this.addModelMapping(Boolean.class, id, new IGetVMCommand<Boolean>() {
+		this.setModelMapping(Boolean.class, id, new IGetVMCommand<Boolean>() {
 			@Override
 			public SimpleValueVM<Boolean> getVM(IViewModel<?> vm) {
 				if (vm instanceof ComplexViewModel<?>)
-					return ((ComplexViewModel<?>)vm).getSelectedVM();
+					return ((ComplexViewModel<?>) vm).getSelectedVM();
 				else
 					return new SimpleValueVM<Boolean>(false);
 			}

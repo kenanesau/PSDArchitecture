@@ -30,10 +30,10 @@ public class TransientViewToModelAdapter<T> {
 	protected IReadViewCommand<T> readViewCmd;
 	protected IWriteViewCommand<T> writeViewCmd;
 	
-	protected IGetVMCommand<T> getModelCmd;
+	protected IGetVMCommand<T> getSimpleVMCmd;
 	
-	public void setGetModelCommand(IGetVMCommand<T> cmd) { this.getModelCmd = cmd; }
-	public IGetVMCommand<T> getGetModelCommand() { return this.getModelCmd; }
+	public void setGetVMCommand(IGetVMCommand<T> cmd) { this.getSimpleVMCmd = cmd; }
+	public IGetVMCommand<T> getGetVMCommand() { return this.getSimpleVMCmd; }
 	public void setReadViewCommand(IReadViewCommand<T> cmd) { this.readViewCmd = cmd; }
 	public void setWriteViewCommand(IWriteViewCommand<T> cmd) { this.writeViewCmd = cmd; }
 	public IReadViewCommand<T> getReadViewCommand() { return this.readViewCmd; }
@@ -52,10 +52,10 @@ public class TransientViewToModelAdapter<T> {
 	}
 	
 	public void setCommands(IReadViewCommand<T> rdViewCmd, IWriteViewCommand<T> wrViewCmd,
-							IGetVMCommand<T> getModelCmd)
+							IGetVMCommand<T> getVMCmd)
 	{
 		this.setViewCommands(rdViewCmd, wrViewCmd);
-		this.setGetModelCommand(getModelCmd);
+		this.setGetVMCommand(getVMCmd);
 	}
 	
 	/**
@@ -66,7 +66,7 @@ public class TransientViewToModelAdapter<T> {
 	 */
 	public void updateView(View v, IViewModel<?> vm)
 	{
-		this.writeViewCmd.set(v, this.getModelCmd.getVM(vm).get());
+		this.writeViewCmd.set(v, this.getSimpleVMCmd.getVM(vm).get());
 	}
 	
 	/**
@@ -74,7 +74,7 @@ public class TransientViewToModelAdapter<T> {
 	 */
 	protected boolean needsWriteViewCommand()
 	{
-		if ( (null != getModelCmd) && (null == writeViewCmd) )
+		if ( (null != getSimpleVMCmd) && (null == writeViewCmd) )
 			return true;
 		else
 			return false; 
@@ -85,7 +85,7 @@ public class TransientViewToModelAdapter<T> {
 	 */
 	protected boolean needsReadViewCommand()
 	{
-		if ( (null != getModelCmd) && (null == readViewCmd))
+		if ( (null != getSimpleVMCmd) && (null == readViewCmd))
 			return true;
 		else
 			return false;
@@ -93,7 +93,7 @@ public class TransientViewToModelAdapter<T> {
 	
 	protected boolean canWriteToModel() 
 	{
-		if ( null != getGetModelCommand() )
+		if ( null != getGetVMCommand() )
 			return true;
 		else
 			return false;

@@ -26,10 +26,10 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBindin
 	}
 	
 	
-	public <T> void addModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
+	public <T> void setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
 	{
 		ViewToModelAdapter<T> adapter = (ViewToModelAdapter<T>)view2ModelAdapters.get(viewId);
-		if (null==adapter) {
+		if (null == adapter) {
 			adapter=new ViewToModelAdapter<T>(type, getModelCmd);
 			View view = mainView.findViewById(viewId);
 			if (null == view)
@@ -40,7 +40,7 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBindin
 			view2ModelAdapters.put(viewId, adapter);
 		}
 		else {
-			adapter.setGetModelCommand(getModelCmd);
+			adapter.setGetVMCommand(getModelCmd);
 		}
 	}
 
