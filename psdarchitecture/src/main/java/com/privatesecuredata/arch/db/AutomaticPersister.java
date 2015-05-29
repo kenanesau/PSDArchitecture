@@ -450,8 +450,9 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				IPersistable other = (IPersistable) rel.getField().get(persistable);
 				if (null == other)
 					continue;
-				
-				getPM().save(other);
+
+				if (other.getDbId() == null ? true : other.getDbId().getDirty())
+					getPM().save(other);
 			}
 		}
 		catch (Exception ex)

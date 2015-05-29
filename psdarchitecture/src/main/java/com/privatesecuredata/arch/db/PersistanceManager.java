@@ -41,6 +41,7 @@ public class PersistanceManager {
 	private SQLiteDatabase db;
 	private IDbDescription dbDesc;
 	private boolean initialized = false;
+	private MVVM mvvm = null;
 	
 	public PersistanceManager(IDbDescription dbDesc) 
 	{
@@ -745,10 +746,13 @@ public class PersistanceManager {
    }
 
     public MVVM createMVVM() {
-        MVVM mvvm = MVVM.createMVVM(this);
-        IListViewModelFactory factory = new DbListViewModelFactory(this);
-        mvvm.setListViewModelFactory(factory);
-        mvvm.addGlobalCommitListener(new DBViewModelCommitListener());
+		if (this.mvvm == null) {
+			this.mvvm = MVVM.createMVVM(this);
+			IListViewModelFactory factory = new DbListViewModelFactory(this);
+			this.mvvm.setListViewModelFactory(factory);
+			this.mvvm.addGlobalCommitListener(new DBViewModelCommitListener());
+		}
+
         return mvvm;
     }
 
