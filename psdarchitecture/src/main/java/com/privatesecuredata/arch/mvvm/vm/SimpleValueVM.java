@@ -11,9 +11,14 @@ import com.privatesecuredata.arch.mvvm.CommitCommand;
 import com.privatesecuredata.arch.mvvm.ICommitCommand;
 
 public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
+	public interface IValidator<T> {
+		boolean validate(T oldData, T newData);
+	}
+
 	private T data;
 	private Class<T> clazz;
-	List<ICommitCommand> commitCommands = new ArrayList<ICommitCommand>();
+	private List<ICommitCommand> commitCommands = new ArrayList<ICommitCommand>();
+	private IValidator<T> validator = null;
 	
 	private void init(Class<T> clazz, T data)
 	{
@@ -31,19 +36,28 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	{
 		if (null==data)
 			throw new ArgumentException("Parameter \"data\" must not be null. Use SimpleValueVM(Class<T>, T) if you want to cope with null values.");
-		init((Class<T>)data.getClass(), data);
+		init((Class<T>) data.getClass(), data);
 	}
-	
-	public void set(T newData)
+
+	public void setValidator(IValidator<T> validator) {
+		this.validator = validator;
+	}
+
+	public void set(T newData) throws ArgumentException
 	{
 		if ( (null == data) || (!this.data.equals(newData)) )
 		{
-			this.setDirty();
-			this.data = newData;
-			notifyViewModelDirty(this, this);
+			if ( (null == validator ? true : validator.validate(this.data, newData)) ) {
+				this.setDirty();
+				this.data = newData;
+				notifyViewModelDirty(this, this);
+			}
+			else {
+				throw new ArgumentException("Validation failed!!!");
+			}
 		}
 	}
-	
+
 	public T get() { return this.data; }
 	
 	public void RegisterCommitCommand(ICommitCommand command)

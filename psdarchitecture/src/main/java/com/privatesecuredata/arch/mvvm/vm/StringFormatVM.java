@@ -20,20 +20,29 @@ public class StringFormatVM extends SimpleValueVM<String> {
         super(formatString);
 
         this._valueVMs = valueVM;
-        for (SimpleValueVM valVM : _valueVMs)
-            valVM.addViewModelListener(this);
+        if (null != _valueVMs) {
+            for (SimpleValueVM valVM : _valueVMs)
+                valVM.addViewModelListener(this);
+        }
     }
 
     @Override
     public String get() {
-        Object[] objs = new Object[_valueVMs.length];
-        for(int i = 0; i < objs.length; i++)
-        {
-            objs[i] = _valueVMs[i].get();
+        String str = null;
+        if (null != _valueVMs) {
+            Object[] objs = new Object[_valueVMs.length];
+            for (int i = 0; i < objs.length; i++) {
+                objs[i] = _valueVMs[i].get();
+            }
+
+            String format = super.get();
+            str = String.format(format, objs);
+        }
+        else {
+            str = super.get();
         }
 
-        String format = super.get();
-        return String.format(format, objs);
+        return str;
     }
 
 }

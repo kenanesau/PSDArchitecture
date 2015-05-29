@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
@@ -8,6 +9,7 @@ import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
 import android.view.View.OnFocusChangeListener;
@@ -170,7 +172,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
                             new IWidgetValueReceiver() {
                                 @Override
                                 public void notifyWidgetChanged(IWidgetValueAccessor accessor) {
-                                    vm.set(ViewToModelAdapter.this.getReadViewCommand().get(ViewToModelAdapter.this.view));
+									viewValueToViewModel(ViewToModelAdapter.this.view, vm);
                                 }
                             };
 
@@ -191,13 +193,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 			public void afterTextChanged(Editable s) {
 				if ( !isVMUpdatesView() && canWriteToModel() ) 
 				{
-					try {
-						vm.set(ViewToModelAdapter.this.getReadViewCommand().get(ViewToModelAdapter.this.view));
-					}
-					catch(MVVMException ex)
-					{
-						//Unreadable value -- for the moment do nothing
-					}
+					viewValueToViewModel(ViewToModelAdapter.this.view, vm);
 				}
 			}
 		};
@@ -247,7 +243,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 			public void onClick(View v) {
 				ViewToModelAdapter.this.viewChanged = true;
 				if (canWriteToModel())
-					vm.set(ViewToModelAdapter.this.getReadViewCommand().get(v));
+					viewValueToViewModel(v, vm);
 			}
 		};
 		
@@ -266,7 +262,23 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 			chkView.setOnClickListener(chkButtonListener);
 		}
 	}
-	
+
+	private void viewValueToViewModel(View view, SimpleValueVM<T> vm) {
+		try {
+			vm.set(getReadViewCommand().get(view));
+		}
+		catch(MVVMException ex)
+		{
+			Log.e(getClass().getSimpleName(), "Unreadable view!!!!", ex);
+			//Unreadable value -- for the moment do nothing
+		}
+		catch(ArgumentException ex)
+		{
+			/** Reset the View to the value of the VM **/
+			writeViewCmd.set(view, vm.get());
+		}
+	}
+
 	protected void unregisterListeners()
 	{
 		this.view.setOnFocusChangeListener(null);
