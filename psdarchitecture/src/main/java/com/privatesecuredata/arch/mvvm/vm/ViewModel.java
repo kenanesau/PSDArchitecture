@@ -27,7 +27,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	
 	@Override
 	public MODEL getModel() throws MVVMException { return this.model; }
-
+	public boolean hasModel() { return (model != null);}
 	
 	@Override
 	public void addViewModelListener(IViewModelChangedListener listener)

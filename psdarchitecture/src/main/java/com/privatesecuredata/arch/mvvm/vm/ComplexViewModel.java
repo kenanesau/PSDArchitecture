@@ -85,7 +85,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     @Override
 	public MODEL getModel() throws MVVMException 
 	{
-		load();
+        if (!hasModel())
+		    load();
 		return super.getModel();
 	}
 
@@ -156,7 +157,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	}
 
 	/**
-	 * This function is used by the functions set setComplexModelMapping() and  setListModelMapping()
+	 * This function is used by the functions setComplexModelMapping() and  setListModelMapping()
 	 * to enable lazy loading on the child model.
 	 * 
 	 * @param parentViewModel the parent view-model on which the modelGetter is invoked
@@ -170,6 +171,11 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		this.parentViewModel = parentViewModel;
 	}
 
+    /**
+     * Return the field within the parent-model which contains the model for this VM.
+     *
+     * @return Field
+     */
     protected Field getModelField() {
         return this.modelField;
     }
@@ -262,6 +268,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
         for (Field field : fields)
         {
+            field.setAccessible(true);
             try {
                 SimpleVmMapping simpleAnno = field.getAnnotation(SimpleVmMapping.class);
                 if (null != simpleAnno)
@@ -343,12 +350,16 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 			Field field, ComplexVmMapping complexAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
         try {
             Class<?> modelType = field.getType();
+            /**
+             * This VM has a model otherwise this method would not be called
+             **/
+            Object childModel = field.get(getModel());
 
-            if (complexAnno.loadLazy() == false) {
+            /**
+             * If the Childmodel is != null -> it is in memory -> create the VM
+             */
+            if (!complexAnno.loadLazy() || childModel != null) {
                 Class<?> viewModelType;
-                Method childModelGetter = createGetter(field);
-                Object childModel = childModelGetter.invoke(getModel(), (Object[]) null);
-
                 if (childModel != null) {
                     modelType = childModel.getClass();
                     ComplexVmMapping anno = modelType.getAnnotation(ComplexVmMapping.class);
@@ -357,6 +368,9 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                                 String.format("Type \"%s\" does not have a ComplexVmMapping-Annotation. Please provide one!", modelType.getName()));
                     viewModelType = anno.viewModelClass();
                 } else {
+                    /** Cannot determin type of an null-reference -> Use the type of the annotation
+                     * -> This is not correct in all cases
+                     **/
                     viewModelType = complexAnno.viewModelClass();
                 }
 
