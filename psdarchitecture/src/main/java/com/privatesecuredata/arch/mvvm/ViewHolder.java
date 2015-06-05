@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.mvvm;
 
 import android.view.View;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class ViewHolder<T> implements IViewHolder<T> {
@@ -44,6 +45,10 @@ public class ViewHolder<T> implements IViewHolder<T> {
 				((TextView) view).setText((val != null ? val.toString() : ""));
 			else if (view instanceof CompoundButton)
 				((CompoundButton) view).setChecked((val != null ? (Boolean)val : false));
+			else if (view instanceof ImageView)
+			{
+                ///TODO add support of ImageView to ViewHolder
+			}
 		}
 		
 		this.pairs = newPairs;
