@@ -42,6 +42,7 @@ public class PersistanceManager {
 	private IDbDescription dbDesc;
 	private boolean initialized = false;
 	private MVVM mvvm = null;
+	private Context ctx;
 	
 	public PersistanceManager(IDbDescription dbDesc) 
 	{
@@ -65,6 +66,7 @@ public class PersistanceManager {
 		try {
 			if (null == this.db)
 			{
+				this.ctx = ctx;
 				ContextWrapper ctxWrapper = new ContextWrapper(ctx);
 				File dbFile = ctxWrapper.getDatabasePath(dbDesc.getName());
 				File dbDir = new File(dbFile.getParent());
@@ -748,6 +750,8 @@ public class PersistanceManager {
     public MVVM createMVVM() {
 		if (this.mvvm == null) {
 			this.mvvm = MVVM.createMVVM(this);
+			if (null != this.ctx)
+				this.mvvm.setResources(this.ctx.getResources());
 			IListViewModelFactory factory = new DbListViewModelFactory(this);
 			this.mvvm.setListViewModelFactory(factory);
 			this.mvvm.addGlobalCommitListener(new DBViewModelCommitListener());

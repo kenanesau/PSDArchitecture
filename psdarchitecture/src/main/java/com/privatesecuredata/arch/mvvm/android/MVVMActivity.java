@@ -18,7 +18,7 @@ public class MVVMActivity extends FragmentActivity {
 	{
 		PersistanceManagerLocator.initializeDB(desc);
 		PersistanceManagerLocator pmLoc = PersistanceManagerLocator.getInstance();
-		return pmLoc.getPersistanceManager(getApplicationContext(), desc); 
+		return pmLoc.getPersistanceManager(this, desc);
 	}
 	
 	public void setDefaultPM(PersistanceManager pm)

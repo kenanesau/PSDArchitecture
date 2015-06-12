@@ -19,7 +19,7 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBindin
 		if (null == mainView)
 			throw new ArgumentException("Parameter \"mainView\" must not be null");
 		this.mainView = mainView;
-		
+
 		if (null == mainView)
 			throw new ArgumentException("Parameter \"vm\" must not be null");
 		this.vm = vm;

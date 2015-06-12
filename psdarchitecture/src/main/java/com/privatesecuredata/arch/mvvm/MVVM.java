@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm;
 
+import android.content.res.Resources;
 import android.util.SparseArray;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -20,6 +21,7 @@ import java.util.Collection;
 public class MVVM {
     private static SparseArray<Object> cfgObjs = new SparseArray<>();
     private static SparseArray<MVVM> mvvmInsts = new SparseArray<MVVM>();
+    private Resources res;
 
     private static int instCnt = -1;
     private int _handle;
@@ -138,4 +140,7 @@ public class MVVM {
     {
         globalCommitListeners.remove(listener);
     }
+
+    public void setResources(Resources res) { this.res = res; }
+    public Resources getResources() { return res; }
 }
