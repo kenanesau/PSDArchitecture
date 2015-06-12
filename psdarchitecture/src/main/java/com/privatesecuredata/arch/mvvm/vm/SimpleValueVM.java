@@ -9,6 +9,7 @@ import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.CommitException;
 import com.privatesecuredata.arch.mvvm.CommitCommand;
 import com.privatesecuredata.arch.mvvm.ICommitCommand;
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
 public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	public interface IValidator<T> {
@@ -43,19 +44,24 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 		this.validator = validator;
 	}
 
-	public void set(T newData) throws ArgumentException
+	public void set(T newData, IViewModelChangedListener originator) throws ArgumentException
 	{
 		if ( (null == data) || (!this.data.equals(newData)) )
 		{
 			if ( (null == validator ? true : validator.validate(this.data, newData)) ) {
 				this.setDirty();
 				this.data = newData;
-				notifyViewModelDirty(this, this);
+				notifyChangeListeners(this, originator);
 			}
 			else {
 				throw new ArgumentException("Validation failed!!!");
 			}
 		}
+	}
+
+	public void set(T newData) throws ArgumentException
+	{
+		set(newData, null);
 	}
 
 	public T get() { return this.data; }

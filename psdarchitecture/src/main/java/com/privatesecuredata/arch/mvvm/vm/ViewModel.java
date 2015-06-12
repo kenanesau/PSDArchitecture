@@ -5,7 +5,6 @@ import java.util.Collection;
 
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
-import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * @author kenan
@@ -40,13 +39,18 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	{
 		this.changeListeners.remove(listener);
 	}
-	
+
 	@Override
 	public void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator)
 	{
+		notifyChangeListeners(originator, null);
+	}
+
+	protected void notifyChangeListeners(IViewModel<?> originator, IViewModelChangedListener skip)
+	{
 		this.setDirty();
 		for(IViewModelChangedListener listener : changeListeners)
-			listener.notifyViewModelDirty(this, originator);
+			if (skip != listener) listener.notifyViewModelDirty(this, originator);
 	}
 	
 	@Override

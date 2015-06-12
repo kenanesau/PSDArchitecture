@@ -77,8 +77,10 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 					IWriteViewCommand<T> writeCmd = new IWriteViewCommand<T>() {
 							@Override
 							public void set(View view, T val) {
-								if ( !isVMUpdatesView() && (null!=val) )
-									((TextView)view).setText(val.toString());						
+								if ( !isVMUpdatesView() && (null!=val) ) {
+									TextView txtView = ((TextView)view);
+									txtView.setText(val.toString());
+								}
 							}
 						};
 				
@@ -265,7 +267,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 
 	private void viewValueToViewModel(View view, SimpleValueVM<T> vm) {
 		try {
-			vm.set(getReadViewCommand().get(view));
+			vm.set(getReadViewCommand().get(view), this);
 		}
 		catch(MVVMException ex)
 		{
@@ -352,8 +354,8 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
         this.writeViewCmd.set(this.view, this.getVM().get());
 	}
 
-    /**
-     * A Model changed and the corresponding View has to be updatet...
+	/**
+     * A Model changed and the corresponding View has to be updated...
      */
     @Override
     public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
