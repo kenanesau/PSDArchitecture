@@ -750,8 +750,10 @@ public class PersistanceManager {
     public MVVM createMVVM() {
 		if (this.mvvm == null) {
 			this.mvvm = MVVM.createMVVM(this);
-			if (null != this.ctx)
+			if (null != this.ctx) {
 				this.mvvm.setResources(this.ctx.getResources());
+				this.mvvm.setContext(this.ctx);
+			}
 			IListViewModelFactory factory = new DbListViewModelFactory(this);
 			this.mvvm.setListViewModelFactory(factory);
 			this.mvvm.addGlobalCommitListener(new DBViewModelCommitListener());

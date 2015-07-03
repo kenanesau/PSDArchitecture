@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import android.content.Context;
 import android.content.res.Resources;
 
 import java.lang.reflect.Constructor;
@@ -543,5 +544,6 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     public boolean isGlobalNotifyEnabled() { return this.globalNotify; }
 
     public Resources getResources() { return this.mvvm.getResources();}
+    public Context getContext() { return this.mvvm.getContext();}
 }
  

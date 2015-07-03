@@ -4,7 +4,7 @@ import com.privatesecuredata.arch.exceptions.ArgumentException;
 
 /**
  * With this VM you can execute code whenever the data of this VM changes or is
- * accesed. One can use this for validating the data which is written to this VM.
+ * accessed. One can use this for validating the data which is written to this VM.
  *
  * Whenever the data should not be written to the VM the ISetDataCB has to return false.
  **/

@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm;
 
+import android.content.Context;
 import android.content.res.Resources;
 import android.util.SparseArray;
 
@@ -22,6 +23,7 @@ public class MVVM {
     private static SparseArray<Object> cfgObjs = new SparseArray<>();
     private static SparseArray<MVVM> mvvmInsts = new SparseArray<MVVM>();
     private Resources res;
+    private Context ctx;
 
     private static int instCnt = -1;
     private int _handle;
@@ -143,4 +145,7 @@ public class MVVM {
 
     public void setResources(Resources res) { this.res = res; }
     public Resources getResources() { return res; }
+    public void setContext(Context ctx) { this.ctx = ctx; }
+    public Context getContext() { return ctx; }
+
 }

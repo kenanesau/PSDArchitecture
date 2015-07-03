@@ -15,11 +15,16 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	public interface IValidator<T> {
 		boolean validate(T oldData, T newData);
 	}
+	public interface IDefaultFilter<T>
+	{
+		T filter(T data);
+	}
 
 	private T data;
 	private Class<T> clazz;
 	private List<ICommitCommand> commitCommands = new ArrayList<ICommitCommand>();
 	private IValidator<T> validator = null;
+	private IDefaultFilter<T> filter = null;
 	
 	private void init(Class<T> clazz, T data)
 	{
@@ -64,7 +69,12 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 		set(newData, null);
 	}
 
-	public T get() { return this.data; }
+	public void setDefaultFilter(IDefaultFilter<T> filter)
+	{
+		this.filter = filter;
+	}
+
+	public T get() {  return filter != null ? filter.filter(this.data) : this.data; }
 	
 	public void RegisterCommitCommand(ICommitCommand command)
 	{
