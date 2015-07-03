@@ -20,9 +20,10 @@ public class DateFormatVM extends SimpleValueVM<String> {
      * @param valueVM      Value-parameter(s) for the format-string
      */
     public DateFormatVM(DateFormat format, SimpleValueVM<Date> valueVM) {
-        super("");
+        super(String.class, null);
         this._valueVM = valueVM;
         this._format = format;
+
         if (null != _valueVM) {
             valueVM.addViewModelListener(this);
         }
@@ -33,7 +34,10 @@ public class DateFormatVM extends SimpleValueVM<String> {
         String str = null;
         if (null != _valueVM) {
             Date date = _valueVM.get();
-            str = date != null ? _format.format(_valueVM.get()) : "";
+            if (null != date)
+                str = _format.format(date);
+
+            str = filter != null ? filter.filter(str) : str;
         }
         else {
             str = super.get();

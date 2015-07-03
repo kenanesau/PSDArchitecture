@@ -52,11 +52,11 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 		T filter(T data);
 	}
 
-	private T data;
-	private Class<T> clazz;
-	private List<ICommitCommand> commitCommands = new ArrayList<ICommitCommand>();
-	private IValidator<T> validator = null;
-	private IDefaultFilter<T> filter = null;
+	protected T data;
+	protected Class<T> clazz;
+	protected List<ICommitCommand> commitCommands = new ArrayList<ICommitCommand>();
+	protected IValidator<T> validator = null;
+	protected IDefaultFilter<T> filter = null;
 	
 	private void init(Class<T> clazz, T data)
 	{

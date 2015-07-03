@@ -35,8 +35,9 @@ public class StringFormatVM extends SimpleValueVM<String> {
                 objs[i] = _valueVMs[i].get();
             }
 
-            String format = super.get();
+            String format = data;
             str = String.format(format, objs);
+            return filter != null ? filter.filter(str) : str;
         }
         else {
             str = super.get();

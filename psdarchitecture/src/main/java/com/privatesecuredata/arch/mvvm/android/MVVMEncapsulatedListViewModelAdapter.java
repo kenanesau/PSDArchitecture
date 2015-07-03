@@ -77,11 +77,10 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 	public void setData(EncapsulatedListViewModel<M, COMPLEXVM> data)
 	{
 		if (null != this.data)
-		{
 			this.data.delModelListener(this);
-		}
 		this.data = data;
-		this.data.addModelListener(this);
+        if (null != this.data)
+		    this.data.addModelListener(this);
         if (null != filteredColumn)
             this.data.setFilteredColumn(filteredColumn);
 		this.notifyDataSetChanged();
