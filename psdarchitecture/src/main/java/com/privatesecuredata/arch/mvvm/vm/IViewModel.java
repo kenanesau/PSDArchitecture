@@ -10,7 +10,7 @@ import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
  *
  * @param <MODEL>
  */
-public interface IViewModel<MODEL> extends IViewModelChangedListener {
+public interface IViewModel<MODEL> extends IViewModelChangedListener, IModelChangedListener {
 
 	/**   
 	 * @return Returns the model
@@ -19,6 +19,10 @@ public interface IViewModel<MODEL> extends IViewModelChangedListener {
 
 	public abstract void addViewModelListener(IViewModelChangedListener listener);
 	public abstract void delViewModelListener(IViewModelChangedListener listener);
+	public abstract void addModelListener(IModelChangedListener listener);
+	public abstract void delModelListener(IModelChangedListener listener);
+	public abstract void addListeners(IViewModelChangedListener vmListener, IModelChangedListener modelListener);
+	public abstract void delListeners(IViewModelChangedListener vmListener, IModelChangedListener modelListener);
 	public abstract void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator);
 	public abstract void notifyViewModelDirty();
     public abstract void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator);

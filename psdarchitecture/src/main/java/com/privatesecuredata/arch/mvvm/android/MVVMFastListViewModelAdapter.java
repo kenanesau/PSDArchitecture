@@ -17,6 +17,7 @@ import android.widget.ListView;
 import com.privatesecuredata.arch.mvvm.IDataBinding;
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.MVVM;
+import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
@@ -244,11 +245,6 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 		//notify (list)view of changed data -> redraw
 		this.notifyDataSetChanged();
 	}
-
-    @Override
-    public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
-
-    }
 
     public void setModelReaderStrategy(IModelReaderStrategy<M> readerStrategy) {
 		this.modelReaderStrategy = (IModelReaderStrategy<M>) readerStrategy;

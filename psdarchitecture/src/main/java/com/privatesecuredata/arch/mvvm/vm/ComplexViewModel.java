@@ -449,9 +449,14 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     @Override
     public void commit() {
         boolean wasDirty = this.isDirty();
-        super.commit();
+        if (wasDirty)
+            this.commitData();
+
         if ( (wasDirty) && (isGlobalNotifyEnabled()) )
                 getMVVM().notifyCommit(this);
+
+        if (wasDirty)
+            notifyModelChanged();
     }
 
 	/**

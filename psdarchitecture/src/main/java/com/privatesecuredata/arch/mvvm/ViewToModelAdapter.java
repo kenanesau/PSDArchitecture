@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.mvvm;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
+import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
@@ -20,7 +21,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T> 
-									implements IViewModelChangedListener
+									implements IModelChangedListener, IViewModelChangedListener
 {
 	private boolean viewChanged;
 	private View view;
@@ -324,12 +325,12 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	public SimpleValueVM<T> getVM() { return vm; }
 	public void setVM(SimpleValueVM<T> _vm) {
 		if (null != this.vm)
-			this.vm.delViewModelListener(this);
+			this.vm.delListeners(this, this);
 
 		this.vm = _vm;
 
         if (null != this.vm)
-		    this.vm.addViewModelListener(this);
+		    this.vm.addListeners(this, this);
 	}
 
 	/**

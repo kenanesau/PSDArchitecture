@@ -1,4 +1,4 @@
-package com.privatesecuredata.arch.mvvm.vm;
+	package com.privatesecuredata.arch.mvvm.vm;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +15,8 @@ import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
  */
 public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IViewModel<MODEL> {
 	
-	private Collection<IViewModelChangedListener> changeListeners = new ArrayList<IViewModelChangedListener>();
+	private Collection<IViewModelChangedListener> viewModelChangeListeners = new ArrayList<IViewModelChangedListener>();
+	private Collection<IModelChangedListener> modelChangeListeners = new ArrayList<IModelChangedListener>();
 	private boolean isDirty = false;
 	private MODEL model;
 
@@ -27,17 +28,44 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	@Override
 	public MODEL getModel() throws MVVMException { return this.model; }
 	public boolean hasModel() { return (model != null);}
-	
+
 	@Override
-	public void addViewModelListener(IViewModelChangedListener listener)
-	{
-		this.changeListeners.add(listener);
+	public void addViewModelListener(IViewModelChangedListener listener) {
+		if (null != listener)
+			this.viewModelChangeListeners.add(listener);
 	}
-	
+
 	@Override
 	public void delViewModelListener(IViewModelChangedListener listener)
 	{
-		this.changeListeners.remove(listener);
+		this.viewModelChangeListeners.remove(listener);
+	}
+
+	@Override
+	public void addModelListener(IModelChangedListener listener) {
+		if (null != listener)
+			this.modelChangeListeners.add(listener);
+	}
+
+	@Override
+	public void delModelListener(IModelChangedListener listener)
+	{
+		if (null != listener)
+			this.modelChangeListeners.remove(listener);
+	}
+
+	@Override
+	public void addListeners(IViewModelChangedListener vmListener, IModelChangedListener modelListener)
+	{
+		addViewModelListener(vmListener);
+		addModelListener(modelListener);
+	}
+
+	@Override
+	public void delListeners(IViewModelChangedListener vmListener, IModelChangedListener modelListener)
+	{
+		delViewModelListener(vmListener);
+		delModelListener(modelListener);
 	}
 
 	@Override
@@ -49,7 +77,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	protected void notifyChangeListeners(IViewModel<?> originator, IViewModelChangedListener skip)
 	{
 		this.setDirty();
-		for(IViewModelChangedListener listener : changeListeners)
+		for(IViewModelChangedListener listener : viewModelChangeListeners)
 			if (skip != listener) listener.notifyViewModelDirty(this, originator);
 	}
 	
@@ -63,7 +91,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
     public void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator)
     {
         this.setClean();
-        for(IViewModelChangedListener listener : changeListeners)
+        for(IModelChangedListener listener : modelChangeListeners)
             listener.notifyModelChanged(this, originator);
     }
 

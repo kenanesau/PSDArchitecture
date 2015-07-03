@@ -11,12 +11,44 @@ import com.privatesecuredata.arch.mvvm.CommitCommand;
 import com.privatesecuredata.arch.mvvm.ICommitCommand;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
+/**
+ * Class to encapsulate primitive values. All ComplexViewModels are composed of SimpleValueVMs
+ * (+ other VMs)
+ * @param <T> The type of the value to be encapsulated
+ * @see ComplexViewModel
+ */
 public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
+    /**
+     * Interface for specifying a validator-CB to run before setting the value
+     * of the VM. If the validate-function returns false the value is not set in
+     * the VM.
+     * @param <T> The type of value
+     */
 	public interface IValidator<T> {
+        /**
+         * Validation function. If this function returns false, the value newData is
+         * not set in the VM
+         * @param oldData Data which is currently in the VM
+         * @param newData Data which should be set in the VM if the validation succeeds
+         * @return true if the validation succeeds, false otherwise
+         */
 		boolean validate(T oldData, T newData);
 	}
+
+    /**
+     * Interface for specifying a filter-callback which is run on each get()-call on the
+     * VM. Using the CB the returned value can be modified. Use this for example for setting
+     * a default-value for empty VMs.
+     * @param <T> Type of the value
+     */
 	public interface IDefaultFilter<T>
 	{
+        /**
+         * This function is called on each get()-of the VM. Its return-value is returned by
+         * the get()-function of the VM.
+         * @param data Data currently in the VM
+         * @return New return-value for the get()-function of the VM
+         */
 		T filter(T data);
 	}
 

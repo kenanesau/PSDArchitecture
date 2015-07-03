@@ -138,7 +138,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     public void load()
     {
         if (!dataLoaded) {
-            listCB.init(referencingType, getParentModel(), this.referencedType);
+            listCB.init(referencingType, getParentModel(), referencedType);
             dataLoaded = true;
             notifyModelChanged();
         }
@@ -325,7 +325,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 				if (null != model) {
 					vm = vmConstructor.newInstance(getMVVM(), model);
 					registerChildVM(vm);
-					positionToViewModel.put(pos, vm);
+                    vm.addModelListener(this);
+                    positionToViewModel.put(pos, vm);
 				}
 				else
 					throw new ArgumentException("Could not find object at position");
@@ -347,6 +348,25 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     public void setFilteredColumn(String filteredColumn)
     {
         listCB.setFilteredColumn(filteredColumn);
+    }
+
+    @Override
+    public void notifyModelChanged(IViewModel<?> changedVM, IViewModel<?> originator) {
+        Object model = changedVM.getModel();
+        /**
+         * If the originator is an EncapsulatedListViewModel this is the load()-operation
+         */
+        if ( (null != model) && !(originator instanceof EncapsulatedListViewModel) )
+        {
+            if (model.getClass().equals(referencedType))
+            {
+                /**
+                 * childVM-was comitted -> reload the cursor...
+                 */
+                listCB.init(referencingType, getParentModel(), referencedType);
+            }
+        }
+        super.notifyModelChanged(changedVM, originator);
     }
 
     public String getFilteredColumn()

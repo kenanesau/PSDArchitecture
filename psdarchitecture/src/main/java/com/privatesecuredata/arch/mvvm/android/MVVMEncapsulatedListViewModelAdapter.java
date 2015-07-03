@@ -16,8 +16,8 @@ import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
+import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
-import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.TransientViewToModelAdapter;
 import com.privatesecuredata.arch.mvvm.ViewHolder;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
@@ -36,7 +36,7 @@ import java.util.Hashtable;
  * @param <COMPLEXVM> Type of ViewModel
  */
 public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
-															implements IDataBinding, IViewModelChangedListener, Filterable
+															implements IDataBinding, IModelChangedListener, Filterable
 {
 	Class<M> modelType;
 	Class<COMPLEXVM> viewModelType;
@@ -78,10 +78,10 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 	{
 		if (null != this.data)
 		{
-			this.data.delViewModelListener(this);
+			this.data.delModelListener(this);
 		}
 		this.data = data;
-		this.data.addViewModelListener(this);
+		this.data.addModelListener(this);
         if (null != filteredColumn)
             this.data.setFilteredColumn(filteredColumn);
 		this.notifyDataSetChanged();
@@ -233,14 +233,6 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 					return new SimpleValueVM<Boolean>(false);
 			}
 		});
-	}
-
-	/**
-	 * Called by underlying EncapsulatedListViewModel when the VM has changed
-	 */
-	@Override
-	public void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator) {
-
 	}
 
     /**
