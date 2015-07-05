@@ -359,66 +359,69 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
         switch(sqlField.getSqlType())
         {
-        case STRING:
-            Object val = fld.get(persistable);
-            String valStr = null;
-            if (null != val)
-                valStr = val.toString();
-            bind(sql, idx, valStr);
-            break;
-        case DATE:
-            java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
-            val = fld.get(persistable);
-            valStr = null;
-            if (null != val)
-                valStr = df.format((Date)val);
-            bind(sql, idx, valStr);
-            break;
-        case DOUBLE:
-            bind(sql, idx, fld.getDouble(persistable));
-            break;
-        case FLOAT:
-            bind(sql, idx, fld.getFloat(persistable));
-            break;
-        case INTEGER:
-            bind(sql, idx, fld.getInt(persistable));
-            break;
-        case LONG:
-            bind(sql, idx, fld.getLong(persistable));
-            break;
-        case OBJECT_REFERENCE:
-            IPersistable referencedObj = (IPersistable) fld.get(persistable);
-            if (null == referencedObj)
-            {
-                bindNull(sql, idx);
-                break;
-            }
+			case STRING:
+				Object val = fld.get(persistable);
+				String valStr = null;
+				if (null != val)
+					valStr = val.toString();
+				bind(sql, idx, valStr);
+				break;
+			case DATE:
+				java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
+				val = fld.get(persistable);
+				valStr = null;
+				if (null != val)
+					valStr = df.format((Date)val);
+				bind(sql, idx, valStr);
+				break;
+			case BOOLEAN:
+				bind(sql, idx, fld.getBoolean(persistable)==true ? 1L : 0L);
+				break;
+			case DOUBLE:
+				bind(sql, idx, fld.getDouble(persistable));
+				break;
+			case FLOAT:
+				bind(sql, idx, fld.getFloat(persistable));
+				break;
+			case INTEGER:
+				bind(sql, idx, fld.getInt(persistable));
+				break;
+			case LONG:
+				bind(sql, idx, fld.getLong(persistable));
+				break;
+			case OBJECT_REFERENCE:
+				IPersistable referencedObj = (IPersistable) fld.get(persistable);
+				if (null == referencedObj)
+				{
+					bindNull(sql, idx);
+					break;
+				}
 
-            DbId<?> dbId = referencedObj.getDbId();
-            if (null == dbId)
-                throw new DBException(String.format("Unable to safe reference from object of type \"%s\" to object of type \"%s\" since this object is not persistent yet!",
-                        persistable.getClass().getName(), referencedObj.getClass().getName()));
+				DbId<?> dbId = referencedObj.getDbId();
+				if (null == dbId)
+					throw new DBException(String.format("Unable to safe reference from object of type \"%s\" to object of type \"%s\" since this object is not persistent yet!",
+							persistable.getClass().getName(), referencedObj.getClass().getName()));
 
-            bind(sql, idx, referencedObj.getDbId().getId());
-            break;
-        case OBJECT_NAME:
-            referencedObj = (IPersistable) fld.get(persistable);
-            if (null == referencedObj) {
-                bindNull(sql, idx);
-                break;
-            }
+				bind(sql, idx, referencedObj.getDbId().getId());
+				break;
+			case OBJECT_NAME:
+				referencedObj = (IPersistable) fld.get(persistable);
+				if (null == referencedObj) {
+					bindNull(sql, idx);
+					break;
+				}
 
-            bind(sql, idx, referencedObj.getClass().getName());
-            break;
-        case COLLECTION_REFERENCE:
-            Collection<?> referencedColl = (Collection<?>) fld.get(persistable);
-            if (null == referencedColl)
-                break;
+				bind(sql, idx, referencedObj.getClass().getName());
+				break;
+			case COLLECTION_REFERENCE:
+				Collection<?> referencedColl = (Collection<?>) fld.get(persistable);
+				if (null == referencedColl)
+					break;
 
-            bind(sql, idx, referencedColl.size());
-            break;
-        default:
-            break;
+				bind(sql, idx, referencedColl.size());
+				break;
+			default:
+				break;
         }
 	}
 	
@@ -575,62 +578,65 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				fld.setAccessible(true);
 				switch(field.getSqlType())
 				{
-				case DATE:
-					String dateStr = csr.getString(colIndex);
-					java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
-					Date val = null;
-					if (null != dateStr)
-						val = df.parse(dateStr);
-					fld.set(obj, val);
-					break;
-				case STRING:
-					fld.set(obj, csr.getString(colIndex));
-					break;
-				case DOUBLE:
-					fld.set(obj, csr.getDouble(colIndex));
-					break;
-				case FLOAT:
-					fld.set(obj, csr.getFloat(colIndex));
-					break;
-				case INTEGER:
-					fld.set(obj, csr.getInt(colIndex));
-					break;
-				case LONG:
-					fld.set(obj, csr.getLong(colIndex));
-					break;
-				case OBJECT_REFERENCE:
-					referencedObjectId = csr.getLong(colIndex);
-                    referencedObjectField = fld;
-					break;
-                case OBJECT_NAME:
-                    String objectName = csr.getString(colIndex);
-                    if (null != objectName) {
-                        if ((referencedObjectId > -1) && (referencedObjectField != null)) {
-                            Class clazz = getPM().getPersistentType(objectName);
-                            IPersistable referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
-                            referencedObjectField.set(obj, referencedObj);
+                    case DATE:
+                        String dateStr = csr.getString(colIndex);
+                        java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
+                        Date val = null;
+                        if (null != dateStr)
+                            val = df.parse(dateStr);
+                        fld.set(obj, val);
+                        break;
+                    case STRING:
+                        fld.set(obj, csr.getString(colIndex));
+                        break;
+                    case BOOLEAN:
+                        fld.set(obj, csr.getInt(colIndex)==1 ? true : false);
+                        break;
+                    case DOUBLE:
+                        fld.set(obj, csr.getDouble(colIndex));
+                        break;
+                    case FLOAT:
+                        fld.set(obj, csr.getFloat(colIndex));
+                        break;
+                    case INTEGER:
+                        fld.set(obj, csr.getInt(colIndex));
+                        break;
+                    case LONG:
+                        fld.set(obj, csr.getLong(colIndex));
+                        break;
+                    case OBJECT_REFERENCE:
+                        referencedObjectId = csr.getLong(colIndex);
+                        referencedObjectField = fld;
+                        break;
+                    case OBJECT_NAME:
+                        String objectName = csr.getString(colIndex);
+                        if (null != objectName) {
+                            if ((referencedObjectId > -1) && (referencedObjectField != null)) {
+                                Class clazz = getPM().getPersistentType(objectName);
+                                IPersistable referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
+                                referencedObjectField.set(obj, referencedObj);
+                            }
                         }
-                    }
 
-                    referencedObjectId = -1;
-                    referencedObjectField = null;
+                        referencedObjectId = -1;
+                        referencedObjectField = null;
 
-                    break;
-				case COLLECTION_REFERENCE:
-                    int collSize = 0;
-                    if (!csr.isNull(colIndex))
-                        collSize = csr.getInt(colIndex);
+                        break;
+                    case COLLECTION_REFERENCE:
+                        int collSize = 0;
+                        if (!csr.isNull(colIndex))
+                            collSize = csr.getInt(colIndex);
 
-					//TODO: If object is not lazily loaded omit the proxy-stuff ...
-                    //TODO: Get type of objects in collection...
-                    ICursorLoader loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
-                    Collection lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class)field.getReferencedType(), obj, collSize, loader);
+                        //TODO: If object is not lazily loaded omit the proxy-stuff ...
+                        //TODO: Get type of objects in collection...
+                        ICursorLoader loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
+                        Collection lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class)field.getReferencedType(), obj, collSize, loader);
 
-					fld.set(obj, lstItems);
-					break;
+                        fld.set(obj, lstItems);
+                        break;
 
-				default:
-					throw new DBException("Unknow data-type");
+                    default:
+                        throw new DBException("Unknow data-type");
 				}
 			}
 

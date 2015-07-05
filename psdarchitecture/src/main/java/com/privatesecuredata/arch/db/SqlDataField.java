@@ -19,6 +19,7 @@ public class SqlDataField {
 	
 	public enum SqlFieldType 
 	{
+        BOOLEAN,
 		INTEGER,
 		LONG, 
 		STRING,
@@ -67,8 +68,12 @@ public class SqlDataField {
 
 		Class<?> fieldType = field.getType();
 
-		if ((fieldType.equals(int.class)) || (fieldType.equals(Integer.class)))
-		{
+        if ( (fieldType.equals(boolean.class)) || (fieldType.equals(Boolean.class)) )
+        {
+            _type = SqlFieldType.BOOLEAN;
+        }
+		else if ( (fieldType.equals(int.class)) || (fieldType.equals(Integer.class)) )
+        {
 			_type = SqlFieldType.INTEGER;
 		} 
 		else if ((fieldType.equals(long.class)) || (fieldType.equals(Long.class)))
@@ -121,26 +126,28 @@ public class SqlDataField {
 	{
 		switch (_type)
 		{
-		case INTEGER:
-			return "INTEGER";
-		case LONG:
-			return "INTEGER";
-		case FLOAT:
-			return "REAL";
-		case DOUBLE:
-			return "REAL";
-		case STRING:
-			return "TEXT";
-		case DATE:
-			return "TEXT";
-		case OBJECT_REFERENCE:
-			return "INTEGER";
-        case OBJECT_NAME:
-            return "Text";
-		case COLLECTION_REFERENCE:
-			return "INTEGER";
-		default:
-			return "";
+            case BOOLEAN:
+                return "INTEGER";
+            case INTEGER:
+                return "INTEGER";
+            case LONG:
+                return "INTEGER";
+            case FLOAT:
+                return "REAL";
+            case DOUBLE:
+                return "REAL";
+            case STRING:
+                return "TEXT";
+            case DATE:
+                return "TEXT";
+            case OBJECT_REFERENCE:
+                return "INTEGER";
+            case OBJECT_NAME:
+                return "Text";
+            case COLLECTION_REFERENCE:
+                return "INTEGER";
+            default:
+                return "";
 		}
 	}
 

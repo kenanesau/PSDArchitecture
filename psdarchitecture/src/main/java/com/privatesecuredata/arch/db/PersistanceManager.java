@@ -651,6 +651,22 @@ public class PersistanceManager {
 		return ret;
 	}
 
+	public <T extends IPersistable> T loadFirst(Class<T> classObj) throws DBException
+	{
+        T persistable = null;
+		Cursor csr = getLoadAllCursor(classObj);
+        IPersister persister = getIPersister(classObj);
+        if (csr.getCount() > 0) {
+            persistable = (T) persister.rowToObject(0, csr);
+
+            DbId<T> dbId = persistable.getDbId();
+            dbId.setClean();
+            dbId.setObj(persistable);
+        }
+
+		return persistable;
+	}
+
     private <T extends IPersistable> void __updateForeignKeyNoTransaction(IPersister<T> persister, T persistable, DbId<?> foreignKey) throws DBException
     {
         persister.updateForeignKey(persistable, foreignKey);
