@@ -2,17 +2,26 @@ package com.privatesecuredata.arch.mvvm.android;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 
 import com.privatesecuredata.arch.db.IDbDescription;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.DataHive;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
-public class MVVMActivity extends FragmentActivity {
-	public static final String TAG_PERSISTANCE_MANAGER = "pm";
-	private String pmUUID;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.Hashtable;
+
+public class MVVMActivity extends FragmentActivity
+    implements MVVMInstanceStateHandler.IInstanceStateHandler {
+	public static final String TAG_PERSISTANCE_MANAGER = "mvvm_pm";
+    private String pmUUID;
+    private MVVMInstanceStateHandler instanceStateHandler = new MVVMInstanceStateHandler();
 	
 	public PersistanceManager createPM(IDbDescription desc)
 	{
@@ -58,9 +67,10 @@ public class MVVMActivity extends FragmentActivity {
 	
 	
 	public String getPMUUID() { return pmUUID; }
-	
-	@Override
+
+   	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		Log.d(getClass().getSimpleName(), "onCreate");
 		super.onCreate(savedInstanceState);
 		
 		Intent intent = getIntent();
@@ -74,5 +84,90 @@ public class MVVMActivity extends FragmentActivity {
 					setDefaultPM(pmUUID);
 			}
 		}
+	}
+
+	@Override
+	protected void onRestart() {
+		Log.d(getClass().getSimpleName(), "onRestart");
+		super.onRestart();
+	}
+
+    protected void rememberInstanceState(IViewModel... vms) {
+        instanceStateHandler.rememberInstanceState(vms);
+    }
+
+    public <T extends IViewModel> T getViewModel(Class type)
+    {
+        return instanceStateHandler.getViewModel(getDefaultPM(), type);
+    }
+
+    public <T extends IViewModel> T getViewModel(String tag)
+    {
+        return instanceStateHandler.getViewModel(getDefaultPM(), tag);
+    }
+
+    @Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        Log.d(getClass().getSimpleName(), "onRestoreInstanceState");
+		super.onRestoreInstanceState(savedInstanceState);
+
+        instanceStateHandler.onRestoreInstanceState(savedInstanceState);
+
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+		Log.d(getClass().getSimpleName(), "onSaveInstanceState");
+        super.onSaveInstanceState(outState, outPersistentState);
+
+        instanceStateHandler.onSaveInstanceState(outState, outPersistentState);
+	}
+
+   	@Override
+	public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
+		Log.d(getClass().getSimpleName(), "onCreate");
+		super.onCreate(savedInstanceState, persistentState);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		Log.d(getClass().getSimpleName(), "onActivityResult");
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+
+	@Override
+	protected void onDestroy() {
+		Log.d(getClass().getSimpleName(), "onDestroy");
+		super.onDestroy();
+	}
+
+	@Override
+	protected void onPause() {
+		Log.d(getClass().getSimpleName(), "onPause");
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		Log.d(getClass().getSimpleName(), "onResume");
+		super.onResume();
+	}
+
+	@Override
+	protected void onResumeFragments() {
+		Log.d(getClass().getSimpleName(), "onResumeFragments");
+		super.onResumeFragments();
+	}
+
+	@Override
+	protected void onStart() {
+		Log.d(getClass().getSimpleName(), "onStart");
+		super.onStart();
+	}
+
+	@Override
+	protected void onStop() {
+		Log.d(getClass().getSimpleName(), "onStop");
+		super.onStop();
 	}
 }
