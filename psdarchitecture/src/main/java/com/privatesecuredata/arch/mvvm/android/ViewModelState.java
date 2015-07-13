@@ -4,6 +4,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
+import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
@@ -81,9 +84,10 @@ public class ViewModelState implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(key);
         dest.writeString(vm.getModel().getClass().getCanonicalName());
-        dest.writeByte((byte) (containsNewObject ? 1 : 0));
-        if (!containsNewObject)
-            dest.writeLong(((IPersistable)vm.getModel()).getDbId().getId());
+        DbId dbId =  ((IPersistable)vm.getModel()).getDbId();
+        dest.writeByte((byte) (dbId != null ? 1 : 0));
+        if (dbId != null)
+            dest.writeLong(dbId.getId());
     }
 
     @SuppressWarnings("unused")
@@ -134,5 +138,35 @@ public class ViewModelState implements Parcelable {
         finally {
             return ret;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getKey(), getDbId(), getTypeName());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof ViewModelState) {
+            ViewModelState that = (ViewModelState) o;
+            return Objects.equal(this.getKey(), that.getKey()) &&
+                    Objects.equal(this.getDbId(), that.getDbId()) &&
+                    Objects.equal(this.getTypeName(), that.getTypeName());
+        }
+        else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("type", getTypeName())
+                .add("dbId", getDbId())
+                .add("key", getKey())
+                .toString();
     }
 }

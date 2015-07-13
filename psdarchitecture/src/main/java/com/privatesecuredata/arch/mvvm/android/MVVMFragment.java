@@ -73,20 +73,17 @@ public class MVVMFragment extends Fragment {
 					setDefaultPM(pmUUID);
 			}
 		}
-	}
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = super.onCreateView(inflater, container, savedInstanceState);
-
-        if (savedInstanceState!=null)
+        if (savedInstanceState != null)
             instanceStateHandler.onRestoreInstanceState(savedInstanceState);
-
-        return view;
     }
 
     protected void rememberInstanceState(IViewModel... vms) {
         instanceStateHandler.rememberInstanceState(vms);
+    }
+
+    protected void forgetInstanceState(IViewModel... vms) {
+        instanceStateHandler.forgetInstanceState(vms);
     }
 
     public <T extends IViewModel> T getViewModel(Class type)

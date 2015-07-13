@@ -35,7 +35,19 @@ public class MVVMInstanceStateHandler {
                 ViewModelState state = new ViewModelState(vm);
                 rememberedInstances.put(state.getKey(), state);
             }
-            throw new ArgumentException("Viewmodel contains a model which is not an instance of IPersistable!!!");
+            else
+                throw new ArgumentException("Cannot remember instance state. Viewmodel contains a model which is not an instance of IPersistable!!!");
+        }
+    }
+
+    public void forgetInstanceState(IViewModel... vms) {
+        for(IViewModel vm : vms) {
+            if (vm.getModel() instanceof IPersistable) {
+                ViewModelState state = new ViewModelState(vm);
+                rememberedInstances.remove(state);
+            }
+            else
+                throw new ArgumentException("Cannot forget instance state. Viewmodel contains a model which is not an instance of IPersistable!!!");
         }
     }
 

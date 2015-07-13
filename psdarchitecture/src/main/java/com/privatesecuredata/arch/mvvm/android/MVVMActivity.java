@@ -96,6 +96,10 @@ public class MVVMActivity extends FragmentActivity
         instanceStateHandler.rememberInstanceState(vms);
     }
 
+    protected void forgetInstanceState(IViewModel... vms) {
+        instanceStateHandler.forgetInstanceState(vms);
+    }
+
     public <T extends IViewModel> T getViewModel(Class type)
     {
         return instanceStateHandler.getViewModel(getDefaultPM(), type);
