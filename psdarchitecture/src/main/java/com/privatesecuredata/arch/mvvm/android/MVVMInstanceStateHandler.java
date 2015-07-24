@@ -7,6 +7,7 @@ import android.util.Log;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 import java.util.Dictionary;
@@ -52,11 +53,11 @@ public class MVVMInstanceStateHandler {
     }
 
     public void onRestoreInstanceState(Bundle savedInstanceState) {
-
         String keyList = savedInstanceState.getString(KEY_REMEMBERED_INSTANCES);
         String[] keys = (keyList != null) ? keyList.split(";") : null;
 
         if (null != keys) {
+            Log.d(getClass().getSimpleName(), String.format("restoring Instance State for %s", keys));
             for (String key : keys) {
                 ViewModelState state = savedInstanceState.getParcelable(key);
 
@@ -79,6 +80,7 @@ public class MVVMInstanceStateHandler {
             }
 
             outState.putString(KEY_REMEMBERED_INSTANCES, keyList.toString());
+            Log.d(getClass().getSimpleName(), String.format("saved Instance State for %s", keyList.toString()));
         }
     }
 

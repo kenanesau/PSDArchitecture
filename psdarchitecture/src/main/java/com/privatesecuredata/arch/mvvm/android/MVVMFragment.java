@@ -5,6 +5,7 @@ import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.DataHive;
+import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 import android.app.Activity;
@@ -60,23 +61,35 @@ public class MVVMFragment extends Fragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Log.d(getClass().getSimpleName(), "onCreate");
-		super.onCreate(savedInstanceState);
-		
-		Intent intent = getActivity().getIntent();
-		
-		if (null != intent)
-		{
-			Bundle bundle = intent.getExtras();
-			if (null != bundle) {
-				String pmUUID = bundle.getString(MVVMActivity.TAG_PERSISTANCE_MANAGER);
-				if (null != pmUUID)
-					setDefaultPM(pmUUID);
-			}
-		}
+        super.onCreate(savedInstanceState);
 
-        if (savedInstanceState != null)
+        Intent intent = getActivity().getIntent();
+
+        if (null != intent)
+		{
+            Bundle bundle = intent.getExtras();
+            if (null != bundle) {
+                String pmUUID = bundle.getString(MVVMActivity.TAG_PERSISTANCE_MANAGER);
+                if (null != pmUUID) {
+                    setDefaultPM(pmUUID);
+                }
+            }
+        }
+
+        if (savedInstanceState != null) {
             instanceStateHandler.onRestoreInstanceState(savedInstanceState);
+        }
+
     }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = super.onCreateView(inflater, container, savedInstanceState);
+        doViewToVMMapping(savedInstanceState != null);
+        return view;
+    }
+
+    protected void doViewToVMMapping(boolean getDataFromView) {}
 
     protected void rememberInstanceState(IViewModel... vms) {
         instanceStateHandler.rememberInstanceState(vms);
@@ -102,8 +115,8 @@ public class MVVMFragment extends Fragment {
         Log.d(getClass().getSimpleName(), "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
 
-        if (savedInstanceState!=null)
-            instanceStateHandler.onRestoreInstanceState(savedInstanceState);
+//        if (savedInstanceState!=null)
+//            instanceStateHandler.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override

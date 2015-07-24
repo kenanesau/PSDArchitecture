@@ -216,6 +216,21 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	{
 		return this.childrenOrdered;			
 	}
+
+    public List<ComplexViewModel> getComplexChildren()
+    {
+        List<ComplexViewModel> ret = new ArrayList<ComplexViewModel>();
+
+        for(IViewModel vm : childrenOrdered)
+        {
+            if (vm instanceof ComplexViewModel)
+            {
+                ret.add((ComplexViewModel)vm);
+            }
+        }
+
+        return ret;
+    }
 	
 	/**
 	 * Register a new Child-VM. Registered children propagate their "changed"-information 

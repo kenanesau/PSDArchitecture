@@ -108,26 +108,24 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 						@Override
 						public T get(View view) {
                             String strVal = ((TextView) view).getText().toString();
-							if ((null == strVal)  || strVal.isEmpty())
-								throw new MVVMException("String value is null or empty");
+//							if ((null == strVal)  || strVal.isEmpty())
+//								throw new MVVMException("String value is null or empty");
 
 							try {
-								if (dataType==String.class)
-								{
-									return dataType.cast(strVal);
-								}
-								if (dataType==Integer.class)
-								{
-									return dataType.cast(Integer.parseInt(strVal));
-								}
-								if (dataType==Float.class)
-								{
-									return dataType.cast(Float.parseFloat(strVal));
-								}
-								if (dataType==Double.class)
-								{
-									return dataType.cast(Double.parseDouble(strVal));
-								}
+                                if ( (strVal!= null) && (!strVal.isEmpty()) ) {
+                                    if (dataType == String.class) {
+                                        return dataType.cast(strVal);
+                                    }
+                                    if (dataType == Integer.class) {
+                                        return dataType.cast(Integer.parseInt(strVal));
+                                    }
+                                    if (dataType == Float.class) {
+                                        return dataType.cast(Float.parseFloat(strVal));
+                                    }
+                                    if (dataType == Double.class) {
+                                        return dataType.cast(Double.parseDouble(strVal));
+                                    }
+                                }
 
 								return null;
 							}
@@ -342,12 +340,19 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	@Override
 	public void updateView(View v, IViewModel<?> complexVM) 
 	{
-		this.setVM(this.getSimpleVMCmd.getVM(complexVM));
-        SimpleValueVM vm = this.getVM();
+        if (complexVM.getModel() != null) {
+            this.setVM(this.getSimpleVMCmd.getVM(complexVM));
+            SimpleValueVM vm = this.getVM();
 
-        if (null != vm)
-		    this.writeViewCmd.set(v, this.getVM().get());
+            if (null != vm)
+                this.writeViewCmd.set(v, this.getVM().get());
+        }
 	}
+
+    public void updateVM()
+    {
+        this.getVM().set(this.getReadViewCommand().get(this.view));
+    }
 
 	@Override
 	public void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator)
