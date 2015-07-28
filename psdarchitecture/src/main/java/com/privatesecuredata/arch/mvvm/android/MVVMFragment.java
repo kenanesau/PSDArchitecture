@@ -114,9 +114,6 @@ public class MVVMFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d(getClass().getSimpleName(), "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
-
-//        if (savedInstanceState!=null)
-//            instanceStateHandler.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override
