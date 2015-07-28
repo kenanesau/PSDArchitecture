@@ -11,14 +11,13 @@ import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
-import com.privatesecuredata.arch.mvvm.vm.ViewModel;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
 
 /**
  * This is the actual parcelable object which stores and restores all the data
- * needed to store the state of an ViewModel
+ * (Table + DB-ID) needed to store the state of an ViewModel
  *
  * @see MVVMInstanceStateHandler
  */
@@ -39,18 +38,7 @@ public class ViewModelState implements Parcelable {
      */
     public ViewModelState(Parcel parcel)
     {
-        String str = getClass().getName();
-//        Log.d(str, "read objCount (int)");
-//        int objCount = parcel.readInt();
-
         readStateFromParcel(parcel, this);
-//        objCount--;
-//
-//        for (int i = 0; i < objCount; i++) {
-//            ViewModelState childState = new ViewModelState();
-//            readStateFromParcel(parcel, childState);
-//            childStates.add(childState);
-//        }
     }
 
     /**
@@ -130,18 +118,7 @@ public class ViewModelState implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        String str = getClass().getName();
-        //List<ComplexViewModel> vms = vm.getComplexChildren();
-        //int objCount = vms.hashCode();
-//        Log.d(str, "write objCount (int)");
-//        dest.writeInt(objCount + 1);
-
         writeStateToParcel(dest, (ComplexViewModel)vm);
-
-//        for (ComplexViewModel childVM : vms)
-//        {
-//            writeStateToParcel(dest, childVM);
-//        }
     }
 
     @SuppressWarnings("unused")
@@ -218,8 +195,8 @@ public class ViewModelState implements Parcelable {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("type", getTypeName())
-                .add("dbId", getDbId())
+                .add("type", getTypeName() == null ? "null" : getTypeName())
+                .add("dbId", getDbId() == null ? "null" : getDbId())
                 .add("key", getKey())
                 .toString();
     }

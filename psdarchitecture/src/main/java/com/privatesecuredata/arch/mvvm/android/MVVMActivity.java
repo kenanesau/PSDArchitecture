@@ -13,10 +13,10 @@ import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.DataHive;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.Hashtable;
-
+/**
+ * Activity which supports easier restoration and saving of instance state. It also provides
+ * access to the Default-Persistance-Manager
+ */
 public class MVVMActivity extends FragmentActivity
     implements MVVMInstanceStateHandler.IInstanceStateHandler {
 	public static final String TAG_PERSISTANCE_MANAGER = "mvvm_pm";
@@ -84,6 +84,10 @@ public class MVVMActivity extends FragmentActivity
 					setDefaultPM(pmUUID);
 			}
 		}
+
+        if (savedInstanceState != null) {
+            instanceStateHandler.onRestoreInstanceState(savedInstanceState);
+        }
 	}
 
 	@Override
@@ -119,7 +123,15 @@ public class MVVMActivity extends FragmentActivity
 
 	}
 
-	@Override
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        Log.d(getClass().getSimpleName(), "onSaveInstanceState");
+        super.onSaveInstanceState(outState);
+
+        instanceStateHandler.onSaveInstanceState(outState, null);
+    }
+
+    @Override
 	public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
 		Log.d(getClass().getSimpleName(), "onSaveInstanceState");
         super.onSaveInstanceState(outState, outPersistentState);
