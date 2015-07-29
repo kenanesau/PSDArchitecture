@@ -43,7 +43,7 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBindin
 			
 			adapter.init(view, vm);
             if (getDataFromView) {
-                //adapter.updateVM();
+                adapter.updateVM();
             }
             else {
                 adapter.updateView(view, vm);

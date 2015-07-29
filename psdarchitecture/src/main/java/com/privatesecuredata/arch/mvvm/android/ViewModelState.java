@@ -67,16 +67,24 @@ public class ViewModelState implements Parcelable {
     public String getKey() { return key; }
 
     public Long getDbId() {
-        return (vm != null) ? ((IPersistable)vm.getModel()).getDbId().getId() : dbId;
+        long ret = -1L;
+        if (vm!=null)
+        {
+            IPersistable model = (IPersistable) vm.getModel();
+
+            if (null != model)
+            {
+                DbId dbId = model.getDbId();
+                if (dbId != null)
+                    ret = dbId.getId();
+            }
+        }
+
+        return ret;
     }
 
     public String getTypeName() {
-        return (vm != null) ? vm.getClass().getCanonicalName() : typeName;
-    }
-
-    public List<ViewModelState> getChildStates()
-    {
-        return childStates;
+        return (vm != null) ? vm.getModel().getClass().getCanonicalName() : typeName;
     }
 
     @Override
@@ -105,13 +113,13 @@ public class ViewModelState implements Parcelable {
         Log.d(str, "write key (string)");
         dest.writeString(key);
         Log.d(str, "write typeName (string)");
-        dest.writeString(vm.getModel().getClass().getCanonicalName());
-        DbId dbId =  ((IPersistable)vm.getModel()).getDbId();
+        dest.writeString(getTypeName());
+        long id = getDbId();
         Log.d(str, "write containsNewObject (byte)");
-        dest.writeByte((byte) (dbId != null ? 0 : 1));
-        if (dbId != null) {
+        dest.writeByte((byte) (id != -1L ? 0 : 1));
+        if (id != -1L) {
             Log.d(str,"write dbId (long)");
-            dest.writeLong(dbId.getId());
+            dest.writeLong(id);
         }
 
     }

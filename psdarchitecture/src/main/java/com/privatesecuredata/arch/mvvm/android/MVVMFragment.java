@@ -84,12 +84,10 @@ public class MVVMFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = super.onCreateView(inflater, container, savedInstanceState);
-        doViewToVMMapping(savedInstanceState != null);
-        return view;
+        return super.onCreateView(inflater, container, savedInstanceState);
     }
 
-    protected void doViewToVMMapping(boolean getDataFromView) {}
+    protected void doViewToVMMapping() {}
 
     protected void rememberInstanceState(IViewModel... vms) {
         instanceStateHandler.rememberInstanceState(vms);
@@ -114,6 +112,7 @@ public class MVVMFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d(getClass().getSimpleName(), "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
+        doViewToVMMapping();
     }
 
     @Override
