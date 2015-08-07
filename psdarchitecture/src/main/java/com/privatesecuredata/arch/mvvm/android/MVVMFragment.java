@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 public class MVVMFragment extends Fragment {
+    private final static String KEY_DEFAULT_PM_UUID = "PSDARCH_MVVMFRAGMENT_PM_UUID";
     private String pmUUID;
     private MVVMInstanceStateHandler instanceStateHandler = new MVVMInstanceStateHandler();
 	
@@ -78,6 +79,7 @@ public class MVVMFragment extends Fragment {
 
         if (savedInstanceState != null) {
             instanceStateHandler.onRestoreInstanceState(savedInstanceState);
+            //setDefaultPM(savedInstanceState.getString(KEY_DEFAULT_PM_UUID));
         }
 
     }
@@ -121,6 +123,7 @@ public class MVVMFragment extends Fragment {
         super.onSaveInstanceState(outState);
 
         instanceStateHandler.onSaveInstanceState(outState, null);
+        //outState.putString(KEY_DEFAULT_PM_UUID, getPMUUID());
     }
 
 	@Override

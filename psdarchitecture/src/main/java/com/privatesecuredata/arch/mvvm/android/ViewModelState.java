@@ -79,6 +79,9 @@ public class ViewModelState implements Parcelable {
                     ret = dbId.getId();
             }
         }
+        else {
+            ret = dbId;
+        }
 
         return ret;
     }
