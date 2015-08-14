@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.db;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 
 import java.util.LinkedList;
 
@@ -80,5 +81,22 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
                 .add("dirty", dirty)
                 .add("type", ((persistableObj == null) ? "unknown" : persistableObj.getClass().getName()))
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (null == o) {
+            return false;
+        }
+        if (o instanceof DbId) {
+            DbId that = (DbId) o;
+            return Objects.equal(this.id, that.id);
+        }
+        else {
+            return false;
+        }
     }
 }

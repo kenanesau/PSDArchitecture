@@ -8,6 +8,7 @@ import android.widget.Filter;
 import com.privatesecuredata.arch.exceptions.DBException;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
 import com.privatesecuredata.arch.mvvm.vm.IDataChangedListener;
+import com.privatesecuredata.arch.mvvm.vm.OrderBy;
 
 /**
  * This implementation of IModelListCallback encapsulates a cursor. It directly writes all changes
@@ -30,6 +31,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	private List<ICursorChangedListener> csrListeners = new ArrayList<ICursorChangedListener>();
     private CursorToListAdapterFilter filter;
     private String filteredColumn;
+    private OrderByTerm[] sortOrderTerms;
 
     public CursorToListAdapter(PersistanceManager _pm, ICursorChangedListener listener) {
 		this(_pm);
@@ -51,13 +53,13 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	}
 	
 	public Cursor getCursor() { return this.csr; }
-	
-	@Override
+
+    @Override
 	public void init(Class<?> parentClazz, Object parent, Class<M> childClazz) {
 		if (null == parent)
-			this.csr = pm.getCursor(parentClazz, childClazz);
+			this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
 		else
-			this.csr = pm.getCursor((IPersistable)parent, childClazz);
+			this.csr = pm.getCursor((IPersistable)parent, childClazz, sortOrderTerms);
 
         if (null == csr)
             throw new DBException("Unable to load cursor");
@@ -68,7 +70,19 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 		this.childClazz = childClazz;
 	}
 
-	@Override
+    @Override
+    public void setSortOrder(OrderBy... orders) {
+        if (null != orders) {
+            sortOrderTerms = new OrderByTerm[orders.length];
+            int i = 0;
+            for (OrderBy order : orders)
+                sortOrderTerms[i++] = new OrderByTerm(order.getFieldName(), order.isAscending());
+        }
+        else
+            sortOrderTerms = null;
+    }
+
+    @Override
 	public M get(int pos) {
 		return  pm.load(persister, csr, pos);
 	}

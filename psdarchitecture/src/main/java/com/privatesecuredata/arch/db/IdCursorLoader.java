@@ -85,9 +85,7 @@ public class IdCursorLoader implements ICursorLoader {
 
 	}
 
-	@Override
-    public Cursor getCursor(DbId<?> foreignKey)
-    {
+    protected String getBaseQuery(DbId<?> foreignKey) {
         String sqlQuery=null;
         if (null == foreignKey) {
             sqlQuery = _selectAllRawString;
@@ -98,6 +96,21 @@ public class IdCursorLoader implements ICursorLoader {
         } else
             throw new DBException("Foreign-key not yet saved to DB, so it is not possible to use it in a query!!!");
 
-        return _pm.getDb().rawQuery(sqlQuery, new String[] {});
+        return sqlQuery;
+    }
+
+	@Override
+    public Cursor getCursor(DbId<?> foreignKey)
+    {
+        return _pm.getDb().rawQuery(getBaseQuery(foreignKey), new String[] {});
+    }
+
+    @Override
+    public Cursor getCursor(DbId<?> foreignKey, OrderByTerm... orderByTerms) {
+        if (null == orderByTerms)
+            return getCursor(foreignKey);
+
+        StringBuilder sb = AbstractPersister.appendOrderByString(new StringBuilder(getBaseQuery(foreignKey)), orderByTerms);
+        return _pm.getDb().rawQuery(sb.toString(), new String[] {});
     }
 }

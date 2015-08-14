@@ -25,7 +25,10 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 	long update(T persistable) throws DBException;
 	T rowToObject(int pos, Cursor csr) throws DBException;
 	Cursor getLoadAllCursor() throws DBException;
+    public Cursor getLoadAllCursor(OrderByTerm[] orderTerms) throws DBException;
     Cursor getFilteredCursor(String fieldName, CharSequence constraint) throws DBException;
+    public Cursor getFilteredCursor(String fieldName, CharSequence constraint,
+                                    OrderByTerm[] orderTerms) throws DBException;
 	T load(long id) throws DBException;
 	Collection<T> loadAll() throws DBException;
 	void delete(T persistable) throws DBException;

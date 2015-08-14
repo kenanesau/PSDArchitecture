@@ -34,6 +34,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	public void init(Object obj) {
         setPM((PersistanceManager) obj);
 
+        /** Check if table exists ... **/
 		Cursor cursor = getDb().rawQuery("SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = '"+getTableName()+"'", null);
 		if ( (null != cursor) && (cursor.getCount() > 0) ) {
 			String delStatement = String.format(getDelSqlString(), getTableName());
@@ -103,25 +104,68 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 		return rowToObject(0, csr);
 	}
 
-	@Override
-	public Cursor getLoadAllCursor() {
-		return getDb().rawQuery(getSelectAllSQLString(), null);
-	}
-
-    public Cursor getFilteredCursor(String fieldName, CharSequence constraint)
+    public static StringBuilder appendOrderByString(StringBuilder sb, OrderByTerm[] orderByTerms)
     {
-        StringBuilder sb = new StringBuilder(getSelectAllSQLString());
+        sb.append(" ORDER BY ");
+
+        for(int i=0; i < orderByTerms.length; i++) {
+            OrderByTerm term = orderByTerms[i];
+            sb = appendOrderByTermsString(sb, term);
+            if ( (orderByTerms.length > 0) && (i < (orderByTerms.length - 1)) )
+                sb.append(", ");
+        }
+
+        return sb;
+    }
+
+    protected static StringBuilder appendOrderByTermsString(StringBuilder sb, OrderByTerm term)
+    {
+        return sb.append(term.toString());
+    }
+
+    public static StringBuilder appendFilterString(StringBuilder sb, String fieldName, CharSequence constraint)
+    {
         sb.append(" WHERE ");
         sb.append(fieldName);
         sb.append(" LIKE ");
         sb.append("'%");
         sb.append(constraint.toString());
         sb.append("%'");
-
-        return getDb().rawQuery(sb.toString(), null);
+        return sb;
     }
 
 	@Override
+	public Cursor getLoadAllCursor() {
+		return getDb().rawQuery(getSelectAllSQLString(), null);
+	}
+
+    @Override
+    public Cursor getLoadAllCursor(OrderByTerm[] orderTerms) {
+        StringBuilder selectAll = appendOrderByString(
+                                    new StringBuilder(getSelectAllSQLString()),
+                                    orderTerms);
+
+        return getDb().rawQuery(selectAll.toString(), null);
+    }
+
+    @Override
+    public Cursor getFilteredCursor(String fieldName, CharSequence constraint)
+    {
+        StringBuilder sb = new StringBuilder(getSelectAllSQLString());
+
+        return getDb().rawQuery(appendFilterString(sb, fieldName, constraint).toString(), null);
+    }
+
+    @Override
+    public Cursor getFilteredCursor(String fieldName, CharSequence constraint, OrderByTerm[] orderTerms)
+    {
+        StringBuilder sb = appendFilterString(new StringBuilder(getSelectAllSQLString())
+                , fieldName, constraint);
+
+        return getDb().rawQuery(appendOrderByString(sb, orderTerms).toString(), null);
+    }
+
+    @Override
 	public Collection<T> loadAll() throws DBException {
 		Cursor csr = getLoadAllCursor();
 		int cnt = csr.getCount();
@@ -187,4 +231,5 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
         return updateStatement;
     }
+
 }

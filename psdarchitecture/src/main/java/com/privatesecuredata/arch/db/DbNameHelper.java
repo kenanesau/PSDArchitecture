@@ -11,10 +11,20 @@ public class DbNameHelper {
 		return String.format("tbl_%s", persistable.getSimpleName().toLowerCase(Locale.US));
 	}
 
+    protected static StringBuilder getSimpleFieldSB(String baseName)
+    {
+        return new StringBuilder("fld_")
+                .append(baseName.toLowerCase(Locale.US));
+    }
+
+    public static String getSimpleFieldName(String baseName)
+    {
+        return getSimpleFieldSB(baseName).toString();
+    }
+
     public static String getFieldName(String baseName, SqlDataField.SqlFieldType type)
     {
-        StringBuilder sbl = new StringBuilder("fld_")
-                .append(baseName.toLowerCase(Locale.US));
+        StringBuilder sbl = getSimpleFieldSB(baseName);
 
         if (type==SqlFieldType.OBJECT_REFERENCE)
             sbl.append("_id");

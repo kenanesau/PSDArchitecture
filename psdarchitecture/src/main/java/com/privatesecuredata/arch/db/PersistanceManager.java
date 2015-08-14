@@ -608,10 +608,27 @@ public class PersistanceManager {
 		return (loader != null) ? loader.getCursor(null) : null;
 	}
 
+    public Cursor getCursor(Class<?> referencingType, Class<?> referencedType, OrderByTerm... terms) throws DBException
+    {
+        if (referencingType == null)
+        {
+            return getLoadAllCursor(referencedType, terms);
+        }
+
+        ICursorLoader loader = getLoader(referencingType, referencedType);
+        return (loader != null) ? loader.getCursor(null, terms) : null;
+    }
+
     public Cursor getCursor(DbId<?> referencingObjectId, Class<?> referencingType, Class<?> referencedType) throws DBException
     {
         ICursorLoader loader = getLoader(referencingType, referencedType);
         return (loader != null) ? loader.getCursor(referencingObjectId) : null;
+    }
+
+    public Cursor getCursor(DbId<?> referencingObjectId, Class<?> referencingType, Class<?> referencedType, OrderByTerm... terms) throws DBException
+    {
+        ICursorLoader loader = getLoader(referencingType, referencedType);
+        return (loader != null) ? loader.getCursor(referencingObjectId, terms) : null;
     }
 	
 	public Cursor getCursor(IPersistable referencingObject, Class<?> referencedType) throws DBException
@@ -619,6 +636,12 @@ public class PersistanceManager {
 		ICursorLoader loader = getLoader(referencingObject.getClass(), referencedType);
 		return (loader != null) ? loader.getCursor(referencingObject.getDbId()) : null;
 	}
+
+    public Cursor getCursor(IPersistable referencingObject, Class<?> referencedType, OrderByTerm... terms) throws DBException
+    {
+        ICursorLoader loader = getLoader(referencingObject.getClass(), referencedType);
+        return (loader != null) ? loader.getCursor(referencingObject.getDbId(), terms) : null;
+    }
 	
 	public void registerCursorLoader(Class<?> referencingType, Class<?> referencedType, ICursorLoader loader)
 	{
@@ -636,6 +659,12 @@ public class PersistanceManager {
 		IPersister persister = getIPersister(classObj);
 		return persister.getLoadAllCursor();
 	}
+
+    public <T extends IPersistable> Cursor getLoadAllCursor(Class<?> classObj, OrderByTerm... terms) throws DBException
+    {
+        IPersister persister = getIPersister(classObj);
+        return null != terms ? persister.getLoadAllCursor(terms) : persister.getLoadAllCursor();
+    }
 	
 	public <T extends IPersistable> Collection<T> loadAll(Class<T> classObj) throws DBException
 	{
@@ -790,6 +819,23 @@ public class PersistanceManager {
         IPersister<?> persister = getPersister(type);
 
         persister.updateCollectionProxySize(persistable, field, childItems);
+    }
+
+    public OrderByTerm[] orderByDbField(String... objFieldNames) {
+        OrderByTerm[] terms = new OrderByTerm[objFieldNames.length];
+
+        int i=0;
+        for(String fieldName : objFieldNames)
+        {
+            terms[i++] = new OrderByTerm(fieldName, true);
+        }
+
+        return terms;
+    }
+
+    public OrderByTerm orderByDbField(String objFieldName, boolean ascending)
+    {
+        return new OrderByTerm(objFieldName, ascending);
     }
 }
  
