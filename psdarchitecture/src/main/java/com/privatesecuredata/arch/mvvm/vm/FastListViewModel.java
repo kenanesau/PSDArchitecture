@@ -372,6 +372,11 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
         return this.parentVM;
     }
 
+    @Override
+    public void setSortOrder(OrderBy... sortOrderTerms) {
+
+    }
+
     private ArrayList<M> getItems() {
 		if (!initialized)
 			getModel();

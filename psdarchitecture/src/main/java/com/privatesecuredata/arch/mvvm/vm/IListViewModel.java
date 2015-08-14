@@ -26,6 +26,7 @@ public interface IListViewModel<M, VM extends IViewModel<M>> {
     int size();
     public VM getViewModel(int pos);
     ComplexViewModel<?> getParentViewModel();
+    void setSortOrder(OrderBy... sortOrderTerms);
 
     public abstract void addViewModelListener(IViewModelChangedListener listener);
     public abstract void delViewModelListener(IViewModelChangedListener listener);

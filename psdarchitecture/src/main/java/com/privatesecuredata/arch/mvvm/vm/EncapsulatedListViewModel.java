@@ -43,6 +43,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	 */
 	public interface IModelListCallback<M> extends Filterable {
 		void init(Class<?> parentClazz, Object parent, Class<M> childClazz);
+        void setSortOrder(OrderBy... order);
 		M get(int pos);
 		int size();
 		
@@ -67,6 +68,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	private IModelListCallback<M> listCB;
     private boolean dataLoaded = false;
     private Method modelSetter;
+    private OrderBy[] sortOrderTerms;
 
 	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
 
@@ -76,8 +78,29 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
      * @param referencedType
      * @param vmType
      * @param listCB
+     * @param sortOrderTerms Immediately set the terms by which to sort the list
      */
-	public EncapsulatedListViewModel(MVVM mvvm, Class<?> referencingType, Class<M> referencedType, Class<VM> vmType, IModelListCallback<M> listCB)
+    public EncapsulatedListViewModel(MVVM mvvm,
+                                     Class<?> referencingType, Class<M> referencedType,
+                                     Class<VM> vmType,
+                                     IModelListCallback<M> listCB,
+                                     OrderBy... sortOrderTerms)
+    {
+        this(mvvm, referencingType, referencedType, vmType, listCB);
+        setSortOrder(sortOrderTerms);
+    }
+
+    /**
+     *
+     * @param referencingType Type of the class referencing the model (The foreign key in DB-terms)
+     * @param referencedType
+     * @param vmType
+     * @param listCB
+     */
+	public EncapsulatedListViewModel(MVVM mvvm,
+                                     Class<?> referencingType, Class<M> referencedType,
+                                     Class<VM> vmType,
+                                     IModelListCallback<M> listCB)
 	{
 		super(mvvm);
         this.referencingType = referencingType;
@@ -103,6 +126,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 			throw new ArgumentException(String.format("Unable to find a valid constructor for the model of type \"%s\"", this.referencedType.getName()), ex);
 		}
 	}
+
+    @Override
+    public void setSortOrder(OrderBy... sortOrderTerms) {
+        this.listCB.setSortOrder(sortOrderTerms);
+    }
 
     public void init(ComplexViewModel<?> parentVM, Field modelField)
 	{
