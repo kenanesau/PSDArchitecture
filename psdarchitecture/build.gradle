@@ -1,5 +1,4 @@
 apply plugin: 'com.android.library'
-
 android {
     compileSdkVersion 22
     buildToolsVersion '22.0.1'
@@ -16,8 +15,11 @@ android {
         }
     }
 }
-
 dependencies {
     compile 'com.android.support:support-v4:22.2.0'
     compile 'com.google.guava:guava:18.0'
+}
+
+repositories {
+    jcenter()
 }

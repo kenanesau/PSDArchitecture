@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.ui.widget;
 
 import android.content.Context;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -100,5 +101,10 @@ public class NumberSelector extends FrameLayout
     @Override
     public Object getValue() {
         return getNumber();
+    }
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        return super.onSaveInstanceState();
     }
 }

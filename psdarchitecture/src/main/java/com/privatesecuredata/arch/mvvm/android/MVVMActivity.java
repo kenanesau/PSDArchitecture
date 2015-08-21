@@ -120,7 +120,6 @@ public class MVVMActivity extends FragmentActivity
 		super.onRestoreInstanceState(savedInstanceState);
 
         instanceStateHandler.onRestoreInstanceState(savedInstanceState);
-
 	}
 
     @Override

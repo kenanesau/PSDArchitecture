@@ -143,7 +143,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
     public void init(ComplexViewModel<?> parentModel)
     {
-        this.dataLoaded = false; //since we've go new data...
+        this.dataLoaded = false; //since we've got new data...
         setModelGetter(parentModel, null);
         load();
     }
