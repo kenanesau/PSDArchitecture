@@ -4,9 +4,12 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -19,11 +22,14 @@ import com.privatesecuredata.arch.db.annotations.DbForeignKeyField;
 import com.privatesecuredata.arch.db.annotations.DbThisToMany;
 import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.DBException;
+import com.privatesecuredata.arch.mvvm.vm.OrderBy;
 
 public class AutomaticPersister<T extends IPersistable> extends AbstractPersister<T> {
 	
 	SQLiteStatement insert;
 	SQLiteStatement update;
+
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
 	
 	private List<SqlDataField> _tableFields = new ArrayList<SqlDataField>();
     private List<SqlDataField> _proxyCntFields;
@@ -78,7 +84,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				addSqlField(field, fieldAnno);
 			
 			DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
-			if (null != thisToOneAnno) {
+            if (null != thisToOneAnno) {
 				field.setAccessible(true);
                 ObjectRelation objRel = new ObjectRelation(field, getPersistentType());
 				_lstThisToOneRelations.add(objRel);
@@ -87,10 +93,13 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				// object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
                 SqlDataField idField = new SqlDataField(field);
                 addSqlField(idField);
+                objRel.setIdField(idField);
+
                 String fldName = String.format("fld_tpy_%s", field.getName());
                 SqlDataField fldTypeName = new SqlDataField(fldName, SqlDataField.SqlFieldType.OBJECT_NAME);
                 fldTypeName.setField(idField.getField());
                 addSqlField(fldTypeName);
+                objRel.setTypeNameField(fldTypeName);
 			}
 			
 			// At the moment DbThisToMany-Annotations are always saved as a foreign-key in the table of the referenced object
@@ -101,9 +110,12 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 ObjectRelation objRel = new ObjectRelation(field, getPersistentType());
 				getOneToManyRelations().add(objRel);
 				
-				Class<?> referencedType = oneToManyAnno.referencedType();
-				ICursorLoader loader = new IdCursorLoader(getPM(), persistentType, referencedType);
-				getPM().registerCursorLoader(persistentType, referencedType, loader);
+				Class referencedType = oneToManyAnno.referencedType();
+                ICursorLoaderFactory fac = new IdCursorLoaderFactory(getPM(), persistentType, referencedType);
+                getPM().registerCursorLoaderFactory(fac);
+
+				/*ICursorLoader loader = new IdCursorLoader(getPM(), persistentType, referencedType);
+				getPM().registerCursorLoader(persistentType, referencedType, loader);*/
 				
 				// Add table-field for the collection-proxy-size
                 SqlDataField collectionProxySizeFld = new SqlDataField(field, referencedType);
@@ -122,7 +134,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
         /*
 		if (getTableFieldsInternal().isEmpty())
-			throw new Exception(String.format("No DBField-annotation found in type \"%s\"", persistentType.getName()));
+			throw new Exception(String.format("No DBField-annotation found in type \"%s\"", persistentType.getSqlName()));
 			*/
 	}
 
@@ -175,7 +187,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         this._persistentType = _persistentType;
     }
 
-    protected List<SqlDataField> getSqlFields() { return new ArrayList<SqlDataField>(getTableFieldsInternal()); }
+    public List<SqlDataField> getSqlFields() { return new ArrayList<SqlDataField>(getTableFieldsInternal()); }
 
     protected void addSqlField (SqlDataField sqlField)
     {
@@ -200,8 +212,19 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     public List<ObjectRelation> getOneToManyRelations() {
         return _lstOneToManyRelations;
     }
-	
-	/**
+
+    @Override
+    protected String getSelectAllStatement(OrderByTerm... terms) {
+        if (getTableFieldsInternal().isEmpty())
+            return null;
+
+        StringBuilder sql = AbstractPersister.createSelectAllStatement(getTableName(), getSqlFields(), terms);
+
+        return sql.toString();
+    }
+
+
+    /**
 	 * Creates the SQL-Statement for inserting a new row to the database
 	 * 
 	 * @return SQL-Statement (insert)
@@ -221,7 +244,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 			if (fieldCount > 0)
 				sql.append(", ");
 			
-			sql.append(fld.getName());
+			sql.append(fld.getSqlName());
 			
 			fieldCount++;
 		}
@@ -240,8 +263,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 		sql.append(")");
 		return sql.toString();
 	}
-	
-	/**
+
+    /**
 	 * Creates the SQL-Statement for updating a row in the database
 	 * 
 	 * @return SQL-Statement (update)
@@ -258,7 +281,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 		int i = 1;
 		for (SqlDataField field : getTableFieldsInternal())
 		{
-			sql.append(field.getName());
+			sql.append(field.getSqlName());
 			sql.append("=? ");
 			if (i < getSqlFields().size())
 				sql.append(", ");
@@ -289,7 +312,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 		for (SqlDataField field : getTableFieldsInternal())
 		{
 			sql.append(", ")
-				.append(field.getName()).append(" ")
+				.append(field.getSqlName()).append(" ")
 				.append(field.getSqlTypeString()).append(" ");
 			
 			if (field.isMandatory())
@@ -300,7 +323,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 		for (SqlDataField field : _foreignKeyFields.values())
 		{
 			sql.append(", ")
-				.append(field.getName()).append(" ")
+				.append(field.getSqlName()).append(" ")
 				.append(field.getSqlTypeString()).append(" ");
 			
 			// Foreign-Key Fields do never have a NOT NULL constraint
@@ -312,7 +335,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 			if ( ( field.isMandatory()) && (null != cls) )
 			{
 				sql.append(",\nFOREIGN KEY(")
-					.append(field.getName()).append(") REFERENCES ")
+					.append(field.getSqlName()).append(") REFERENCES ")
 					.append(cls.getSimpleName()).append("(_id) DEFERRABLE INITIALLY DEFERRED");
 			}
 		}
@@ -367,7 +390,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				bind(sql, idx, valStr);
 				break;
 			case DATE:
-				java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
+				java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
 				val = fld.get(persistable);
 				valStr = null;
 				if (null != val)
@@ -568,11 +591,11 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 			csr.moveToPosition(pos);
             getPM().assignDbId(obj, csr.getLong(0));
 
-            //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fieds
+            //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fields
 			for (int colIndex=1; colIndex< getTableFieldsInternal().size() + 1; colIndex++)
 			{
 				field = getTableFieldsInternal().get(colIndex - 1);
-				//int colIndex = csr.getColumnIndex(field.getName());
+				//int colIndex = csr.getColumnIndex(field.getSqlName());
 
 				Field fld = field.getField();
 				fld.setAccessible(true);
@@ -580,7 +603,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				{
                     case DATE:
                         String dateStr = csr.getString(colIndex);
-                        java.text.DateFormat df = java.text.DateFormat.getDateTimeInstance();
+                        java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
                         Date val = null;
                         if (null != dateStr)
                             val = df.parse(dateStr);
@@ -644,7 +667,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 			if (field != null) {
 				throw new DBException(
 					String.format("Error converting value for Field \"%s\" in object of type \"%s\"",
-							field.getName(),
+							field.getSqlName(),
 							getPersistentType().getName()), e);
 			}
 			else {

@@ -1,7 +1,5 @@
 package com.privatesecuredata.arch.db;
 
-import java.util.Locale;
-
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
@@ -71,14 +69,14 @@ public class SqlForeignKeyField extends SqlDataField {
 		StringBuilder str = new StringBuilder("UPDATE ");
 		str.append(getTableName())
 			.append(" SET ")
-			.append(getName()).append("=? WHERE _id=?");
+			.append(getSqlName()).append("=? WHERE _id=?");
 		
 		_updateForeignKey = db.compileStatement(str.toString());
 	}
 
 	public SqlForeignKeyField.ForeignkeyKey createHashtableKey() {
 		ForeignkeyKey key = new ForeignkeyKey();
-		key.fieldName   = getName();
+		key.fieldName   = getSqlName();
 		key.foreignType = getForeignKeyType();
 		return key;
 	}

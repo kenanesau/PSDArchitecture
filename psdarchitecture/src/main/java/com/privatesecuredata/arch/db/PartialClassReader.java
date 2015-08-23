@@ -42,7 +42,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
             if (null == partialPersisterField)
                 continue;
 
-            partialPersisterField.setName(fullPersisterField.getName());
+            partialPersisterField.setName(fullPersisterField.getSqlName());
             partialPersisterField.setSqlType(fullPersisterField.getSqlType());
             partialPersisterField.setTableName(fullPersisterField.getTableName());
         }
@@ -74,7 +74,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         for(SqlDataField fld : getTableFieldsInternal() )
         {
             sql.append(", ")
-              .append(fld.getName());
+              .append(fld.getSqlName());
 
             fieldCount++;
         }
@@ -92,7 +92,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         for(SqlDataField fld : getTableFieldsInternal() )
         {
             sql.append(", ")
-                    .append(fld.getName());
+                    .append(fld.getSqlName());
 
             fieldCount++;
         }
@@ -127,7 +127,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
     }
 
     @Override
-    protected String getSelectAllSQLString() { return _selectAllSqlString; }
+    protected String getSelectAllStatement() { return _selectAllSqlString; }
 
     @Override
     protected String getSelectSingleSqlString() { return _selectSingleSqlString; }

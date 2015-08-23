@@ -43,6 +43,7 @@ public class PersistanceManager {
 	private boolean initialized = false;
 	private MVVM mvvm = null;
 	private Context ctx;
+    private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
 	
 	public PersistanceManager(IDbDescription dbDesc) 
 	{
@@ -112,7 +113,15 @@ public class PersistanceManager {
 						}
 					}
 				}
-	
+
+                for(ICursorLoaderFactory factory : cursorLoaderFactories)
+                {
+                    registerCursorLoader(factory.getReferencingType(),
+                            factory.getReferencedType(),
+                            factory.create());
+                }
+
+                cursorLoaderFactories.clear();
 				this.initialized = true;
 			}
 		}
@@ -527,7 +536,7 @@ public class PersistanceManager {
 //			{
 //				throw new DBException(
 //						String.format("Error inserting an object of type=%s to database", 
-//								persistable.getClass().getName()));
+//								persistable.getClass().getSqlName()));
 //			}
 //			finally 
 //			{
@@ -552,7 +561,7 @@ public class PersistanceManager {
 //			{
 //				throw new DBException(
 //						String.format("Error updating an object of type=%s, id=%d",
-//								persistable.getClass().getName(),
+//								persistable.getClass().getSqlName(),
 //								dbId.getId()));
 //			}
 //			finally 
@@ -641,6 +650,11 @@ public class PersistanceManager {
     {
         ICursorLoader loader = getLoader(referencingObject.getClass(), referencedType);
         return (loader != null) ? loader.getCursor(referencingObject.getDbId(), terms) : null;
+    }
+
+    public void registerCursorLoaderFactory(ICursorLoaderFactory factory)
+    {
+        cursorLoaderFactories.add(factory);
     }
 	
 	public void registerCursorLoader(Class<?> referencingType, Class<?> referencedType, ICursorLoader loader)

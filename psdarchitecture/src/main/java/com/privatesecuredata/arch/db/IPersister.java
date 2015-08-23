@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.db;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.List;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
@@ -24,6 +25,7 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 	long insert(T persistable) throws DBException;
 	long update(T persistable) throws DBException;
 	T rowToObject(int pos, Cursor csr) throws DBException;
+    List<SqlDataField> getSqlFields();
 	Cursor getLoadAllCursor() throws DBException;
     public Cursor getLoadAllCursor(OrderByTerm[] orderTerms) throws DBException;
     Cursor getFilteredCursor(String fieldName, CharSequence constraint) throws DBException;

@@ -76,7 +76,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
             sortOrderTerms = new OrderByTerm[orders.length];
             int i = 0;
             for (OrderBy order : orders)
-                sortOrderTerms[i++] = new OrderByTerm(order.getFieldName(), order.isAscending());
+                sortOrderTerms[i++] = new OrderByTerm(order.getType(), order.getFieldName(), order.isAscending());
         }
         else
             sortOrderTerms = null;

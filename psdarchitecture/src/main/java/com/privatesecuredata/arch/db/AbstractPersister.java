@@ -3,7 +3,9 @@ package com.privatesecuredata.arch.db;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
@@ -26,7 +28,8 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     private Hashtable<Field, SQLiteStatement> _foreignListCountUpdateStatements;
 
 
-	protected String getSelectAllSQLString() { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
+	protected String getSelectAllStatement() { return getSelectAllStatement(null); }
+    protected String getSelectAllStatement(OrderByTerm... terms) { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
     protected String getDelSqlString() { return String.format(DELSQLSTATEMENT, getTableName()); }
     protected String getSelectSingleSqlString() { return String.format(SELECTSINGLESQLSTATEMENT, getTableName()); }
 
@@ -134,15 +137,73 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
         return sb;
     }
 
+    public static StringBuilder createSelectAllStatement(String tableName, List<SqlDataField> fields, OrderByTerm... terms)
+    {
+        StringBuilder sql = new StringBuilder("SELECT ").append(tableName).append("._id, ");
+
+        int fieldCount = 0;
+        Hashtable<Class, SqlDataField> references = new Hashtable<>();
+        for(SqlDataField fld : fields)
+        {
+            if (fieldCount > 0)
+                sql.append(", ");
+
+            sql.append(fld.getSqlName());
+            if (fld.getSqlType()== SqlDataField.SqlFieldType.OBJECT_REFERENCE)
+                references.put(fld.getField().getType(), fld);
+
+            fieldCount++;
+        }
+
+        Hashtable<String, OrderByTerm> tables = null;
+        if (null != terms) {
+            tables = new Hashtable<String, OrderByTerm>();
+            for (OrderByTerm term : terms) {
+                if (fieldCount > 0)
+                    sql.append(", ");
+
+                sql.append(term.getSqlFieldName());
+
+                fieldCount++;
+                if (!tables.containsKey(term.getSqlTableName()))
+                    tables.put(term.getSqlTableName(), term);
+            }
+        }
+
+        sql.append(" FROM ").append(tableName);
+
+        if (null != terms) {
+            if (tables.size() > 0) {
+                Enumeration keys = tables.keys();
+                while (keys.hasMoreElements()) {
+                    String otherTable = (String)keys.nextElement();
+                    OrderByTerm term = tables.get(otherTable);
+                    SqlDataField referenceFld = references.get(term.getType());
+                    if (null != referenceFld) {
+
+                        sql.append(" INNER JOIN ");
+
+                        sql.append(otherTable)
+                                .append(" ON ")
+                                .append(referenceFld.getSqlName())
+                                .append("=").append(otherTable).append("._id ");
+                    }
+                }
+            }
+        }
+
+        return sql;
+    }
+
 	@Override
 	public Cursor getLoadAllCursor() {
-		return getDb().rawQuery(getSelectAllSQLString(), null);
+		return getDb().rawQuery(getSelectAllStatement(), null);
 	}
 
     @Override
     public Cursor getLoadAllCursor(OrderByTerm[] orderTerms) {
         StringBuilder selectAll = appendOrderByString(
-                                    new StringBuilder(getSelectAllSQLString()),
+                                    new StringBuilder(getSelectAllStatement()),
                                     orderTerms);
 
         return getDb().rawQuery(selectAll.toString(), null);
@@ -151,7 +212,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     @Override
     public Cursor getFilteredCursor(String fieldName, CharSequence constraint)
     {
-        StringBuilder sb = new StringBuilder(getSelectAllSQLString());
+        StringBuilder sb = new StringBuilder(getSelectAllStatement());
 
         return getDb().rawQuery(appendFilterString(sb, fieldName, constraint).toString(), null);
     }
@@ -159,7 +220,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     @Override
     public Cursor getFilteredCursor(String fieldName, CharSequence constraint, OrderByTerm[] orderTerms)
     {
-        StringBuilder sb = appendFilterString(new StringBuilder(getSelectAllSQLString())
+        StringBuilder sb = appendFilterString(new StringBuilder(getSelectAllStatement(orderTerms))
                 , fieldName, constraint);
 
         return getDb().rawQuery(appendOrderByString(sb, orderTerms).toString(), null);
@@ -223,7 +284,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
                 .append(tableName)
                 .append(" SET ");
 
-        sql.append(field.getName());
+        sql.append(field.getSqlName());
         sql.append("=? ");
         sql.append("WHERE _id=?");
 

@@ -41,10 +41,15 @@ public class DbNameHelper {
 	
 	public static String getForeignKeyFieldName(Class<?> persistable)
 	{
-		StringBuilder sbl = new StringBuilder("fld_")
-		  .append(getTableName(persistable))
-		  .append("_id");
-		
-		return sbl.toString();
+		return getForeignKeyFieldName(getTableName(persistable));
 	}
+
+    public static String getForeignKeyFieldName(String tableName)
+    {
+        StringBuilder sbl = new StringBuilder("fld_")
+                .append(tableName)
+                .append("_id");
+
+        return sbl.toString();
+    }
 }

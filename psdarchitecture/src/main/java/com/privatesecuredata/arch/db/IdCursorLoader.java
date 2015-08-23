@@ -1,12 +1,10 @@
 package com.privatesecuredata.arch.db;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import android.database.Cursor;
-import android.database.sqlite.SQLiteStatement;
 
 /**
  * This Cursorloader tries to load a cursor which is retrieved from a SQL-statement
@@ -21,50 +19,85 @@ public class IdCursorLoader implements ICursorLoader {
 	private PersistanceManager _pm;
 	private String _tableName;
 	private String _foreignKeyColumn;
+    private List<SqlDataField> _fields;
 
 	private String _selectAllRawString;
 	private String _selectIdRawString;
 
-    public IdCursorLoader(PersistanceManager pm, Class<?> persistentType, Class<?> referencedType, List<SqlDataField> fields)
+    /**
+     * Used by PartialClassReader
+     * @param pm
+     * @param referencingType
+     * @param referencedType
+     * @param fields
+     */
+    public IdCursorLoader(PersistanceManager pm, Class referencingType, Class referencedType, List<SqlDataField> fields)
     {
-        String table = DbNameHelper.getTableName(referencedType);
-        String foreignKeyColumn = DbNameHelper.getForeignKeyFieldName(persistentType);
-
-        init (pm, table, foreignKeyColumn, fields);
+        init (pm, referencedType, referencingType, fields);
     }
-	
-	public IdCursorLoader(PersistanceManager pm, String table, String foreignKeyColumn)
+
+    /**
+     * Used by Hand-made persisters
+     * @param pm
+     * @param table
+     * @param foreignKeyColumn
+     */
+	/*public IdCursorLoader(PersistanceManager pm, String table, String foreignKeyColumn)
 	{
 		init(pm, table, foreignKeyColumn, null);
-	}
-	
+	}*/
+
+    /**
+     * Used by AutomaticPersister
+     *
+     * @param pm
+     * @param referencingType
+     * @param referencedType
+     */
 	public IdCursorLoader(PersistanceManager pm, Class<?> referencingType, Class<?> referencedType)
 	{
 		String table = DbNameHelper.getTableName(referencedType);
 		String foreignKeyColumn = DbNameHelper.getForeignKeyFieldName(referencingType);
-		
-		init(pm, table, foreignKeyColumn, null);
-	}
-	
-	protected void init(PersistanceManager pm, String table, String foreignKeyColumn, List<SqlDataField> fields)
-	{
-		this._pm = pm;
-		this._tableName = table;
-		this._foreignKeyColumn = foreignKeyColumn;
+        IPersister persister = pm.getPersister((Class)referencedType);
 
+		init(pm, table, foreignKeyColumn, persister.getSqlFields());
+	}
+
+    protected void init(PersistanceManager pm, String tableName, String foreignKeyColumn, List<SqlDataField> fields)
+    {
+        this._pm = pm;
+        this._tableName = tableName;
+        this._foreignKeyColumn = foreignKeyColumn;
+        this._fields = fields;
+
+        StringBuilder sbSelectAll = AbstractPersister.createSelectAllStatement(_tableName, fields, null);
+        StringBuilder sbSelectId = new StringBuilder(sbSelectAll.toString());
+
+        sbSelectAll.append(" WHERE ")
+                .append(_foreignKeyColumn)
+                .append(" IS NULL");
+
+        sbSelectId.append(" WHERE ")
+                .append(_foreignKeyColumn)
+                .append("=");
+
+        _selectAllRawString = sbSelectAll.toString();
+        _selectIdRawString = sbSelectId.toString();
+        /*
         if (null == fields) {
-            _selectAllRawString = String.format("SELECT * FROM %s WHERE %s IS NULL", _tableName, _foreignKeyColumn);
-            _selectIdRawString = String.format("SELECT * FROM %s WHERE %s=", _tableName, _foreignKeyColumn);
+            sbSelectAll.append(" WHERE ").append(_foreignKeyColumn).append(" IS NULL");
+            sbSelectId.append(" WHERE ").append(_foreignKeyColumn).append("=");
         }
+
         else {
             StringBuilder sqlSelectAll = new StringBuilder("SELECT _id ");
             StringBuilder sqlSelectId = new StringBuilder("SELECT _id ");
 
             for(SqlDataField field : fields) {
                 sqlSelectAll.append(", ")
-                        .append(field.getName());
+                        .append(field.getSqlName());
                 sqlSelectId.append(", ")
-                        .append(field.getName());
+                        .append(field.getSqlName());
             }
 
             sqlSelectAll.append(" FROM ")
@@ -82,7 +115,12 @@ public class IdCursorLoader implements ICursorLoader {
             _selectAllRawString = sqlSelectAll.toString();
             _selectIdRawString = sqlSelectId.toString();
         }
+        */
+    }
 
+	protected void init(PersistanceManager pm, Class referencedType, Class referencingType, List<SqlDataField> fields)
+	{
+        init(pm, DbNameHelper.getTableName(referencedType), DbNameHelper.getForeignKeyFieldName(referencingType), fields);
 	}
 
     protected String getBaseQuery(DbId<?> foreignKey) {
@@ -99,10 +137,10 @@ public class IdCursorLoader implements ICursorLoader {
         return sqlQuery;
     }
 
-	@Override
+    @Override
     public Cursor getCursor(DbId<?> foreignKey)
     {
-        return _pm.getDb().rawQuery(getBaseQuery(foreignKey), new String[] {});
+        return _pm.getDb().rawQuery(getBaseQuery(foreignKey), new String[]{});
     }
 
     @Override
@@ -110,7 +148,11 @@ public class IdCursorLoader implements ICursorLoader {
         if (null == orderByTerms)
             return getCursor(foreignKey);
 
-        StringBuilder sb = AbstractPersister.appendOrderByString(new StringBuilder(getBaseQuery(foreignKey)), orderByTerms);
-        return _pm.getDb().rawQuery(sb.toString(), new String[] {});
+        StringBuilder sb = AbstractPersister.appendOrderByString(
+                AbstractPersister.createSelectAllStatement(_tableName,
+                        _fields,
+                        orderByTerms),
+                orderByTerms);
+        return _pm.getDb().rawQuery(sb.toString(), new String[]{});
     }
 }
