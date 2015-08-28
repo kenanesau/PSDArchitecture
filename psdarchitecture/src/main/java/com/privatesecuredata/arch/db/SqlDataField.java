@@ -40,7 +40,7 @@ public class SqlDataField {
     private String _id;
 	
 	protected SqlDataField() {}
-	
+
 	public SqlDataField(String table, String name, SqlFieldType type)
 	{
 		_tableName = ((table == null) ? null : table.toLowerCase(Locale.US));
@@ -110,7 +110,7 @@ public class SqlDataField {
 	}
 	
 	protected void setName(String name) { _name = name; }
-	public String getName() { return _name; }
+	public String getSqlName() { return _name; }
 	
 	protected void setSqlType(SqlFieldType type) { _type = type; }
 	public SqlFieldType getSqlType() { return _type; }

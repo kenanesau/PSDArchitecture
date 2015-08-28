@@ -8,7 +8,7 @@ import com.privatesecuredata.arch.db.SqlDataField.SqlFieldType;
 public class DbNameHelper {
 	public static String getTableName(Class<?> persistable)
 	{
-		return String.format("tbl_%s", persistable.getSimpleName().toLowerCase(Locale.US));
+        return null == persistable ? null : String.format("tbl_%s", persistable.getSimpleName().toLowerCase(Locale.US));
 	}
 
     protected static StringBuilder getSimpleFieldSB(String baseName)

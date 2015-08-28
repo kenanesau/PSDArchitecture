@@ -93,13 +93,11 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				// object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
                 SqlDataField idField = new SqlDataField(field);
                 addSqlField(idField);
-                objRel.setIdField(idField);
 
                 String fldName = String.format("fld_tpy_%s", field.getName());
                 SqlDataField fldTypeName = new SqlDataField(fldName, SqlDataField.SqlFieldType.OBJECT_NAME);
                 fldTypeName.setField(idField.getField());
                 addSqlField(fldTypeName);
-                objRel.setTypeNameField(fldTypeName);
 			}
 			
 			// At the moment DbThisToMany-Annotations are always saved as a foreign-key in the table of the referenced object
@@ -313,10 +311,10 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 		{
 			sql.append(", ")
 				.append(field.getSqlName()).append(" ")
-				.append(field.getSqlTypeString()).append(" ");
+				.append(field.getSqlTypeString());
 			
 			if (field.isMandatory())
-				sql.append("NOT NULL");
+				sql.append(" NOT NULL");
 		}
 		
 		//Add the foreign key-fields and constraints
@@ -324,7 +322,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 		{
 			sql.append(", ")
 				.append(field.getSqlName()).append(" ")
-				.append(field.getSqlTypeString()).append(" ");
+				.append(field.getSqlTypeString());
 			
 			// Foreign-Key Fields do never have a NOT NULL constraint
 			// since they are deferred

@@ -165,8 +165,15 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
                 sql.append(term.getSqlFieldName());
 
                 fieldCount++;
-                if (!tables.containsKey(term.getSqlTableName()))
-                    tables.put(term.getSqlTableName(), term);
+                String table = term.getSqlTableName();
+                /**
+                 * If there is no tablename set, assume the field is in the current table
+                 * -> no tablename needed an no INNER JOIN needed...
+                 */
+                if (null != table) {
+                    if (!tables.containsKey(term.getSqlTableName()))
+                        tables.put(term.getSqlTableName(), term);
+                }
             }
         }
 

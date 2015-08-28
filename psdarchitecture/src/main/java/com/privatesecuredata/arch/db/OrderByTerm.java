@@ -11,13 +11,17 @@ public class OrderByTerm {
     public OrderByTerm(Class type, String objectFieldName, boolean asc)
     {
         _type = type;
-        setSqlOrderStr(DbNameHelper.getTableName(type), DbNameHelper.getSimpleFieldName(objectFieldName), asc);
+         setSqlOrderStr(DbNameHelper.getTableName(type), DbNameHelper.getSimpleFieldName(objectFieldName), asc);
     }
 
     private void setSqlOrderStr(String tableName, String simpleFieldName, boolean asc) {
         _dbTableName = tableName;
-        _sqlOrderStr = String.format(" %s.%s %s", tableName, simpleFieldName, asc ? "ASC" : "DESC");
-        _sqlFieldStr = String.format(" %s.%s", _dbTableName, simpleFieldName);
+        _sqlFieldStr = null == tableName ?
+                simpleFieldName :
+                String.format(" %s.%s", _dbTableName, simpleFieldName);
+        _sqlOrderStr = null == tableName ?
+                String.format(" %s %s", _sqlFieldStr, asc ? "ASC" : "DESC") :
+                String.format(" %s.%s %s", tableName, simpleFieldName, asc ? "ASC" : "DESC");
     }
 
     public OrderByTerm(String objectFieldName, boolean asc)
