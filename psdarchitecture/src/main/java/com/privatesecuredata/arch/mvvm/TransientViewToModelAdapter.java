@@ -61,7 +61,7 @@ public class TransientViewToModelAdapter<T> {
 	/**
 	 * Fills the view with new data provided by the model (vm)
 	 * 
-	 * @param v View to write data to 
+	 * @param v View to write data to
 	 * @param vm The complex ViewModel which contains the data to transfer to the view
 	 */
 	public void updateView(View v, IViewModel<?> vm)

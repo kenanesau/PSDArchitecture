@@ -40,6 +40,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     private HashMap<String, IViewModel<?>> nameViewModelMapping;
     private MVVM mvvm;
     private boolean globalNotify = true;
+    private boolean isLazy = false;
 
     /**
      * Handle for locating the lower level configuration reference when communicating with
@@ -65,6 +66,19 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         //setModelAndRegisterChildren needs this.mvvm set...
         if (null != model)
             this.nameViewModelMapping = setModelAndRegisterChildren(model);
+    }
+
+    /**
+     * Write a completely new Model to the VM
+     *
+     * @param m
+     */
+    public void updateModel(MODEL m)
+    {
+        setModel(null);
+        unsetLazy();
+        setModelAndRegisterChildren(m);
+        notifyViewModelDirty();
     }
 /*
     public ComplexViewModel(ListViewModelFactory fac)
@@ -93,13 +107,13 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		return super.getModel();
 	}
 
-   	protected MODEL loadProxyData(MODEL model)
+   	protected MODEL loadProxyData(MODEL m)
 	{
-		InvocationHandler handler = Proxy.getInvocationHandler(model);
+		InvocationHandler handler = Proxy.getInvocationHandler(m);
 		if (handler instanceof LazyCollectionInvocationHandler)
-			model = (MODEL) new ArrayList(((LazyCollectionInvocationHandler)handler).loadCollection());
+			m = (MODEL) new ArrayList(((LazyCollectionInvocationHandler)handler).loadCollection());
 		
-		return model;
+		return m;
 	}
 
     public MVVM getMVVM()
@@ -137,17 +151,12 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		if (null != getModelField()) {
 			try {
                 Object parentModel = getParentModel();
-                if (null != parentModel) {
+                if ( (null != parentModel) && (isLazy()) ) {
                     Field fld = getModelField();
                     MODEL model = (MODEL) fld.get(parentModel); //(MODEL) getModelGetter().invoke(getParentModel(), (Object[]) null);
                     if ((null != model) && (Proxy.isProxyClass(model.getClass()))) {
                         model = loadProxyData(model);
                     }
-                    /**
-                     * delete _modelGetter -> all future calls of getModel() go directly to the
-                     * real Model. DO THIS BEFORE SETMODELANDREGISTER -> StackOverflow otherwise
-                     */
-                    setModelGetter(null, null);
 
                     setModelAndRegisterChildren(model);
                 }
@@ -164,7 +173,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	 * to enable lazy loading on the child model.
 	 * 
 	 * @param parentViewModel the parent view-model on which the modelGetter is invoked
-	 * @param field the Field which accesses the (child)model (of the parentModel)
+	 * @param field the Field which accesses the model of THIS Viewmodel in the Parent-Model
 	 */
 	protected void setModelGetter(ComplexViewModel<?> parentViewModel, Field field)
 	{
@@ -244,7 +253,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		{
 			addChild(vm);
 			vm.addViewModelListener(this);
-		}
+
+        }
 		else 
 			throw new ArgumentException(String.format("You are trying to register a Viewmodel twice. ViewModel \"%s\" was already registered", vm.toString()));
 	}
@@ -264,25 +274,31 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
      * This method analyses all the mapping-annotations and returns a Hashmap of all
      * Modelnames to their VMs. Overwrite doMappings to get the Hashmap with name->VM-mappings.
      *
-     * @param model The model
+     * @param m The model
      * @return Hashmap containing all mappings from model-name to view-model
      *
      * @see {@link #doMappings(HashMap<String, IViewModel>)}
      */
-	private HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL model)
+	private HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL m)
 	{
 		HashMap<String, IViewModel<?>> childViewModels = new HashMap<String, IViewModel<?>>();
         if (null != getModel())
             throw new ArgumentException("This Viewmodel already has a Model, don't do this twice!!!");
-        if (null == model)
+        if (null == m)
             throw new ArgumentException("Your model is null -- this does not make any sense!!!");
 
-        setModel(model);
+        setModel(m);
 
         for (IListViewModel listVM : this.listVMs)
             unregisterChildVM((ComplexViewModel)listVM);
-        this.listVMs.clear();
-        Field[] fields = model.getClass().getDeclaredFields();
+        if (this.children.size() > 0) {
+            ArrayList<IViewModel<?>> vms = new ArrayList<>(this.children.values());
+            for (IViewModel vm : vms) {
+                unregisterChildVM(vm);
+            }
+            vms.clear();
+        }
+        Field[] fields = m.getClass().getDeclaredFields();
 
         for (Field field : fields)
         {
@@ -377,6 +393,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
              * If the Childmodel is != null -> it is in memory -> create the VM
              */
             if (!complexAnno.loadLazy() || childModel != null) {
+                isLazy = false;
                 Class<?> viewModelType;
                 if (childModel != null) {
                     modelType = childModel.getClass();
@@ -394,6 +411,9 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
                 Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
                 ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), childModel);
+
+                //We might need this in case the model is replaced later by a new model
+                vm.setModelGetter(this, field);
                 registerChildVM(vm);
 
                 childModels.put(field.getName(), vm);
@@ -404,6 +424,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
                 Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
                 ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), null);
+                vm.setLazy();
                 vm.setModelGetter(this, field);
 
                 childModels.put(field.getName(), vm);
@@ -420,7 +441,20 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         }
 	}
 
-	protected void setSimpleModelMapping(HashMap<String, IViewModel<?>> childModels, 
+    protected void setLazy() {
+        this.isLazy = true;
+    }
+
+    protected void unsetLazy() {
+        this.isLazy = false;
+    }
+
+    protected boolean isLazy() {
+        return  isLazy;
+    }
+
+
+    protected void setSimpleModelMapping(HashMap<String, IViewModel<?>> childModels,
 			Field field, SimpleVmMapping simpleAnno) throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException 
 	{
 		Method getter = createGetter(field);
@@ -457,6 +491,14 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         for(IListViewModel listVM : listVMs) {
             listVM.commit();
         }
+
+        Field fld = this.getModelField();
+        try {
+            if (null != fld)
+                fld.set(getParentModel(), getModel());
+        }
+        catch (Exception ex)
+        {}
 
 		this.setClean();
 	}

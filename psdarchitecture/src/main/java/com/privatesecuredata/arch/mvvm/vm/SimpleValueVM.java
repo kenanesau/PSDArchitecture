@@ -141,7 +141,7 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	public void reload() 
 	{
 		
-		if (!data.equals(getModel()))
+		if ((null == data) || (!data.equals(getModel())))
 		{
 			this.data = getModel();
 			notifyViewModelDirty(this, this);

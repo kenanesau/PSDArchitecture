@@ -334,7 +334,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	/**
 	 * Fills the view with new data
 	 * 
-	 * @param v View to write data to 
+	 * @param v View to write data to
 	 * @param complexVM The complex ViewModel which contains the data to transfer to the view
 	 */
 	@Override
