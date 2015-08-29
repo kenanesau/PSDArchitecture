@@ -84,6 +84,23 @@ public class MVVMInstanceStateHandler {
         }
     }
 
+    public <T extends IPersistable> T getModel(PersistanceManager pm, Class type)
+    {
+        return getModel(pm, type.getCanonicalName());
+    }
+
+    public <T extends IPersistable> T getModel(PersistanceManager pm, String tag)
+    {
+        ViewModelState state = rememberedInstances.get(tag);
+
+        if (state!=null) {
+            return state.getModel(pm);
+        }
+        else {
+            return null;
+        }
+    }
+
     public <T extends IViewModel> T getViewModel(PersistanceManager pm, Class type)
     {
         return getViewModel(pm, type.getCanonicalName());

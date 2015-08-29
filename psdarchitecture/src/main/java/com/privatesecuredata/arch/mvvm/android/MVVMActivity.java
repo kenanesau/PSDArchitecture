@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 import com.privatesecuredata.arch.db.IDbDescription;
+import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -102,6 +103,14 @@ public class MVVMActivity extends FragmentActivity
 
     protected void forgetInstanceState(IViewModel... vms) {
         instanceStateHandler.forgetInstanceState(vms);
+    }
+
+    public IPersistable getModel(Class type) {
+        return instanceStateHandler.getModel(getDefaultPM(), type);
+    }
+
+    public IPersistable getModel(String tag) {
+        return instanceStateHandler.getModel(getDefaultPM(), tag);
     }
 
     public <T extends IViewModel> T getViewModel(Class type)

@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.mvvm.android;
 
 import com.privatesecuredata.arch.db.IDbDescription;
+import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -97,6 +98,14 @@ public class MVVMFragment extends Fragment {
 
     protected void forgetInstanceState(IViewModel... vms) {
         instanceStateHandler.forgetInstanceState(vms);
+    }
+
+    public <T extends IPersistable> T getModel(Class type) {
+        return instanceStateHandler.getModel(getDefaultPM(), type);
+    }
+
+    public <T extends IPersistable> T getModel(String tag) {
+        return instanceStateHandler.getModel(getDefaultPM(), tag);
     }
 
     public <T extends IViewModel> T getViewModel(Class type)

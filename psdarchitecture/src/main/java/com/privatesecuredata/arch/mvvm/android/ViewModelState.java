@@ -9,6 +9,7 @@ import com.google.common.base.Objects;
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
@@ -145,6 +146,27 @@ public class ViewModelState implements Parcelable {
         }
     };
 
+    public <T extends IPersistable> T getModel(PersistanceManager pm)
+    {
+        T model = null;
+        try {
+            Class type = Class.forName(getTypeName());
+
+            if (!containsNewObject) {
+                model = (T)pm.load(type, getDbId());
+            } else {
+                Constructor constructor = type.getConstructor();
+                model = (T) constructor.newInstance();
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new MVVMException("Unable to create model-object!");
+        }
+
+        return model;
+    }
+
     /**
      * Returns the ViewModel in any case (when the instance was saved before or not)
      *
@@ -159,15 +181,7 @@ public class ViewModelState implements Parcelable {
             return ret;
 
         try {
-            Class type = Class.forName(getTypeName());
-            IPersistable model;
-            if (!containsNewObject) {
-                model = pm.load(type, getDbId());
-            }
-            else {
-                Constructor constructor = type.getConstructor();
-                model = (IPersistable)constructor.newInstance();
-            }
+            IPersistable model = getModel(pm);
 
             this.vm = pm.createMVVM().createVM(model);
             ret = (T) vm;
