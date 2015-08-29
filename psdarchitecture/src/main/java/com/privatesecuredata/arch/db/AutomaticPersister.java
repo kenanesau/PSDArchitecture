@@ -19,6 +19,7 @@ import android.database.sqlite.SQLiteStatement;
 import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.annotations.DbField;
 import com.privatesecuredata.arch.db.annotations.DbForeignKeyField;
+import com.privatesecuredata.arch.db.annotations.DbMultipleForeignKeyFields;
 import com.privatesecuredata.arch.db.annotations.DbThisToMany;
 import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.DBException;
@@ -50,6 +51,17 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
     protected AutomaticPersister() {}
 
+    protected void addForeignKeyField(DbForeignKeyField dbAnno)
+    {
+        Class<?> foreignKeyType = dbAnno.foreignType();
+
+        SqlForeignKeyField sqlForeignKeyField = new SqlForeignKeyField(getTableName(), foreignKeyType);
+        if (dbAnno.isMandatory())
+            sqlForeignKeyField.setMandatory();
+        Class<?> key = foreignKeyType; //sqlForeignKeyField.createHashtableKey();
+        _foreignKeyFields.put(key, sqlForeignKeyField);
+    }
+
     public AutomaticPersister(PersistanceManager pm, Class<T> persistentType) throws Exception
 	{
 		setTableName(DbNameHelper.getTableName(persistentType));
@@ -61,21 +73,15 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 		_foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
 
 		setPM(pm);
-		Annotation[] annos = persistentType.getAnnotations();
-		for(Annotation anno : annos)
-		{
-			if (anno instanceof DbForeignKeyField)
-			{
-				DbForeignKeyField dbAnno = (DbForeignKeyField) anno;
-				Class<?> foreignKeyType = dbAnno.foreignType();
-				
-				SqlForeignKeyField sqlForeignKeyField = new SqlForeignKeyField(getTableName(), foreignKeyType);
-				if (dbAnno.isMandatory())
-					sqlForeignKeyField.setMandatory();
-				Class<?> key = foreignKeyType; //sqlForeignKeyField.createHashtableKey();
-				_foreignKeyFields.put(key, sqlForeignKeyField);
-			}
-		}
+		DbForeignKeyField anno = persistentType.getAnnotation(DbForeignKeyField.class);
+        if (anno!=null)
+            addForeignKeyField(anno);
+
+        DbMultipleForeignKeyFields multipleAnnos = persistentType.getAnnotation(DbMultipleForeignKeyFields.class);
+        if (null != multipleAnnos) {
+            for (DbForeignKeyField dbAnno : multipleAnnos.value())
+                addForeignKeyField(dbAnno);
+        }
 		
 		for (Field field : fields)
 		{			
@@ -114,8 +120,16 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
 				/*ICursorLoader loader = new IdCursorLoader(getPM(), persistentType, referencedType);
 				getPM().registerCursorLoader(persistentType, referencedType, loader);*/
-				
-				// Add table-field for the collection-proxy-size
+
+                /**
+                 * Add DB-Field for the foreign-key
+                 */
+                //SqlForeignKeyField sqlForeignKeyField = new SqlForeignKeyField(getTableName(), referencedType);
+                //_foreignKeyFields.put(referencedType, sqlForeignKeyField);
+
+                /**
+                 * Add table-field for the collection-proxy-size
+                 */
                 SqlDataField collectionProxySizeFld = new SqlDataField(field, referencedType);
 				addSqlField(collectionProxySizeFld);
 
@@ -577,7 +591,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         }
 	}
 
-	@Override
+    @Override
 	public T rowToObject(int pos, Cursor csr) throws DBException {
 		T obj = null;
 		SqlDataField field = null;

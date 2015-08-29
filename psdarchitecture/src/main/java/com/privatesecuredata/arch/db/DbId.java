@@ -17,6 +17,7 @@ import java.util.LinkedList;
  */
 public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	private boolean dirty = true;
+    private Class type = null;
 	private long id = -1;
 	private IDirtyChangedListener dirtyListener;
 	
@@ -24,8 +25,9 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	private LinkedList<DbId<?>> loadedChildren;
 	private LinkedList<DbId<?>> dirtyChildren;
 	
-	public DbId(long id)
+	public DbId(Class type, long id)
 	{
+        this.type = type;
 		this.id = id;
 	}
 	
@@ -37,6 +39,7 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	{
 		return persistableObj;
 	}
+    public Class getType() { return this.type; }
 	
 	public boolean getDirty() { return this.dirty; }
 	public void setDirty() { this.dirty = true; }

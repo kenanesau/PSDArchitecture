@@ -140,7 +140,8 @@ public class IdCursorLoader implements ICursorLoader {
     @Override
     public Cursor getCursor(DbId<?> foreignKey)
     {
-        return _pm.getDb().rawQuery(getBaseQuery(foreignKey), new String[]{});
+        StringBuilder sb = new StringBuilder(getBaseQuery(foreignKey));
+        return _pm.getDb().rawQuery(sb.toString(), new String[]{});
     }
 
     @Override
@@ -149,9 +150,12 @@ public class IdCursorLoader implements ICursorLoader {
             return getCursor(foreignKey);
 
         StringBuilder sb = AbstractPersister.appendOrderByString(
-                AbstractPersister.createSelectAllStatement(_tableName,
+                AbstractPersister.appendWhereClause(
+                    AbstractPersister.createSelectAllStatement(_tableName,
                         _fields,
                         orderByTerms),
+                    _foreignKeyColumn,
+                    foreignKey),
                 orderByTerms);
         return _pm.getDb().rawQuery(sb.toString(), new String[]{});
     }

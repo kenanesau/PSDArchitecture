@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Pair;
 
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
@@ -319,6 +320,11 @@ public class PersistanceManager {
 		fathersId.addChild(persistable.getDbId());
 		return (T) persistable;
 	}
+
+    public <T extends IPersistable> T load(DbId id) throws DBException
+    {
+        return (T)load(id.getType(), id.getId());
+    }
 	
 	public <T extends IPersistable> T load(Class<T> classObj, long id) throws DBException
 	{
@@ -570,6 +576,15 @@ public class PersistanceManager {
 //			}
 //		}
 //	}
+
+    public void deleteChildren(IPersistable father, Class referencedChild)
+    {
+        StringBuilder sql = new StringBuilder("DELETE FROM ").append(DbNameHelper.getTableName(referencedChild))
+                .append(" WHERE ").append(DbNameHelper.getForeignKeyFieldName(father.getClass()))
+                .append("=").append(father.getDbId().getId());
+        SQLiteStatement del = getDb().compileStatement(sql.toString());
+        del.executeUpdateDelete();
+    }
 	
 	public <T extends IPersistable> void delete(T persistable) throws DBException
 	{
@@ -581,13 +596,26 @@ public class PersistanceManager {
 		try {
 			Class<T> classObj = (Class<T>) persistable.getClass();
 			IPersister<T> persister = (IPersister<T>) getPersister(classObj);
+            db.beginTransaction();
+
+            for (SqlDataField field : persister.getSqlFields())
+            {
+                if (field.getSqlType() == SqlDataField.SqlFieldType.COLLECTION_REFERENCE)
+                {
+                    Class referencedType = field.getReferencedType();
+                    deleteChildren(persistable, referencedType);
+                }
+            }
+
 			persister.delete(persistable);
+            db.setTransactionSuccessful();
+            db.endTransaction();
 		}
 		catch (Exception ex)
 		{
 			throw new DBException(
-					String.format("Error deleting an object of type=%s to database", 
-							persistable.getClass().getName()));
+					String.format("Error deleting an object of type=%s",
+							persistable.getClass().getName()), ex);
 		}
 	}
 	
@@ -744,7 +772,7 @@ public class PersistanceManager {
 	{
 		if (null == persistable.getDbId())
 		{
-			DbId<T> dbId = new DbId<T>(id);
+			DbId<T> dbId = new DbId<T>(persistable.getClass(), id);
 			dbId.setObj(persistable);
 			persistable.setDbId(dbId);
 			if (isClean)
@@ -821,6 +849,12 @@ public class PersistanceManager {
         return mvvm;
     }
 
+    public void updateCollectionProxySize(IPersistable persistable, Field field, long newCollSize) {
+        Class type = persistable.getClass();
+        IPersister<?> persister = getPersister(type);
+
+        persister.updateCollectionProxySize(persistable, field, newCollSize);
+    }
     /**
      * Update the size of the collection which is saved in each "parent" object.
      *
@@ -829,10 +863,7 @@ public class PersistanceManager {
      * @param childItems  The new / updated list of child items
      */
     public void updateCollectionProxySize(IPersistable persistable, Field field, Collection childItems) {
-        Class type = persistable.getClass();
-        IPersister<?> persister = getPersister(type);
-
-        persister.updateCollectionProxySize(persistable, field, childItems);
+        updateCollectionProxySize(persistable, field, childItems.size());
     }
 
     public OrderByTerm[] orderByDbField(String... objFieldNames) {

@@ -14,7 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
 public abstract class AbstractPersister<T extends IPersistable> implements IPersister<T> {
-	protected static final String DELSQLSTATEMENT = "DELETE from %s WHERE _id=?";
+	protected static final String DELSQLSTATEMENT = "DELETE FROM %s WHERE _id=?";
 	protected static final String SELECTSINGLESQLSTATEMENT = "SELECT * FROM %s WHERE _id=?";
 	protected static final String SELECTALLSQLSTATEMENT = "SELECT * FROM %s";
 	
@@ -56,6 +56,18 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	public abstract void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;
 	@Override
 	public abstract T rowToObject(int pos, Cursor csr) throws DBException;
+
+    @Override
+    public void delete(T persistable) throws DBException {
+        delete.clearBindings();
+        long _id = persistable.getDbId().getId();
+        delete.bindLong(1, _id);
+        int ret = delete.executeUpdateDelete();
+        if (ret != 1)
+            throw new DBException(String.format("Error deleting persistable type=\"%s\", _id=\"%d\"!",
+                    ((persistable==null) ? "null" : persistable.getClass().getName()),
+                    _id));
+    }
 
     protected void addUpdateProxyStatement(Field field, SQLiteStatement update)
     {
@@ -119,6 +131,25 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
         }
 
         return sb;
+    }
+
+    public static StringBuilder appendWhereClause(StringBuilder sb, String foreignKeyColumn, DbId foreignKey)
+    {
+        StringBuilder res = null;
+
+        if (null == foreignKey)
+        {
+            res = sb.append(" WHERE ")
+                    .append(foreignKeyColumn)
+                    .append(" IS NULL");
+        }
+        else {
+            res = sb.append(" WHERE ")
+                    .append(foreignKeyColumn)
+                    .append("=").append(foreignKey.getId());
+        }
+
+        return res;
     }
 
     protected static StringBuilder appendOrderByTermsString(StringBuilder sb, OrderByTerm term)
@@ -250,23 +281,11 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 		return lst;
 	}
 	
-	@Override
-	public void delete(T persistable) throws DBException {
-		delete.clearBindings();
-        long _id = persistable.getDbId().getId();
-		delete.bindLong(1, _id);
-		int ret = delete.executeUpdateDelete();
-        if (ret != 1)
-            throw new DBException(String.format("Error deleting persistable type=\"%s\", _id=\"%d\"!",
-                    ((persistable==null) ? "null" : persistable.getClass().getName()),
-                    _id));
-	}
-
     @Override
-    public long updateCollectionProxySize(IPersistable persistable, Field field, Collection coll) throws DBException {
+    public long updateCollectionProxySize(IPersistable persistable, Field field, long newCollSize) throws DBException {
         SQLiteStatement update = getUpdateProxyStatement(field);
         /** Get table field name from parameters (childType + collection or a Field???) */
-        update.bindLong(1, coll.size());
+        update.bindLong(1, newCollSize);
         update.bindLong(2, persistable.getDbId().getId());
         int rowsAffected = update.executeUpdateDelete();
 
