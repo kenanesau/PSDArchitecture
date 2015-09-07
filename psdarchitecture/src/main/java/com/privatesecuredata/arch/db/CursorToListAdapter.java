@@ -87,7 +87,14 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 		return  pm.load(persister, csr, pos);
 	}
 
-	@Override
+    @Override
+    public DbId getDbId(int pos) {
+        csr.moveToPosition(pos);
+        DbId dbId = new DbId(this.childClazz, csr.getLong(0));
+        return dbId;
+    }
+
+    @Override
 	public int size() {
 		return csr.getCount();
 	}
@@ -130,7 +137,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         {
             DbId<?> dbId = item.getDbId();
             if (null != dbId)
-                dbId.setDirty();
+                dbId.setDirtyForeignKey();
         }
 
 		if (null != parent) {

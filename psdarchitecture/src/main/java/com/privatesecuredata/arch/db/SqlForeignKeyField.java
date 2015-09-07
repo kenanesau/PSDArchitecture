@@ -43,7 +43,7 @@ public class SqlForeignKeyField extends SqlDataField {
 	}
 	
 	private Class<?> _foreignKeyType;
-	SQLiteStatement _updateForeignKey;
+	private SQLiteStatement _updateForeignKeySql;
 
 	public SqlForeignKeyField(String tableName, Class<?> foreignKeyType)
 	{
@@ -71,7 +71,7 @@ public class SqlForeignKeyField extends SqlDataField {
 			.append(" SET ")
 			.append(getSqlName()).append("=? WHERE _id=?");
 		
-		_updateForeignKey = db.compileStatement(str.toString());
+		_updateForeignKeySql = db.compileStatement(str.toString());
 	}
 
 	public SqlForeignKeyField.ForeignkeyKey createHashtableKey() {
@@ -82,7 +82,7 @@ public class SqlForeignKeyField extends SqlDataField {
 	}
 	
 	public SQLiteStatement getUpdateForeingKey() {
-		return _updateForeignKey;
+		return _updateForeignKeySql;
 	}
 	
 	@Override
