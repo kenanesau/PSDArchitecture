@@ -558,7 +558,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 	}
 
 	@Override
-	public void updateForeignKey(T persistable, DbId<?> foreignId)
+	public void updateForeignKey(DbId<T> persistableId, DbId<?> foreignId)
 			throws DBException {
 		IPersistable foreignObj = foreignId.getObj();
 		if (null != foreignObj)
@@ -571,7 +571,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 				SQLiteStatement updateForeignKey = fld.getUpdateForeingKey();
 				updateForeignKey.clearBindings();
 				updateForeignKey.bindLong(1, foreignId.getId());
-				updateForeignKey.bindLong(2, persistable.getDbId().getId());
+				updateForeignKey.bindLong(2, persistableId.getId());
 				
 				int ret = updateForeignKey.executeUpdateDelete();
 				if (ret == 0)

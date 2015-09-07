@@ -86,7 +86,7 @@ public class DbListViewModelFactory implements IListViewModelFactory {
                         Collection oldItems = (Collection)modelField.get(model);
                         if ( (null != oldItems) && (oldItems.size() != lstItems.size()) )
                         {
-                            DbListViewModelFactory.this.pm.updateCollectionProxySize(model, modelField, lstItems);
+                            DbListViewModelFactory.this.pm.updateCollectionProxySize(model.getDbId(), modelField, lstItems);
                         }
 
                         modelField.setAccessible(true);

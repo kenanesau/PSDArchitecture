@@ -117,7 +117,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
     }
 
     @Override
-    public void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException
+    public void updateForeignKey(DbId<T> persistableId, DbId<?> foreignId) throws DBException
     {}
 
     @Override

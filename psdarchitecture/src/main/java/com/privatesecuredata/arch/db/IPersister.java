@@ -34,6 +34,6 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 	T load(long id) throws DBException;
 	Collection<T> loadAll() throws DBException;
 	void delete(T persistable) throws DBException;
-	void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;
-    long updateCollectionProxySize(IPersistable persistable, Field field, long newCollectionSize) throws DBException;
+	void updateForeignKey(DbId<T> persistableId, DbId<?> foreignId) throws DBException;
+    long updateCollectionProxySize(DbId<T> persistableId, Field field, long newCollectionSize) throws DBException;
 }

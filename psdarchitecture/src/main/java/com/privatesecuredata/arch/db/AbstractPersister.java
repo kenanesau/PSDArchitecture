@@ -53,7 +53,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	@Override
 	public abstract long update(T persistable) throws DBException;
 	@Override
-	public abstract void updateForeignKey(T persistable, DbId<?> foreignId) throws DBException;
+	public abstract void updateForeignKey(DbId<T> persistable, DbId<?> foreignId) throws DBException;
 	@Override
 	public abstract T rowToObject(int pos, Cursor csr) throws DBException;
 
@@ -282,11 +282,11 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	}
 	
     @Override
-    public long updateCollectionProxySize(IPersistable persistable, Field field, long newCollSize) throws DBException {
+    public long updateCollectionProxySize(DbId<T> persistableId, Field field, long newCollSize) throws DBException {
         SQLiteStatement update = getUpdateProxyStatement(field);
         /** Get table field name from parameters (childType + collection or a Field???) */
         update.bindLong(1, newCollSize);
-        update.bindLong(2, persistable.getDbId().getId());
+        update.bindLong(2, persistableId.getId());
         int rowsAffected = update.executeUpdateDelete();
 
         return rowsAffected;
@@ -318,5 +318,4 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
         return updateStatement;
     }
-
 }
