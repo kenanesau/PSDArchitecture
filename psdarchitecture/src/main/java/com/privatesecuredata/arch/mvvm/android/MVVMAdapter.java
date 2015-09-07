@@ -3,6 +3,7 @@ package com.privatesecuredata.arch.mvvm.android;
 import java.util.Hashtable;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.mvvm.DisableViewAdapter;
 import com.privatesecuredata.arch.mvvm.IDataBinding;
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
@@ -10,7 +11,7 @@ import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 
 import android.view.View;
 
-public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBinding {
+public class MVVMAdapter<COMPLEXVM extends IViewModel> implements IDataBinding {
 	View mainView;
 	COMPLEXVM vm;
 	private Hashtable<Integer, ViewToModelAdapter<?>> view2ModelAdapters = new Hashtable<Integer, ViewToModelAdapter<?>>();
@@ -54,5 +55,23 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel<?>> implements IDataBindin
 			adapter.setGetVMCommand(getModelCmd);
 		}
 	}
+
+    public void setDisableViewMapping(int viewId, IGetVMCommand<Boolean> getModelCmd)
+    {
+        ViewToModelAdapter adapter = (ViewToModelAdapter)view2ModelAdapters.get(viewId);
+        if (null == adapter) {
+            adapter = new DisableViewAdapter(getModelCmd);
+            View view = mainView.findViewById(viewId);
+            if (null == view)
+                throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
+
+            adapter.init(view, vm);
+            adapter.updateView(view, vm);
+            view2ModelAdapters.put(viewId, adapter);
+        }
+        else {
+            adapter.setGetVMCommand(getModelCmd);
+        }
+    }
 
 }
