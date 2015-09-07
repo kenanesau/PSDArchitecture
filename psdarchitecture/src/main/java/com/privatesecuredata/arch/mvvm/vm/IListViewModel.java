@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.MVVM;
@@ -18,7 +19,8 @@ public interface IListViewModel<M, VM extends IViewModel<M>> {
     boolean add(M object);
     boolean addAll(Collection<? extends  M> arg0);
     boolean addAll(int arg0, Collection<? extends M> arg1);
-    M get(int location);
+    M get(int pos);
+    DbId getDbId(int pos);
     boolean isEmpty();
     boolean remove(M object);
     M remove(int location);

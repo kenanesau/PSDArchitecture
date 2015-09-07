@@ -188,7 +188,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
      *
      * @return Field
      */
-    protected Field getModelField() {
+    public Field getModelField() {
         return this.modelField;
     }
 
@@ -591,8 +591,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 				.toString();
 	}
 
-    public ComplexViewModel<?> getParentViewModel() { return this.parentViewModel; }
-    protected void setParentViewModel(ComplexViewModel<?> parentViewModel) { this.parentViewModel = parentViewModel; }
+    public ComplexViewModel getParentViewModel() { return this.parentViewModel; }
+    protected void setParentViewModel(ComplexViewModel parentViewModel) { this.parentViewModel = parentViewModel; }
 
     public int getHandle() {
         return _cfgHandle;

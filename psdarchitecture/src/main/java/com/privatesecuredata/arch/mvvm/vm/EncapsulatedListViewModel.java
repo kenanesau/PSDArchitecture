@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.MVVM;
 
@@ -45,6 +46,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		void init(Class<?> parentClazz, Object parent, Class<M> childClazz);
         void setSortOrder(OrderBy... order);
 		M get(int pos);
+        DbId getDbId(int pos);
 		int size();
 		
 		void commitFinished();
@@ -208,12 +210,17 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		return ret;
 	}
 
-	public M get(int location) {
+	public M get(int pos) {
         load();
-		return listCB.get(location);
+		return listCB.get(pos);
 	}
 
-	public boolean isEmpty() {
+    @Override
+    public DbId getDbId(int pos) {
+        return listCB.getDbId(pos);
+    }
+
+    public boolean isEmpty() {
 		load();
         return ( (listCB.size()==0) && (this.newItems.size()==0) );
 	}

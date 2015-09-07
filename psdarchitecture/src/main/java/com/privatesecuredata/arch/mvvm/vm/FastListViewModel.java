@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import com.privatesecuredata.arch.db.DbId;
+import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.MVVM;
@@ -186,7 +188,12 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		return getItems().get(location);
 	}
 
-	@Override
+    @Override
+    public DbId getDbId(int pos) {
+        return ((IPersistable)get(pos)).getDbId();
+    }
+
+    @Override
 	public int indexOf(Object object) {
 		return getItems().indexOf(object);
 	}
