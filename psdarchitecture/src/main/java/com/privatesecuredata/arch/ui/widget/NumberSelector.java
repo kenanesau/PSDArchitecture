@@ -6,7 +6,6 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.privatesecuredata.arch.R;
@@ -14,7 +13,6 @@ import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by kenan on 2/20/15.
