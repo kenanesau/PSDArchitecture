@@ -54,7 +54,6 @@ public class PersistanceManager {
 	/**
 	 * This method initializes the database. 
 	 * This means:
-	 * - create the database and all tables if needed.
 	 * - update the database if needed
 	 * - 
 	 * 
@@ -345,29 +344,27 @@ public class PersistanceManager {
     private <T extends IPersistable> Class<T> __saveAndUpdateForeignKeyNoTransaction(IPersister<T> persister, Collection<T> persistables, DbId<?> foreignKey) throws Exception
     {
         Class<T> type = null;
-        try {
 
-            if (!persistables.isEmpty()) {
-                T persistable = persistables.iterator().next();
-                type = (Class<T>)persistable.getClass();
-            }
-
-            for (T persistable : persistables) {
-
-                DbId<?> dbId = persistable.getDbId();
-                if ((null == dbId) || (dbId.getDirty())) {
-                    __saveNoTransaction(persister, persistable);
-                    __updateForeignKeyNoTransaction(persister, persistable, foreignKey);
-                }
-            }
-
-            /**
-             * The size of the collection-proxy is updated from the Cursors-Listener in the DBListeViewModelFactory...
-             */
+        if (!persistables.isEmpty()) {
+            T persistable = persistables.iterator().next();
+            type = (Class<T>)persistable.getClass();
         }
-        finally {
-            return type;
+
+        for (T persistable : persistables) {
+
+            DbId<?> dbId = persistable.getDbId();
+            if ((null == dbId) || (dbId.getDirty())) {
+                __saveNoTransaction(persister, persistable);
+            }
+            if ((null == dbId) || (dbId.getDirtyForeignKey()))
+                __updateForeignKeyNoTransaction(persistable, foreignKey);
         }
+
+        /**
+         * The size of the collection-proxy is updated from the Cursors-Listener in the DBListeViewModelFactory...
+         */
+
+        return type;
     }
 
     public <T extends IPersistable> void saveAndUpdateForeignKey(Collection<T> persistables, IPersistable foreignKey) throws DBException
@@ -394,7 +391,7 @@ public class PersistanceManager {
         catch (Exception ex)
         {
             throw new DBException(String.format("Error saving and updating foreign persistable for an list of objects of type=%s",
-                    ( (null!=type) ? type.getName() : "unknown")));
+                    ( (null!=type) ? type.getName() : "unknown")), ex);
         }
         finally {
             db.endTransaction();
@@ -477,7 +474,7 @@ public class PersistanceManager {
         }
     }
 
-    public  <T extends IPersistable> void save(T persistable) throws DBException
+    public <T extends IPersistable> void save(T persistable) throws DBException
     {
         try {
             db.beginTransaction();
@@ -489,6 +486,60 @@ public class PersistanceManager {
         }
         finally
         {
+            db.endTransaction();
+        }
+    }
+
+    /**
+     * Move the persistable with the DbId "item" to the container (foreign-key) with the
+     * DbId "containerDst".
+     * @param containerDst DbId of the destination container
+     * @param item         DbId of the item to move
+     * @param <T>
+     * @throws DBException
+     */
+    public <T extends IPersistable> void move(DbId<T> containerSrc, DbId<T> containerDst, Field field, int oldSize, DbId<?> item) throws DBException
+    {
+        try {
+            db.beginTransaction();
+            Class classObj = (Class) item.getType();
+            IPersister persister = getPersister(classObj);
+            persister.updateForeignKey(item, containerDst);
+            persister.updateCollectionProxySize(containerSrc, field, oldSize-1);
+            db.setTransactionSuccessful();
+        }
+        finally {
+            db.endTransaction();
+        }
+
+    }
+
+    /**
+     * Move the persistable items to the container (foreign-key) with the
+     * DbId "containerDst".
+     * @param <T>
+     * @param containerDst DbId of the destination container
+     * @param itemIds      DbIds of the items to move
+     * @throws DBException
+     */
+    public <T extends IPersistable> void move(DbId<T> containerSrc, DbId<IPersistable> containerDst, Field fld, int oldSrcSize, int oldDstSize, ArrayList<DbId> itemIds) throws DBException
+    {
+        try {
+            db.beginTransaction();
+            Class classObj = (Class) itemIds.get(0).getType();
+            IPersister persister = getPersister(classObj);
+
+            for(DbId<?> itemId : itemIds) {
+                persister.updateForeignKey(itemId, containerDst);
+            }
+
+            classObj = containerDst.getType();
+            persister = getPersister(classObj);
+            persister.updateCollectionProxySize(containerSrc, fld, oldSrcSize-itemIds.size());
+            persister.updateCollectionProxySize(containerDst, fld, oldDstSize+itemIds.size());
+            db.setTransactionSuccessful();
+        }
+        finally {
             db.endTransaction();
         }
     }
@@ -608,6 +659,7 @@ public class PersistanceManager {
             }
 
 			persister.delete(persistable);
+            persistable.setDbId(null);
             db.setTransactionSuccessful();
             db.endTransaction();
 		}
@@ -625,7 +677,7 @@ public class PersistanceManager {
 		return cursorLoaderMap.get(key);
 	}
 
-    /**
+        /**
      * Get a DB-Cursor with all DB-objects of type referencedType and the foreign-Key
      * referencingType
      *
@@ -740,7 +792,8 @@ public class PersistanceManager {
 
     private <T extends IPersistable> void __updateForeignKeyNoTransaction(IPersister<T> persister, T persistable, DbId<?> foreignKey) throws DBException
     {
-        persister.updateForeignKey(persistable, foreignKey);
+        persister.updateForeignKey(persistable.<T>getDbId(), foreignKey);
+        persistable.getDbId().setCleanForeignKey();
     }
 
     private <T extends IPersistable> void __updateForeignKeyNoTransaction(T persistable, DbId<?> foreignKey) throws DBException
@@ -849,21 +902,21 @@ public class PersistanceManager {
         return mvvm;
     }
 
-    public void updateCollectionProxySize(IPersistable persistable, Field field, long newCollSize) {
-        Class type = persistable.getClass();
+    public void updateCollectionProxySize(DbId persistableId, Field field, long newCollSize) {
+        Class type = persistableId.getType();
         IPersister<?> persister = getPersister(type);
 
-        persister.updateCollectionProxySize(persistable, field, newCollSize);
+        persister.updateCollectionProxySize(persistableId, field, newCollSize);
     }
     /**
      * Update the size of the collection which is saved in each "parent" object.
      *
-     * @param persistable The parent which contains the list
+     * @param persistableId The DbId of the parent which contains the list
      * @param field       The field within the parent which holds the list
      * @param childItems  The new / updated list of child items
      */
-    public void updateCollectionProxySize(IPersistable persistable, Field field, Collection childItems) {
-        updateCollectionProxySize(persistable, field, childItems.size());
+    public void updateCollectionProxySize(DbId persistableId, Field field, Collection childItems) {
+        updateCollectionProxySize(persistableId, field, childItems.size());
     }
 
     public OrderByTerm[] orderByDbField(String... objFieldNames) {

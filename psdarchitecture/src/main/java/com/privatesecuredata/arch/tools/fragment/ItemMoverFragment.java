@@ -1,0 +1,89 @@
+package com.privatesecuredata.arch.tools.fragment;
+
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.privatesecuredata.arch.R;
+import com.privatesecuredata.arch.mvvm.DataHive;
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
+import com.privatesecuredata.arch.mvvm.IWriteModelCommand;
+import com.privatesecuredata.arch.mvvm.android.MVVMAdapter;
+import com.privatesecuredata.arch.mvvm.android.MVVMFragment;
+import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
+import com.privatesecuredata.arch.tools.vm.ItemMoverVM;
+
+/**
+ * Created by kenan on 9/1/15.
+ */
+public class ItemMoverFragment extends MVVMFragment {
+    public static final String TAG = "psdarch_mover_fragment";
+
+    private MVVMAdapter<ItemMoverVM> mvvmAdapter;
+    private ItemMoverVM vm;
+    private View view;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+        view = inflater.inflate(R.layout.psdarch_action_move, container, false);
+        Bundle bundle = getActivity().getIntent().getExtras();
+
+        if (savedInstanceState == null) {
+            String uuid = (String) bundle.get(ItemMoverVM.TAG_PSDARCH_ITEMMOVER);
+            if (null != uuid) {
+                vm = DataHive.getInstance().remove(uuid);
+                rememberInstanceState(vm);
+            }
+
+        } else {
+            vm = getViewModel(ItemMoverVM.class);
+        }
+
+        return view;
+    }
+
+    @Override
+    protected void doViewToVMMapping() {
+        if ( (null != this.view) && (null != this.vm)) {
+            mvvmAdapter = new MVVMAdapter<ItemMoverVM>(this.view, this.vm);
+            mvvmAdapter.setModelMapping(String.class, R.id.psdarch_txt_action_move_number_of_items,
+                    new IGetVMCommand<String>() {
+                        @Override
+                        public SimpleValueVM<String> getVM(IViewModel<?> vm) {
+                            return ((ItemMoverVM) vm).getNumberOfItemsText();
+                        }
+                    });
+            mvvmAdapter.setDisableViewMapping(R.id.psdarch_btn_action_move_ok,
+                    new IGetVMCommand<Boolean>() {
+                        @Override
+                        public SimpleValueVM<Boolean> getVM(IViewModel<?> vm) {
+                            return ((ItemMoverVM) vm).getActionValid();
+                        }
+                    });
+        }
+    }
+
+    public void setItemMoverVM(ItemMoverVM vm) {
+        //if (null != this.vm)
+        //    forgetInstanceState(this.vm);
+        this.vm = vm;
+        //if (null != this.vm)
+        //    rememberInstanceState(this.vm);
+
+        doViewToVMMapping();
+    }
+
+    public boolean checkMove(ComplexViewModel dstVM)
+    {
+        return this.vm.checkMove(dstVM);
+    }
+
+    public <T> void move(ComplexViewModel dstVM)
+    {
+        this.vm.move(dstVM);
+    }
+}

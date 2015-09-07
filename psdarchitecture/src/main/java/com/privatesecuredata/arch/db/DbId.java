@@ -17,6 +17,7 @@ import java.util.LinkedList;
  */
 public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	private boolean dirty = true;
+    private boolean dirtyForeignKey = false; //Parent container changed
     private Class type = null;
 	private long id = -1;
 	private IDirtyChangedListener dirtyListener;
@@ -43,7 +44,13 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	
 	public boolean getDirty() { return this.dirty; }
 	public void setDirty() { this.dirty = true; }
-	public void setClean() { this.dirty = false; }
+	public void setClean() {
+        this.dirty = false;
+        this.dirtyForeignKey = false;
+    }
+    public boolean getDirtyForeignKey() { return this.dirtyForeignKey; }
+    public void setDirtyForeignKey() { this.dirtyForeignKey = true; }
+    public void setCleanForeignKey() { this.dirtyForeignKey = false; }
 	
 	public long getId() { return this.id; }
 
