@@ -123,7 +123,7 @@ public class MVVMFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d(getClass().getSimpleName(), "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
-        doViewToVMMapping();
+        //doViewToVMMapping();
     }
 
     @Override
@@ -168,7 +168,8 @@ public class MVVMFragment extends Fragment {
 	@Override
 	public void onResume() {
         Log.d(getClass().getSimpleName(), "onResume");
-		super.onResume();
+        super.onResume();
+        doViewToVMMapping();
 	}
 
 	@Override

@@ -43,6 +43,9 @@ public class MVVMInstanceStateHandler {
 
     public void forgetInstanceState(IViewModel... vms) {
         for(IViewModel vm : vms) {
+            if (null == vm)
+                continue;
+
             if (vm.getModel() instanceof IPersistable) {
                 ViewModelState state = new ViewModelState(vm);
                 rememberedInstances.remove(state);
