@@ -22,8 +22,7 @@ import android.view.ViewGroup;
 public class MVVMFragment extends Fragment {
     private final static String KEY_DEFAULT_PM_UUID = "PSDARCH_MVVMFRAGMENT_PM_UUID";
     private String pmUUID;
-    private MVVMInstanceStateHandler instanceStateHandler = new MVVMInstanceStateHandler();
-	
+
 	public PersistanceManager createPM(IDbDescription desc)
 	{
 		PersistanceManagerLocator.initializeDB(desc);
@@ -59,6 +58,8 @@ public class MVVMFragment extends Fragment {
 	}
 	
 	public String getPMUUID() { return pmUUID; }
+
+    public MVVMActivity getMVVMActivity() { return (MVVMActivity)getActivity(); }
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -77,12 +78,6 @@ public class MVVMFragment extends Fragment {
                 }
             }
         }
-
-        if (savedInstanceState != null) {
-            instanceStateHandler.onRestoreInstanceState(savedInstanceState);
-            //setDefaultPM(savedInstanceState.getString(KEY_DEFAULT_PM_UUID));
-        }
-
     }
 
     @Override
@@ -93,29 +88,37 @@ public class MVVMFragment extends Fragment {
     protected void doViewToVMMapping() {}
 
     protected void rememberInstanceState(IViewModel... vms) {
-        instanceStateHandler.rememberInstanceState(vms);
+        getMVVMActivity().rememberInstanceState(vms);
+    }
+
+    protected void rememberInstanceState(String key, IViewModel vm) {
+        getMVVMActivity().rememberInstanceState(key, vm);
     }
 
     protected void forgetInstanceState(IViewModel... vms) {
-        instanceStateHandler.forgetInstanceState(vms);
+        getMVVMActivity().forgetInstanceState(vms);
+    }
+
+    protected void forgetInstanceState(String key, IViewModel vm) {
+        getMVVMActivity().forgetInstanceState(key, vm);
     }
 
     public <T extends IPersistable> T getModel(Class type) {
-        return instanceStateHandler.getModel(getDefaultPM(), type);
+        return getMVVMActivity().getModel(type);
     }
 
     public <T extends IPersistable> T getModel(String tag) {
-        return instanceStateHandler.getModel(getDefaultPM(), tag);
+        return getMVVMActivity().getModel(tag);
     }
 
     public <T extends IViewModel> T getViewModel(Class type)
     {
-        return instanceStateHandler.getViewModel(getDefaultPM(), type);
+        return getMVVMActivity().getViewModel(type);
     }
 
     public <T extends IViewModel> T getViewModel(String tag)
     {
-        return instanceStateHandler.getViewModel(getDefaultPM(), tag);
+        return getMVVMActivity().getViewModel(tag);
     }
 
 
@@ -123,16 +126,12 @@ public class MVVMFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.d(getClass().getSimpleName(), "onActivityCreated");
         super.onActivityCreated(savedInstanceState);
-        //doViewToVMMapping();
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        Log.d(getClass().getSimpleName(), "onSaveInstanceState");
+        Log.d(getClass().getSimpleName(), "saveInstanceState");
         super.onSaveInstanceState(outState);
-
-        instanceStateHandler.onSaveInstanceState(outState, null);
-        //outState.putString(KEY_DEFAULT_PM_UUID, getPMUUID());
     }
 
 	@Override

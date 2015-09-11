@@ -28,16 +28,55 @@ public class MVVMInstanceStateHandler {
     }
 
     private static final String KEY_REMEMBERED_INSTANCES = "mvvm_key_remembered_instances";
-    Dictionary<String, ViewModelState> rememberedInstances = new Hashtable<String, ViewModelState>();
+    Hashtable<String, ViewModelState> rememberedInstances = new Hashtable<String, ViewModelState>();
+
+    Hashtable<String, Object> modelCache = new Hashtable<>();
+    Hashtable<String, IViewModel> viewModelCache = new Hashtable<>();
+
+    protected void rememberInstanceState(ViewModelState state, IViewModel vm)
+    {
+        String key = state.getKey();
+        rememberedInstances.put(key, state);
+
+        if (modelCache.containsKey(key)) {
+            modelCache.put(key, vm.getModel());
+            viewModelCache.put(key, vm);
+        }
+    }
 
     public void rememberInstanceState(IViewModel... vms) {
         for(IViewModel vm : vms) {
             if (vm.getModel() instanceof IPersistable) {
                 ViewModelState state = new ViewModelState(vm);
-                rememberedInstances.put(state.getKey(), state);
+                rememberInstanceState(state, vm);
             }
             else
                 throw new ArgumentException("Cannot remember instance state. Viewmodel contains a model which is not an instance of IPersistable!!!");
+        }
+    }
+
+    public void rememberInstanceState(String key, IViewModel vm)
+    {
+        ViewModelState state = new ViewModelState(key, vm);
+        rememberInstanceState(state, vm);
+    }
+
+    protected void forgetInstanceState(ViewModelState state, IViewModel vm)
+    {
+        rememberedInstances.remove(state);
+
+        String key = state.getKey();
+        if (modelCache.containsKey(key)) {
+            modelCache.remove(key);
+            viewModelCache.remove(key);
+        }
+    }
+
+    public void forgetInstanceState(String key, IViewModel vm)
+    {
+        if (vm.getModel() instanceof IPersistable) {
+            ViewModelState state = new ViewModelState(key, vm);
+            forgetInstanceState(state, vm);
         }
     }
 
@@ -48,14 +87,14 @@ public class MVVMInstanceStateHandler {
 
             if (vm.getModel() instanceof IPersistable) {
                 ViewModelState state = new ViewModelState(vm);
-                rememberedInstances.remove(state);
+                forgetInstanceState(state, vm);
             }
             else
                 throw new ArgumentException("Cannot forget instance state. Viewmodel contains a model which is not an instance of IPersistable!!!");
         }
     }
 
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
+    public void restoreInstanceState(Bundle savedInstanceState) {
         String keyList = savedInstanceState.getString(KEY_REMEMBERED_INSTANCES);
         String[] keys = (keyList != null) ? keyList.split(";") : null;
 
@@ -69,7 +108,7 @@ public class MVVMInstanceStateHandler {
         }
     }
 
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+    public void saveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
         StringBuilder keyList = new StringBuilder();
 
         if (rememberedInstances.size() > 0) {
@@ -87,34 +126,45 @@ public class MVVMInstanceStateHandler {
         }
     }
 
-    public <T extends IPersistable> T getModel(PersistanceManager pm, Class type)
+    public synchronized <T extends IPersistable> T getModel(PersistanceManager pm, Class type)
     {
         return getModel(pm, type.getCanonicalName());
     }
 
-    public <T extends IPersistable> T getModel(PersistanceManager pm, String tag)
+    public synchronized <T extends IPersistable> T getModel(PersistanceManager pm, String tag)
     {
         ViewModelState state = rememberedInstances.get(tag);
 
-        if (state!=null) {
-            return state.getModel(pm);
+        if (modelCache.containsKey(tag))
+            return (T) modelCache.get(tag);
+
+        if (state != null) {
+            T model = state.getModel(pm);
+            modelCache.put(tag, model);
+            return model;
         }
         else {
             return null;
         }
     }
 
-    public <T extends IViewModel> T getViewModel(PersistanceManager pm, Class type)
+    public synchronized <T extends IViewModel> T getViewModel(PersistanceManager pm, Class type)
     {
         return getViewModel(pm, type.getCanonicalName());
     }
 
-    public <T extends IViewModel> T getViewModel(PersistanceManager pm, String tag)
+    public synchronized <T extends IViewModel> T getViewModel(PersistanceManager pm, String tag)
     {
-        ViewModelState state = rememberedInstances.get(tag);
 
-        if (state!=null) {
-            return state.getVM(pm);
+        if (viewModelCache.containsKey(tag)) {
+            return (T) viewModelCache.get(tag);
+        }
+
+        ViewModelState state = rememberedInstances.get(tag);
+        if (state != null) {
+            T viewModel =  state.getVM(pm);
+            viewModelCache.put(tag, viewModel);
+            return viewModel;
         }
         else {
             return null;

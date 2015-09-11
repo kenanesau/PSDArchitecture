@@ -72,8 +72,7 @@ public class MVVMActivity extends FragmentActivity
    	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d(getClass().getSimpleName(), "onCreate");
-		super.onCreate(savedInstanceState);
-		
+
 		Intent intent = getIntent();
 		
 		if (null != intent)
@@ -87,8 +86,10 @@ public class MVVMActivity extends FragmentActivity
 		}
 
         if (savedInstanceState != null) {
-            instanceStateHandler.onRestoreInstanceState(savedInstanceState);
+            instanceStateHandler.restoreInstanceState(savedInstanceState);
         }
+
+        super.onCreate(savedInstanceState);
 	}
 
 	@Override
@@ -101,15 +102,23 @@ public class MVVMActivity extends FragmentActivity
         instanceStateHandler.rememberInstanceState(vms);
     }
 
+    protected void rememberInstanceState(String key, IViewModel vm) {
+        instanceStateHandler.rememberInstanceState(key, vm);
+    }
+
     protected void forgetInstanceState(IViewModel... vms) {
         instanceStateHandler.forgetInstanceState(vms);
     }
 
-    public IPersistable getModel(Class type) {
+    protected void forgetInstanceState(String key, IViewModel vm) {
+        instanceStateHandler.forgetInstanceState(key, vm);
+    }
+
+    public <T extends IPersistable> T getModel(Class type) {
         return instanceStateHandler.getModel(getDefaultPM(), type);
     }
 
-    public IPersistable getModel(String tag) {
+    public <T extends IPersistable> T  getModel(String tag) {
         return instanceStateHandler.getModel(getDefaultPM(), tag);
     }
 
@@ -125,26 +134,26 @@ public class MVVMActivity extends FragmentActivity
 
     @Override
 	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        Log.d(getClass().getSimpleName(), "onRestoreInstanceState");
+        Log.d(getClass().getSimpleName(), "restoreInstanceState");
 		super.onRestoreInstanceState(savedInstanceState);
 
-        instanceStateHandler.onRestoreInstanceState(savedInstanceState);
+        instanceStateHandler.restoreInstanceState(savedInstanceState);
 	}
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Log.d(getClass().getSimpleName(), "onSaveInstanceState");
+        Log.d(getClass().getSimpleName(), "saveInstanceState");
         super.onSaveInstanceState(outState);
 
-        instanceStateHandler.onSaveInstanceState(outState, null);
+        instanceStateHandler.saveInstanceState(outState, null);
     }
 
     @Override
 	public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
-		Log.d(getClass().getSimpleName(), "onSaveInstanceState");
+		Log.d(getClass().getSimpleName(), "saveInstanceState");
         super.onSaveInstanceState(outState, outPersistentState);
 
-        instanceStateHandler.onSaveInstanceState(outState, outPersistentState);
+        instanceStateHandler.saveInstanceState(outState, outPersistentState);
 	}
 
    	@Override
