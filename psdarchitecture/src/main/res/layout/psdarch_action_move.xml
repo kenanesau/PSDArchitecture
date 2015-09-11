@@ -23,7 +23,7 @@
         android:padding="0dp"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:textColor="@color/background_light"
+        android:textColor="@color/light_text_on_dark_bg_color"
         android:layout_marginStart="@dimen/keyline2"
         android:layout_gravity="center_vertical" />
 
@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:layout_marginEnd="@dimen/keyline1"
-        android:textColor="@color/background_light"
+        android:textColor="@color/light_text_on_dark_bg_color"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/action_move"
         android:clickable="true"

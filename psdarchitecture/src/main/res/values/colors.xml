@@ -11,4 +11,7 @@
     <color name="accent_light">#ffff00</color>
     <color name="background_light">#FFFFFF</color>
     <color name="black">#000000</color>
+    <color name="light_text_primary">#ffffffff</color>
+    <color name="light_text_secondary">#b3ffffff</color>
+    <color name="light_text_hint">#4bffffff</color>
 </resources>
