@@ -535,8 +535,8 @@ public class PersistanceManager {
 
             classObj = containerDst.getType();
             persister = getPersister(classObj);
-            persister.updateCollectionProxySize(containerSrc, fld, oldSrcSize-itemIds.size());
-            persister.updateCollectionProxySize(containerDst, fld, oldDstSize+itemIds.size());
+            persister.updateCollectionProxySize(containerSrc, fld, oldSrcSize - itemIds.size());
+            persister.updateCollectionProxySize(containerDst, fld, oldDstSize + itemIds.size());
             db.setTransactionSuccessful();
         }
         finally {
