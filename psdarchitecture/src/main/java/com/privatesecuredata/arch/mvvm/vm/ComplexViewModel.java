@@ -78,7 +78,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         setModel(null);
         unsetLazy();
         setModelAndRegisterChildren(m);
-        notifyViewModelDirty();
+        notifyModelChanged();
     }
 /*
     public ComplexViewModel(ListViewModelFactory fac)
