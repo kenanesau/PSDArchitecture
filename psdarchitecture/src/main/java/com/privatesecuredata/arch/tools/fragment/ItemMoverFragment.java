@@ -18,6 +18,9 @@ import com.privatesecuredata.arch.tools.vm.ItemMoverVM;
 
 /**
  * Created by kenan on 9/1/15.
+ *
+ * Fragment for the ItemMover. This is always displayed as long a move-operation
+ * is imminent.
  */
 public class ItemMoverFragment extends MVVMFragment {
     public static final String TAG = "psdarch_mover_fragment";
@@ -25,6 +28,11 @@ public class ItemMoverFragment extends MVVMFragment {
     private MVVMAdapter<ItemMoverVM> mvvmAdapter;
     private ItemMoverVM vm;
     private View view;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -36,11 +44,15 @@ public class ItemMoverFragment extends MVVMFragment {
             String uuid = (String) bundle.get(ItemMoverVM.TAG_PSDARCH_ITEMMOVER);
             if (null != uuid) {
                 vm = DataHive.getInstance().remove(uuid);
-                rememberInstanceState(vm);
             }
 
         } else {
-            vm = getViewModel(ItemMoverVM.class);
+            if (null != savedInstanceState) {
+                /** Cancel action ... **/
+                View btn = view.findViewById(R.id.psdarch_btn_action_move_cancel);
+                if (btn != null)
+                    btn.callOnClick();
+            }
         }
 
         return view;
@@ -68,22 +80,26 @@ public class ItemMoverFragment extends MVVMFragment {
     }
 
     public void setItemMoverVM(ItemMoverVM vm) {
-        //if (null != this.vm)
-        //    forgetInstanceState(this.vm);
         this.vm = vm;
-        //if (null != this.vm)
-        //    rememberInstanceState(this.vm);
 
         doViewToVMMapping();
     }
 
     public boolean checkMove(ComplexViewModel dstVM)
     {
-        return this.vm.checkMove(dstVM);
+        if (null != this.vm)
+            return this.vm.checkMove(dstVM);
+        else
+            return false;
     }
 
     public <T> void move(ComplexViewModel dstVM)
     {
         this.vm.move(dstVM);
+        getActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .remove(this)
+                .commit();
+        this.setItemMoverVM(null);
     }
 }
