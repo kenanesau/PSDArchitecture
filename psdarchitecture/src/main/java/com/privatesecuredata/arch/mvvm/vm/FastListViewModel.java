@@ -1,5 +1,7 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import android.widget.Filter;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -381,7 +383,18 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 
     @Override
     public void setSortOrder(OrderBy... sortOrderTerms) {
+        // FIXME: Implement setSortOrde()
+    }
 
+    @Override
+    public void setFilteredColumn(String filteredColumn) {
+        // FIXME: Implement setFilteredColumn()
+    }
+
+    @Override
+    public Filter getFilter() {
+        // FIXME: Implement getFilter()
+        return null;
     }
 
     private ArrayList<M> getItems() {

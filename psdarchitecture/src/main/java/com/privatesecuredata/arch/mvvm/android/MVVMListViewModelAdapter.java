@@ -16,13 +16,14 @@ import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
-import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
-import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.TransientViewToModelAdapter;
 import com.privatesecuredata.arch.mvvm.ViewHolder;
 import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 import java.util.ArrayList;
@@ -35,13 +36,13 @@ import java.util.Hashtable;
  * @param <M> Type of Model
  * @param <COMPLEXVM> Type of ViewModel
  */
-public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
+public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
 															implements IDataBinding, IModelChangedListener, Filterable
 {
 	Class<M> modelType;
 	Class<COMPLEXVM> viewModelType;
 	private final Context ctx;
-	private EncapsulatedListViewModel<M, COMPLEXVM> data;
+	private IListViewModel<M, COMPLEXVM> data;
 	private IModelReaderStrategy<M> modelReaderStrategy;
 
 	/**
@@ -58,14 +59,14 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
     private String filteredColumn = null;
 
-    public MVVMEncapsulatedListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx)
+    public MVVMListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx)
 	{
 		modelType = modelClass;
 		viewModelType = vmClass;
 		this.ctx = ctx;
 	}
 
-	public MVVMEncapsulatedListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, EncapsulatedListViewModel<M, COMPLEXVM> lstVMs)
+	public MVVMListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, IListViewModel<M, COMPLEXVM> lstVMs)
 	{
 		this(modelClass, vmClass, ctx);		
 		setData(lstVMs);
@@ -74,7 +75,7 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 	/*
 	 * This method discards the old VM and register a new one
 	 */
-	public void setData(EncapsulatedListViewModel<M, COMPLEXVM> data)
+	public void setData(IListViewModel<M, COMPLEXVM> data)
 	{
 		if (null != this.data)
 			this.data.delModelListener(this);
@@ -187,7 +188,7 @@ public class MVVMEncapsulatedListViewModelAdapter<M, COMPLEXVM extends IViewMode
 			viewHolder.updateViews(vm);
 		}
 		
-		if (this.selectionViewId>-1)
+		if (this.selectionViewId > -1)
 		{
 			View selectionView = rowView.findViewById(selectionViewId);
 			
