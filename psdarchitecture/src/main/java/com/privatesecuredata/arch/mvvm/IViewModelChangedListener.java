@@ -9,7 +9,7 @@ public interface IViewModelChangedListener {
      * @param vm ViewModel notifying the listener
      * @param originator Original originator of the event
      */
-	void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator);
+	void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator);
 
 
 }

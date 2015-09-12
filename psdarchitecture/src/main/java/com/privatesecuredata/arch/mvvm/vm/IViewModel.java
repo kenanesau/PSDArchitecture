@@ -23,7 +23,7 @@ public interface IViewModel<MODEL> extends IViewModelChangedListener, IModelChan
 	public abstract void delModelListener(IModelChangedListener listener);
 	public abstract void addListeners(IViewModelChangedListener vmListener, IModelChangedListener modelListener);
 	public abstract void delListeners(IViewModelChangedListener vmListener, IModelChangedListener modelListener);
-	public abstract void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator);
+	public abstract void notifyViewModelDirty(IViewModel<?> changedModel, IViewModelChangedListener originator);
 	public abstract void notifyViewModelDirty();
     public abstract void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator);
     public abstract void notifyModelChanged();

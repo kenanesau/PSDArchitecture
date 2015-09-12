@@ -32,7 +32,7 @@ public interface IListViewModel<M, VM extends IViewModel<M>> {
 
     public abstract void addViewModelListener(IViewModelChangedListener listener);
     public abstract void delViewModelListener(IViewModelChangedListener listener);
-    public abstract void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator);
+    public abstract void notifyViewModelDirty(IViewModel<?> changedModel, IViewModelChangedListener originator);
     public abstract void notifyViewModelDirty();
     public abstract void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator);
     public abstract void notifyModelChanged();

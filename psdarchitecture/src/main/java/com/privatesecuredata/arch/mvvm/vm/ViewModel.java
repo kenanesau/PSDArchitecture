@@ -68,18 +68,18 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 		delModelListener(modelListener);
 	}
 
-	@Override
-	public void notifyViewModelDirty(IViewModel<?> changedModel, IViewModel<?> originator)
-	{
-		notifyChangeListeners(originator, null);
-	}
-
-	protected void notifyChangeListeners(IViewModel<?> originator, IViewModelChangedListener skip)
+	protected void notifyChangeListeners(IViewModel<?> vm, IViewModelChangedListener originator)
 	{
 		this.setDirty();
 		for(IViewModelChangedListener listener : viewModelChangeListeners)
-			if (skip != listener) listener.notifyViewModelDirty(this, originator);
+			if (originator != listener) listener.notifyViewModelDirty(vm, originator);
 	}
+
+    @Override
+    public void notifyViewModelDirty(IViewModel<?> changedModel, IViewModelChangedListener originator)
+    {
+        notifyChangeListeners(changedModel, originator);
+    }
 	
 	@Override
 	public void notifyViewModelDirty()
