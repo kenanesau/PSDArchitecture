@@ -241,7 +241,7 @@ public class MVVMFastListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> ex
 	 * Called by underlying ListViewModel when data has changed
 	 */
 	@Override
-	public void notifyViewModelDirty(IViewModel<?> vm, IViewModel<?> originator) {
+	public void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator) {
 		//notify (list)view of changed data -> redraw
 		this.notifyDataSetChanged();
 	}

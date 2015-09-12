@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm.android;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -14,6 +15,9 @@ import android.view.View;
 public class MVVMAdapter<COMPLEXVM extends IViewModel> implements IDataBinding {
 	View mainView;
 	COMPLEXVM vm;
+    /**
+     * View-ID -> ViewtoVM-Adapter
+     */
 	private Hashtable<Integer, ViewToModelAdapter<?>> view2ModelAdapters = new Hashtable<Integer, ViewToModelAdapter<?>>();
     boolean getDataFromView = false;
 
@@ -73,5 +77,24 @@ public class MVVMAdapter<COMPLEXVM extends IViewModel> implements IDataBinding {
             adapter.setGetVMCommand(getModelCmd);
         }
     }
+
+    public void dispose()
+    {
+        Enumeration<Integer> keys = view2ModelAdapters.keys();
+
+        while (keys.hasMoreElements())
+        {
+            Integer key = keys.nextElement();
+            ViewToModelAdapter<?> adapter = view2ModelAdapters.get(key);
+
+            /**
+             * unregister VM-listener...
+             */
+            adapter.dispose();
+        }
+
+        view2ModelAdapters.clear();
+    }
+
 
 }
