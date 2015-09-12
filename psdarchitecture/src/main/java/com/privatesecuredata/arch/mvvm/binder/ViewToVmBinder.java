@@ -1,7 +1,11 @@
-package com.privatesecuredata.arch.mvvm;
+package com.privatesecuredata.arch.mvvm.binder;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
+import com.privatesecuredata.arch.mvvm.IReadViewCommand;
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
+import com.privatesecuredata.arch.mvvm.IWriteViewCommand;
 import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
@@ -20,7 +24,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T> 
+public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 									implements IModelChangedListener, IViewModelChangedListener
 {
 	private boolean viewChanged;
@@ -33,13 +37,13 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	private SimpleValueVM<T> vm;
 	private boolean vmUpdatesView = false;
 	
-	public ViewToModelAdapter(Class<T> type, IGetVMCommand<T> getVMCommand)
+	public ViewToVmBinder(Class<T> type, IGetVMCommand<T> getVMCommand)
 	{
 		super(type);
 		setGetVMCommand(getVMCommand);
 	}
 	
-	public ViewToModelAdapter(TransientViewToModelAdapter<T> other)
+	public ViewToVmBinder(TransientViewToVmBinder<T> other)
 	{
 		super(other.dataType);
 		
@@ -173,7 +177,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
                             new IWidgetValueReceiver() {
                                 @Override
                                 public void notifyWidgetChanged(IWidgetValueAccessor accessor) {
-									viewValueToViewModel(ViewToModelAdapter.this.view, vm);
+									viewValueToViewModel(ViewToVmBinder.this.view, vm);
                                 }
                             };
 
@@ -194,7 +198,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 			public void afterTextChanged(Editable s) {
 				if ( !isVMUpdatesView() && canWriteToModel() ) 
 				{
-					viewValueToViewModel(ViewToModelAdapter.this.view, vm);
+					viewValueToViewModel(ViewToVmBinder.this.view, vm);
 				}
 			}
 		};
@@ -204,12 +208,12 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 //			
 //			@Override
 //			public void onFocusChange(View view, boolean hasFocus) {
-//				SimpleValueVM<T> vm = ViewToModelAdapter.this.getVM();
+//				SimpleValueVM<T> vm = ViewToVmBinder.this.getVM();
 //				
 //				if ( (!hasFocus) && (isViewChanged()) )
 //				{
 //					if ( (canWriteToModel()) && (!isVMUpdatesView()) ) {
-//						vm.set(ViewToModelAdapter.this.getReadViewCommand().get(view));
+//						vm.set(ViewToVmBinder.this.getReadViewCommand().get(view));
 //						resetViewChanged();
 //					}
 //				}
@@ -224,14 +228,14 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 //			public void onViewDetachedFromWindow(View v) {
 //				if (isViewChanged())
 //				{
-//					vm.set(ViewToModelAdapter.this.getReadViewCommand().get(v));
+//					vm.set(ViewToVmBinder.this.getReadViewCommand().get(v));
 //					resetViewChanged();
 //				}
 //				if (v instanceof EditText)
 //				{
-//					((EditText) v).removeTextChangedListener(ViewToModelAdapter.this.txtWatch);
+//					((EditText) v).removeTextChangedListener(ViewToVmBinder.this.txtWatch);
 //				}
-//				v.removeOnAttachStateChangeListener(ViewToModelAdapter.this.attachStateChangedListener);
+//				v.removeOnAttachStateChangeListener(ViewToVmBinder.this.attachStateChangedListener);
 //			}
 //			
 //			@Override
@@ -242,7 +246,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 			
 			@Override
 			public void onClick(View v) {
-				ViewToModelAdapter.this.viewChanged = true;
+				ViewToVmBinder.this.viewChanged = true;
 				if (canWriteToModel())
 					viewValueToViewModel(v, vm);
 			}
@@ -298,7 +302,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	}
 
     /**
-     * Initialize the ViewToModelAdapter.
+     * Initialize the ViewToVmBinder.
      *
      * Here all the wiring for transfering the data beween VM and view is done.
      * @param view The view we want to bind to

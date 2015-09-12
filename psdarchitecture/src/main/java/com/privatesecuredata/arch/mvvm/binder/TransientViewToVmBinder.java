@@ -1,7 +1,11 @@
-package com.privatesecuredata.arch.mvvm;
+package com.privatesecuredata.arch.mvvm.binder;
 
 import android.view.View;
 
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
+import com.privatesecuredata.arch.mvvm.IReadViewCommand;
+import com.privatesecuredata.arch.mvvm.IWriteViewCommand;
+import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 /**
@@ -18,10 +22,10 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
  *
  * @param <T> (primitive) Datatype which is transfered between the View and the ViewModel
  * 
- * @see ViewToModelAdapter
+ * @see ViewToVmBinder
  */
-public class TransientViewToModelAdapter<T> {
-	public TransientViewToModelAdapter(Class<T> _dataType)
+public class TransientViewToVmBinder<T> {
+	public TransientViewToVmBinder(Class<T> _dataType)
 	{
 		this.dataType=_dataType;
 	}
@@ -111,10 +115,10 @@ public class TransientViewToModelAdapter<T> {
 	}
 	
 	/**
-	 * Get a non-transient copy of this TransientViewToModelAdapter (Remember to set the View and the ViewModel in that copy)
+	 * Get a non-transient copy of this TransientViewToVmBinder (Remember to set the View and the ViewModel in that copy)
 	 */
-	public ViewToModelAdapter<T> clone()
+	public ViewToVmBinder<T> clone()
 	{
-		return new ViewToModelAdapter<T>(this);
+		return new ViewToVmBinder<T>(this);
 	}
 }

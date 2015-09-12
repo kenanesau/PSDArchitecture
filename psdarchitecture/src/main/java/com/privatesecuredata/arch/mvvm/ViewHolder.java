@@ -50,6 +50,8 @@ public class ViewHolder<T> implements IViewHolder<T> {
                 ///TODO add support of ImageView to ViewHolder
 			}
 		}
+
+
 		
 		this.pairs = newPairs;
 	}

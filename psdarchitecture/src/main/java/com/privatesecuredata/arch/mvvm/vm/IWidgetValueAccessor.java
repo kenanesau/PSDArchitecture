@@ -1,8 +1,8 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
 /**
- * Interface which can be implemented by custom widgets, so that MVVMAdapter and
- * ViewToModelAdapter can access the value embedded in the widget.
+ * Interface which can be implemented by custom widgets, so that MVVMComplexVmAdapter and
+ * ViewToVmBinder can access the value embedded in the widget.
  */
 public interface IWidgetValueAccessor {
     void registerValueChanged(IWidgetValueReceiver valueReceiver);
