@@ -296,7 +296,14 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
             ((IWidgetValueAccessor)view).unregisterValueChanged(widgetValueReceiver);
         }
 	}
-	
+
+    /**
+     * Initialize the ViewToModelAdapter.
+     *
+     * Here all the wiring for transfering the data beween VM and view is done.
+     * @param view The view we want to bind to
+     * @param complexVM The complexVM which contains the SimpleValueVM we want to bind
+     */
 	public void init(View view, IViewModel<?> complexVM)
 	{
 		if (null != this.view)
@@ -338,7 +345,7 @@ public class ViewToModelAdapter<T> extends TransientViewToModelAdapter<T>
 	 * @param complexVM The complex ViewModel which contains the data to transfer to the view
 	 */
 	@Override
-	public void updateView(View v, IViewModel<?> complexVM) 
+	public void updateView(View v, IViewModel<?> complexVM)
 	{
         if (complexVM.getModel() != null) {
             SimpleValueVM<T> simpleVM = this.getSimpleVMCmd.getVM(complexVM);
