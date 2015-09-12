@@ -11,16 +11,14 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ListView;
 
-import com.privatesecuredata.arch.mvvm.IDataBinding;
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
-import com.privatesecuredata.arch.mvvm.TransientViewToModelAdapter;
+import com.privatesecuredata.arch.mvvm.binder.TransientViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.ViewHolder;
-import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
+import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
-import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
@@ -37,7 +35,7 @@ import java.util.Hashtable;
  * @param <COMPLEXVM> Type of ViewModel
  */
 public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
-															implements IDataBinding, IModelChangedListener, Filterable
+															implements IModelChangedListener, Filterable
 {
 	Class<M> modelType;
 	Class<COMPLEXVM> viewModelType;
@@ -55,7 +53,7 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 	 */
 	private int selectionViewId = -1;
 
-	private Hashtable<Integer, TransientViewToModelAdapter<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToModelAdapter<?>>();
+	private Hashtable<Integer, TransientViewToVmBinder<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToVmBinder<?>>();
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
     private String filteredColumn = null;
 
@@ -110,9 +108,9 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 	
 	public <T> void setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
 	{
-		TransientViewToModelAdapter<T> adapter = (TransientViewToModelAdapter<T>)view2ModelAdapters.get(viewId);
+		TransientViewToVmBinder<T> adapter = (TransientViewToVmBinder<T>)view2ModelAdapters.get(viewId);
 		if (null==adapter) {
-			adapter=new TransientViewToModelAdapter<T>(type);
+			adapter=new TransientViewToVmBinder<T>(type);
 			view2ModelAdapters.put(viewId, adapter);
 		}
 		adapter.setGetVMCommand(getModelCmd);
@@ -162,7 +160,7 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 				while(keys.hasMoreElements())
 				{
 					Integer viewId = keys.nextElement();
-					ViewToModelAdapter<?> adapter = view2ModelAdapters.get(viewId).clone();
+					ViewToVmBinder<?> adapter = view2ModelAdapters.get(viewId).clone();
 
 					View elementview = rowView.findViewById(viewId);
 					if (null != elementview)

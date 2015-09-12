@@ -19,7 +19,7 @@ import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
-import com.privatesecuredata.arch.mvvm.TransientViewToModelAdapter;
+import com.privatesecuredata.arch.mvvm.binder.TransientViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.ViewHolder;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
@@ -37,7 +37,7 @@ public class MVVMCursorAdapter<M extends IPersistable> extends BaseAdapter
 	 */
 	private int rowViewId = -1;
 	
-	private Hashtable<Integer, TransientViewToModelAdapter<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToModelAdapter<?>>();
+	private Hashtable<Integer, TransientViewToVmBinder<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToVmBinder<?>>();
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
 	private IPersister<M> persister;
 	

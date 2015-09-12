@@ -8,8 +8,7 @@ import android.view.ViewGroup;
 import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.mvvm.DataHive;
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
-import com.privatesecuredata.arch.mvvm.IWriteModelCommand;
-import com.privatesecuredata.arch.mvvm.android.MVVMAdapter;
+import com.privatesecuredata.arch.mvvm.android.MVVMComplexVmAdapter;
 import com.privatesecuredata.arch.mvvm.android.MVVMFragment;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
@@ -25,7 +24,7 @@ import com.privatesecuredata.arch.tools.vm.ItemMoverVM;
 public class ItemMoverFragment extends MVVMFragment {
     public static final String TAG = "psdarch_mover_fragment";
 
-    private MVVMAdapter<ItemMoverVM> mvvmAdapter;
+    private MVVMComplexVmAdapter<ItemMoverVM> mvvmAdapter;
     private ItemMoverVM vm;
     private View view;
 
@@ -61,7 +60,7 @@ public class ItemMoverFragment extends MVVMFragment {
     @Override
     protected void doViewToVMMapping() {
         if ( (null != this.view) && (null != this.vm)) {
-            mvvmAdapter = new MVVMAdapter<ItemMoverVM>(this.view, this.vm);
+            mvvmAdapter = new MVVMComplexVmAdapter<ItemMoverVM>(this.view, this.vm);
             mvvmAdapter.setModelMapping(String.class, R.id.psdarch_txt_action_move_number_of_items,
                     new IGetVMCommand<String>() {
                         @Override

@@ -3,9 +3,9 @@ package com.privatesecuredata.arch.mvvm.android;
 
 import java.util.ArrayList;
 
+import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.IViewHolder;
-import com.privatesecuredata.arch.mvvm.ViewToModelAdapter;
 
 import android.view.View;
 
@@ -15,15 +15,15 @@ public class MVVMViewHolder<COMPLEXVM extends IViewModel<?>> implements IViewHol
 		public View view;
 		
 		// Adapter mapping this single data to a SimpleViewModel<T>
-		public ViewToModelAdapter<?> adapter;
+		public ViewToVmBinder<?> adapter;
 
 		// Constructor
-		public Elem(View v, ViewToModelAdapter<?> a) {view = v; adapter=a; }
+		public Elem(View v, ViewToVmBinder<?> a) {view = v; adapter=a; }
 	}
 	
 	private ArrayList<Elem> mapping = new ArrayList<MVVMViewHolder<COMPLEXVM>.Elem>();
 	
-	public <T> void add(View view, ViewToModelAdapter<T> adapter)
+	public <T> void add(View view, ViewToVmBinder<T> adapter)
 	{
 		mapping.add(new Elem(view, adapter));
 	}
