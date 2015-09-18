@@ -3,6 +3,7 @@
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
@@ -31,6 +32,9 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 
 	@Override
 	public void addViewModelListener(IViewModelChangedListener listener) {
+        if (listener == this)
+            throw new ArgumentException("Cannot register viewmodel-listener with itself!!!");
+
 		if (null != listener)
 			this.viewModelChangeListeners.add(listener);
 	}
@@ -43,6 +47,9 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 
 	@Override
 	public void addModelListener(IModelChangedListener listener) {
+        if (listener == this)
+            throw new ArgumentException("Cannot register model-listener with itself!!!");
+
 		if (null != listener)
 			this.modelChangeListeners.add(listener);
 	}
@@ -72,7 +79,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	{
 		this.setDirty();
 		for(IViewModelChangedListener listener : viewModelChangeListeners)
-			if (originator != listener) listener.notifyViewModelDirty(vm, originator);
+			if (originator != listener) listener.notifyViewModelDirty(this, originator);
 	}
 
     @Override

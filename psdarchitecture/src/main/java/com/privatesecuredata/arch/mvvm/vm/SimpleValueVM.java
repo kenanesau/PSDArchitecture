@@ -98,7 +98,7 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 
 	public void set(T newData) throws ArgumentException
 	{
-		set(newData, null);
+		set(newData, this);
 	}
 
 	public void setDefaultFilter(IDefaultFilter<T> filter)
