@@ -103,7 +103,8 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
         }
         if (o instanceof DbId) {
             DbId that = (DbId) o;
-            return Objects.equal(this.id, that.id);
+            return Objects.equal(this.id, that.id) &&
+                    Objects.equal(this.type, that.type);
         }
         else {
             return false;

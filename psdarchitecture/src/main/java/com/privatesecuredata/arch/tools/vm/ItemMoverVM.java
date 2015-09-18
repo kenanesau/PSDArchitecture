@@ -1,5 +1,8 @@
 package com.privatesecuredata.arch.tools.vm;
 
+import android.util.Pair;
+import android.util.SparseArray;
+
 import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.IPersistable;
@@ -11,6 +14,7 @@ import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 import com.privatesecuredata.arch.mvvm.vm.StringFormatVM;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * VM which can be used to move items (container-content) from one
@@ -44,7 +48,7 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
     public static final String TAG_PSDARCH_ITEMMOVER = "psdarch_itemmover";
     private DbId srcContainerId;
     private ComplexViewModel srcContainerVM;
-    private ArrayList<DbId> items = new ArrayList<DbId>();
+    private SparseArray<DbId> items = new SparseArray<>();
     private SimpleValueVM<Integer> itemCount = new SimpleValueVM<Integer>(Integer.class, 0);
     private SimpleValueVM<Boolean> actionValid = new SimpleValueVM<Boolean>(false);
     private StringFormatVM itemsCountTxt;
@@ -101,22 +105,45 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
     /**
      * Add a new Item for the move-operation
      *
-     * @param dbId dbId of the item
+     * @param dbIds dbId of the item
      */
-    public void addItem(DbId dbId)
+    public void addItems(List<Pair<Integer, DbId>> dbIds)
     {
-        items.add(dbId);
+        for(Pair<Integer, DbId> item : dbIds)
+            items.append(item.first, item.second);
         itemCount.set(items.size());
+    }
+
+    public SparseArray<DbId> getItems() {
+        return items;
+    }
+
+    public boolean hasItem(V model) {
+        DbId needle = model.getDbId();
+
+        if (null == needle)
+            return false;
+
+        SparseArray<DbId> items = getItems();
+
+        for(int i=0; i<items.size(); i++)
+        {
+            DbId dbid = items.valueAt(i);
+            if (dbid.equals(needle))
+                return true;
+        }
+
+        return false;
     }
 
     /**
      * remove an item from the move-operation
      *
-     * @param dbId dbId of the item
+     * @param pos
      */
-    public void removeItem(DbId dbId)
+    public void removeItem(int pos)
     {
-        items.remove(dbId);
+        items.remove(pos);
         itemCount.set(items.size());
     }
 
@@ -134,11 +161,18 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
             DbId dstId = ((IPersistable) dstVM.getModel()).getDbId();
             IListViewModel listVM = getListCommand.getVM(srcContainerVM);
             IListViewModel dstListVM = getListCommand.getVM(dstVM);
+            ArrayList<DbId> dbIds = new ArrayList<>();
+
+            for (int i = 0; i < items.size(); i++) {
+                DbId dbId = items.valueAt(i);
+                dbIds.add(dbId);
+            }
+
             pm.move(srcContainerId, ((IPersistable) dstVM.getModel()).getDbId(),
                     ((ComplexViewModel) listVM).getModelField(),
                     listVM.size(),
                     dstListVM.size(),
-                    items);
+                    dbIds);
             Object dstModel = pm.load(dstId);
             dstVM.updateModel(dstModel);
             return true;
@@ -165,5 +199,10 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
      */
     public ComplexViewModel getSource() {
         return srcContainerVM;
+    }
+
+    public void clear() {
+        this.getItems().clear();
+        itemCount.set(items.size());
     }
 }

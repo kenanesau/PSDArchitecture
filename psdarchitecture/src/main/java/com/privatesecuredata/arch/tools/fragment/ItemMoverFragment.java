@@ -84,6 +84,10 @@ public class ItemMoverFragment extends MVVMFragment {
         doViewToVMMapping();
     }
 
+    public ItemMoverVM getItemMover() {
+        return this.vm;
+    }
+
     public boolean checkMove(ComplexViewModel dstVM)
     {
         if (null != this.vm)
@@ -94,11 +98,20 @@ public class ItemMoverFragment extends MVVMFragment {
 
     public <T> void move(ComplexViewModel dstVM)
     {
-        this.vm.move(dstVM);
+        this.getItemMover().move(dstVM);
         getActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .remove(this)
                 .commit();
+        this.getItemMover().clear();
         this.setItemMoverVM(null);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        if (null != this.getItemMover())
+            this.getItemMover().clear();
     }
 }
