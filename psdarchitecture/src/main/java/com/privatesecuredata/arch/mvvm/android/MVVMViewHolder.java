@@ -5,7 +5,6 @@ import java.util.ArrayList;
 
 import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
-import com.privatesecuredata.arch.mvvm.IViewHolder;
 
 import android.view.View;
 

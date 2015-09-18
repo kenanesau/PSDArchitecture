@@ -1,15 +1,18 @@
-package com.privatesecuredata.arch.mvvm;
+package com.privatesecuredata.arch.mvvm.android;
 
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
+
 public class ViewHolder<T> implements IViewHolder<T> {
 	IModelReaderStrategy<T> strategy;
 	T model;
 	IModelReaderStrategy.Pair[] pairs;
-	
+
+
 	public ViewHolder(IModelReaderStrategy<T> strategy, T model)
 	{
 		this.strategy = strategy;
@@ -28,8 +31,8 @@ public class ViewHolder<T> implements IViewHolder<T> {
 			}
 		}
 	}
-	
-	public void updateViews(T newModel)
+
+    public void updateViews(T newModel)
 	{
 		IModelReaderStrategy.Pair[] newPairs = strategy.getValues(newModel);
 		for (int i=0; i<newPairs.length; i++)
@@ -51,8 +54,6 @@ public class ViewHolder<T> implements IViewHolder<T> {
 			}
 		}
 
-
-		
 		this.pairs = newPairs;
 	}
 }

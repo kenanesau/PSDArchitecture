@@ -13,10 +13,8 @@ import android.widget.ListView;
 
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
-import com.privatesecuredata.arch.mvvm.IModelReaderStrategy.Pair;
-import com.privatesecuredata.arch.mvvm.IViewHolder;
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.binder.TransientViewToVmBinder;
-import com.privatesecuredata.arch.mvvm.ViewHolder;
 import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
@@ -27,6 +25,8 @@ import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * ListAdapter to enable the display of ListViewModels based on a database cursor in an Android ListView
@@ -35,13 +35,17 @@ import java.util.Hashtable;
  * @param <COMPLEXVM> Type of ViewModel
  */
 public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
-															implements IModelChangedListener, Filterable
+															implements IModelChangedListener, Filterable,
+                                                            IViewModelChangedListener
 {
 	Class<M> modelType;
 	Class<COMPLEXVM> viewModelType;
 	private final Context ctx;
 	private IListViewModel<M, COMPLEXVM> data;
 	private IModelReaderStrategy<M> modelReaderStrategy;
+    private List<ViewManipulator> manipulators = new ArrayList<>();
+    private List<IViewHolder> viewHolders = new LinkedList<>();
+    private ArrayList<IViewModel> updatingVMs = new ArrayList<>();
 
 	/**
 	 * Id of the Row-layout
@@ -123,39 +127,40 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View rowView = convertView;
 		M model = this.data.get(position);
-        COMPLEXVM vm = null;
+        Object data = model;
 
 		if (null == rowView)
 		{
 			LayoutInflater inflater = (LayoutInflater)ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			rowView = inflater.inflate(getRowViewId(), parent, false);
-
+            IViewHolder holder;
             /**
              * If there is a reader-Strategy -- use this
              */
 			if (null != modelReaderStrategy)
 			{
-				ViewHolder<M> holder = new ViewHolder<M>(modelReaderStrategy, model);
-				
-				for(Pair pair : modelReaderStrategy.getValues(model))
+				holder = new ViewHolder<M>(modelReaderStrategy, model);
+                viewHolders.add(holder);
+
+				for(IModelReaderStrategy.Pair pair : modelReaderStrategy.getValues(model))
 				{
 					View elementview = rowView.findViewById(pair.id);
 					if (null != elementview)
 					{
-						holder.addView(elementview);
+                        ((ViewHolder<M>)holder).addView(elementview);
 					}
+
 				}
-				
-				rowView.setTag(holder);
 			}
 			else {
                 /**
                  * If not -> Use the MVVM (which is expensive)
                  */
-				MVVMViewHolder<COMPLEXVM> holder = new MVVMViewHolder();
+				holder = new MVVMViewHolder();
+                viewHolders.add(holder);
 
 				Enumeration<Integer> keys = view2ModelAdapters.keys();
-				vm = this.data.getViewModel(position);
+				COMPLEXVM vm = this.data.getViewModel(position);
 
 				while(keys.hasMoreElements())
 				{
@@ -166,26 +171,19 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 					if (null != elementview)
 					{
 						adapter.init(elementview, vm);
-						holder.add(elementview, adapter);
+                        ((MVVMViewHolder<COMPLEXVM>)holder).add(elementview, adapter);
 					}
 				}
-				
-				rowView.setTag(holder);
+                data = vm;
 			}
+
+            rowView.setTag(holder);
 		}
 		
-		
-		if (null != modelReaderStrategy)
-		{
-			IViewHolder<M> viewHolder = (IViewHolder<M>) rowView.getTag();
-			viewHolder.updateViews(model);
-		}
-		else 
-		{
-			IViewHolder<COMPLEXVM> viewHolder = (IViewHolder<COMPLEXVM>) rowView.getTag();
-			viewHolder.updateViews(vm);
-		}
-		
+        IViewHolder viewHolder = (IViewHolder) rowView.getTag();
+        viewHolder.updateViews(data);
+
+
 		if (this.selectionViewId > -1)
 		{
 			View selectionView = rowView.findViewById(selectionViewId);
@@ -210,8 +208,24 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 			}
 		}
 
-		return rowView;
+        /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
+        for (ViewManipulator manipulator : manipulators)
+        {
+            manipulator.manipulate(position, data, rowView, parent);
+        }
+
+        return rowView;
 	}
+
+    /**
+     * Register a ViewManipulator for manipulating Views with an ID of viewId
+     *
+     * @param manipulator The View-Manipulator
+     */
+    public void registerViewManipulator(ViewManipulator manipulator)
+    {
+        manipulators.add(manipulator);
+    }
 	
 	/**
 	 * Set the view-Id of the view (e.g. Checkbox) which is used for selection 
@@ -223,14 +237,14 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 		this.selectionViewId = id;
 		
 		this.setModelMapping(Boolean.class, id, new IGetVMCommand<Boolean>() {
-			@Override
-			public SimpleValueVM<Boolean> getVM(IViewModel<?> vm) {
-				if (vm instanceof ComplexViewModel<?>)
-					return ((ComplexViewModel<?>) vm).getSelectedVM();
-				else
-					return new SimpleValueVM<Boolean>(false);
-			}
-		});
+            @Override
+            public SimpleValueVM<Boolean> getVM(IViewModel<?> vm) {
+                if (vm instanceof ComplexViewModel<?>)
+                    return ((ComplexViewModel<?>) vm).getSelectedVM();
+                else
+                    return new SimpleValueVM<Boolean>(false);
+            }
+        });
 	}
 
     /**
@@ -258,4 +272,27 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
         else
             data.setFilteredColumn(filteredColumn);
     }
+
+    public void updateViewOnChange(SimpleValueVM vm) {
+        this.updatingVMs.add(vm);
+        vm.addViewModelListener(this);
+    }
+
+    public void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator) {
+        MVVMListViewModelAdapter.this.notifyDataSetChanged();
+    }
+
+    /**
+     * unregister from the VMs...
+     */
+    public void dispose()
+    {
+        for (IViewModel vm : updatingVMs)
+        {
+            vm.delViewModelListener(this);
+        }
+        updatingVMs.clear();
+    }
+
+
 }
