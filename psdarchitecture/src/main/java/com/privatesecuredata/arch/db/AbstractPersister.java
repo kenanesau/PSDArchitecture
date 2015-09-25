@@ -1,17 +1,17 @@
 package com.privatesecuredata.arch.db;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
+
+import com.privatesecuredata.arch.exceptions.DBException;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
-
-import com.privatesecuredata.arch.exceptions.DBException;
-
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 
 public abstract class AbstractPersister<T extends IPersistable> implements IPersister<T> {
 	protected static final String DELSQLSTATEMENT = "DELETE FROM %s WHERE _id=?";
@@ -121,13 +121,15 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
     public static StringBuilder appendOrderByString(StringBuilder sb, OrderByTerm[] orderByTerms)
     {
-        sb.append(" ORDER BY ");
+        if ( (null != orderByTerms) && (orderByTerms.length > 0) ) {
+            sb.append(" ORDER BY ");
 
-        for(int i=0; i < orderByTerms.length; i++) {
-            OrderByTerm term = orderByTerms[i];
-            sb = appendOrderByTermsString(sb, term);
-            if ( (orderByTerms.length > 0) && (i < (orderByTerms.length - 1)) )
-                sb.append(", ");
+            for (int i = 0; i < orderByTerms.length; i++) {
+                OrderByTerm term = orderByTerms[i];
+                sb = appendOrderByTermsString(sb, term);
+                if ((orderByTerms.length > 0) && (i < (orderByTerms.length - 1)))
+                    sb.append(", ");
+            }
         }
 
         return sb;

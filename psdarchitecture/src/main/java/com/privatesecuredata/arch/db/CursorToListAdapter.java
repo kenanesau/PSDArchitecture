@@ -1,14 +1,16 @@
 package com.privatesecuredata.arch.db;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import android.database.Cursor;
 import android.widget.Filter;
+
 import com.privatesecuredata.arch.exceptions.DBException;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
 import com.privatesecuredata.arch.mvvm.vm.IDataChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.OrderBy;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * This implementation of IModelListCallback encapsulates a cursor. It directly writes all changes
@@ -162,7 +164,11 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     }
 
     public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
-        Cursor csr = persister.getFilteredCursor(getFilteredColumn(), constraint);
+        Cursor csr;
+        if (this.sortOrderTerms != null)
+            csr = persister.getFilteredCursor(getFilteredColumn(), constraint, sortOrderTerms);
+        else
+            csr = persister.getFilteredCursor(getFilteredColumn(), constraint);
 
         return csr;
     }
