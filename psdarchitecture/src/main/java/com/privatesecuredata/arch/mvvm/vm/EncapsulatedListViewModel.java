@@ -132,6 +132,15 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     @Override
     public void setSortOrder(OrderBy... sortOrderTerms) {
         this.listCB.setSortOrder(sortOrderTerms);
+
+        if (dataLoaded)
+        {
+            ComplexViewModel vm = getParentViewModel();
+            Field fld = getModelField();
+
+            if ( (vm != null) && (fld != null) )
+                init(getParentViewModel(), getModelField());
+        }
     }
 
     public void init(ComplexViewModel<?> parentVM, Field modelField)
@@ -287,6 +296,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		for(IViewModel<M> vm : positionToViewModel.values()) {
 			if(vm.isDirty())
 			{
+                vm.commit();
                 newItems.add(vm.getModel());
 			}
 		}

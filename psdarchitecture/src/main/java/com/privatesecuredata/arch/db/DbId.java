@@ -46,7 +46,6 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	public void setDirty() { this.dirty = true; }
 	public void setClean() {
         this.dirty = false;
-        this.dirtyForeignKey = false;
     }
     public boolean getDirtyForeignKey() { return this.dirtyForeignKey; }
     public void setDirtyForeignKey() { this.dirtyForeignKey = true; }

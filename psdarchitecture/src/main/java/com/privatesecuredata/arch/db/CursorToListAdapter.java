@@ -138,7 +138,6 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
             DbId<?> dbId = item.getDbId();
             if (null != dbId) {
                 dbId.setDirtyForeignKey();
-                dbId.setDirty();
             }
         }
 
