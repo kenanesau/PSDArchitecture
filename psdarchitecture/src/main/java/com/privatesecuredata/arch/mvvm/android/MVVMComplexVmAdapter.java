@@ -14,20 +14,15 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import android.view.View;
 
 public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
+    MVVMActivity ctx;
 	View mainView;
 	COMPLEXVM vm;
     /**
      * View-ID -> ViewtoVM-Adapter
      */
 	private HashMap<Integer, List<ViewToVmBinder>> view2ModelAdapters = new HashMap<>();
-    boolean getDataFromView = false;
 
-    public MVVMComplexVmAdapter(View mainView, COMPLEXVM vm) {
-        this(mainView, vm, false);
-    }
-	
-	public MVVMComplexVmAdapter(View mainView, COMPLEXVM vm, boolean getDataFromView) {
-        this.getDataFromView = getDataFromView;
+	protected MVVMComplexVmAdapter(View mainView, COMPLEXVM vm) {
 		if (null == mainView)
 			throw new ArgumentException("Parameter \"mainView\" must not be null");
 		this.mainView = mainView;
@@ -36,6 +31,13 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
 			throw new ArgumentException("Parameter \"vm\" must not be null");
 		this.vm = vm;
 	}
+
+    public MVVMComplexVmAdapter(MVVMActivity ctx, View mainView, COMPLEXVM vm) {
+        this (mainView, vm);
+
+        this.ctx = ctx;
+        this.ctx.registerMVVMAdapter(this);
+    }
 	
 	
 	public <T> ViewToVmBinder setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getSimpleVmCmd)
@@ -53,7 +55,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
             throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
 
         adapter.init(view, vm);
-        if (getDataFromView) {
+        if (this.ctx.isResumedActivity()) {
             adapter.updateVM();
         }
         else {

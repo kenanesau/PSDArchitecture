@@ -6,11 +6,9 @@ import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.DataHive;
-import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 import android.app.Activity;
-import android.os.PersistableBundle;
 import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;

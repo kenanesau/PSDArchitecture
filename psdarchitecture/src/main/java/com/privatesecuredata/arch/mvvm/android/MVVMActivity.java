@@ -12,7 +12,11 @@ import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.DataHive;
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Activity which supports easier restoration and saving of instance state. It also provides
@@ -23,6 +27,8 @@ public class MVVMActivity extends FragmentActivity
 	public static final String TAG_PERSISTANCE_MANAGER = "mvvm_pm";
     private String pmUUID;
     private MVVMInstanceStateHandler instanceStateHandler = new MVVMInstanceStateHandler();
+    private boolean isResumed = false;
+    private List<MVVMComplexVmAdapter> adapters = new ArrayList<>();
 	
 	public PersistanceManager createPM(IDbDescription desc)
 	{
@@ -87,6 +93,8 @@ public class MVVMActivity extends FragmentActivity
 
         if (savedInstanceState != null) {
             instanceStateHandler.restoreInstanceState(savedInstanceState);
+
+
         }
 
         super.onCreate(savedInstanceState);
@@ -201,6 +209,36 @@ public class MVVMActivity extends FragmentActivity
 	@Override
 	protected void onStop() {
 		Log.d(getClass().getSimpleName(), "onStop");
+        Log.d(getClass().getSimpleName(), "onStop");
+        for(MVVMComplexVmAdapter adapter : adapters)
+        {
+            adapter.dispose();
+        }
+        adapters.clear();
 		super.onStop();
 	}
+
+    /**
+     * This is used to determine if the activity is resumed and the views value has to be set
+     * into the VM (normally it is the other way 'round)
+     *
+     * @return Returns true if the activity is resumed and an instance-state is restored.
+     * @see MVVMComplexVmAdapter#setModelMapping(Class, int, IGetVMCommand)
+     */
+    public boolean isResumedActivity() {
+        return this.isResumed;
+    }
+
+    /**
+     * The MVVMComplexVmAdapter register thmeselves, so the ViewToVM-Mappings which are
+     * managed by the MVVMComplexVMAdapter can be disposed when the Activity stops...
+     *
+     * This has to be done to prevent doubled binding to a view.
+     *
+     * @param adapter
+     */
+    public void registerMVVMAdapter(MVVMComplexVmAdapter adapter)
+    {
+        this.adapters.add(adapter);
+    }
 }

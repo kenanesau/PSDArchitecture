@@ -60,7 +60,7 @@ public class ItemMoverFragment extends MVVMFragment {
     @Override
     protected void doViewToVMMapping() {
         if ( (null != this.view) && (null != this.vm)) {
-            mvvmAdapter = new MVVMComplexVmAdapter<ItemMoverVM>(this.view, this.vm);
+            mvvmAdapter = new MVVMComplexVmAdapter<ItemMoverVM>(getMVVMActivity(), this.view, this.vm);
             mvvmAdapter.setModelMapping(String.class, R.id.psdarch_txt_action_move_number_of_items,
                     new IGetVMCommand<String>() {
                         @Override
