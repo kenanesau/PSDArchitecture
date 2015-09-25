@@ -20,6 +20,7 @@ import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+import com.privatesecuredata.arch.mvvm.vm.OrderBy;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
     private List<ViewManipulator> manipulators = new ArrayList<>();
     private List<IViewHolder> viewHolders = new LinkedList<>();
     private ArrayList<IViewModel> updatingVMs = new ArrayList<>();
+    private OrderBy[] sortOrder;
 
 	/**
 	 * Id of the Row-layout
@@ -82,8 +84,11 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 		if (null != this.data)
 			this.data.delModelListener(this);
 		this.data = data;
-        if (null != this.data)
-		    this.data.addModelListener(this);
+        if (null != this.data) {
+            this.data.addModelListener(this);
+            if (null != sortOrder)
+                this.data.setSortOrder(sortOrder);
+        }
         if (null != filteredColumn)
             this.data.setFilteredColumn(filteredColumn);
 		this.notifyDataSetChanged();
@@ -271,6 +276,12 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
             this.filteredColumn = filteredColumn;
         else
             data.setFilteredColumn(filteredColumn);
+    }
+
+    public void setSortOrder(OrderBy... sortOrderTerms) {
+        this.sortOrder = sortOrderTerms;
+        if (null != data)
+            data.setSortOrder(sortOrderTerms);
     }
 
     public void updateViewOnChange(SimpleValueVM vm) {

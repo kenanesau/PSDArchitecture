@@ -8,6 +8,11 @@ public class OrderBy {
     private String _fieldName;
     private boolean _ascending;
 
+    public OrderBy(Class type, String objectFieldName)
+    {
+        this(type, objectFieldName, true);
+    }
+
     public OrderBy(Class type, String objectFieldName, boolean asc)
     {
         this(objectFieldName, asc);
@@ -18,6 +23,11 @@ public class OrderBy {
     {
         _fieldName = objectFieldName;
         _ascending = asc;
+    }
+
+    public OrderBy(String objectFieldName)
+    {
+        this(objectFieldName, true);
     }
 
     public Class getType() { return _type; }
