@@ -65,12 +65,14 @@ public class Fab extends FrameLayout
             _disableOutline = a.getBoolean(R.styleable.psdarch_fab_disable_outline, false);
 
 			a.recycle();
+
+            getDefaultAnimator().setTarget(getDefaultImageView());
 		}
 	}
 	
 	protected Drawable getDefaultDrawable() { return _defaultDrawable; }
-	protected ImageView getDefaultImageView() { return _defaultImageView; }
-	protected Animator getDefaultAnimator() { return _defaultAnimator; }
+	public ImageView getDefaultImageView() { return _defaultImageView; }
+	public Animator getDefaultAnimator() { return _defaultAnimator; }
 	protected int getBgColor() { return _color; }
 	
     @Override
@@ -93,16 +95,15 @@ public class Fab extends FrameLayout
     protected void onSizeChangedNoOutline(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
     }
-    
+
     protected void doAnimation()
     {
-    	getDefaultAnimator().setTarget(getDefaultImageView());
-    	getDefaultAnimator().start();
+        getDefaultAnimator().start();
     }
-    
+
     @Override
     public boolean performClick() {
     	doAnimation();
-    	return super.performClick();
+        return super.performClick();
     }
 }
