@@ -58,13 +58,22 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
 	public void init(Class<?> parentClazz, Object parent, Class<M> childClazz) {
-		if (null == parent)
-			this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
-		else
-			this.csr = pm.getCursor((IPersistable)parent, childClazz, sortOrderTerms);
+        if (null == parent) {
+            this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
 
-        if (null == csr)
-            throw new DBException("Unable to load cursor");
+            if (null == csr)
+                throw new DBException("Unable to load cursor");
+        } else {
+            // Only load a cursor if there can be something in the DB
+            // If it is a new object (no DB-ID) -> don't load the cursor
+            if (((IPersistable)parent).getDbId() != null) {
+                this.csr = pm.getCursor((IPersistable) parent, childClazz, sortOrderTerms);
+
+                if (null == csr)
+                    throw new DBException("Unable to load cursor");
+            }
+        }
+
 		
 		persister = pm.getPersister(childClazz);
 		this.parentClazz = parentClazz;
@@ -98,7 +107,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
 	public int size() {
-		return csr.getCount();
+		return csr != null ? csr.getCount() : 0;
 	}
 
 	@Override
