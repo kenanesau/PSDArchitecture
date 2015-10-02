@@ -1,25 +1,23 @@
 package com.privatesecuredata.arch.mvvm.android;
 
-import com.privatesecuredata.arch.db.IDbDescription;
-import com.privatesecuredata.arch.db.IPersistable;
-import com.privatesecuredata.arch.db.PersistanceManager;
-import com.privatesecuredata.arch.db.PersistanceManagerLocator;
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.DataHive;
-import com.privatesecuredata.arch.mvvm.vm.IViewModel;
-
 import android.app.Activity;
-import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.privatesecuredata.arch.db.IDbDescription;
+import com.privatesecuredata.arch.db.IPersistable;
+import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.db.PersistanceManagerLocator;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+
 public class MVVMFragment extends Fragment {
     private final static String KEY_DEFAULT_PM_UUID = "PSDARCH_MVVMFRAGMENT_PM_UUID";
-    private String pmUUID;
+    private Activity attachedActivity;
 
 	public PersistanceManager createPM(IDbDescription desc)
 	{
@@ -27,21 +25,7 @@ public class MVVMFragment extends Fragment {
 		PersistanceManagerLocator pmLoc = PersistanceManagerLocator.getInstance();
 		return pmLoc.getPersistanceManager(getActivity(), desc); 
 	}
-	
-	public void setDefaultPM(String uuid)
-	{
-		PersistanceManager pm = (PersistanceManager) DataHive.getInstance().get(uuid);
-		
-		if (null == pm)
-			throw new ArgumentException(String.format("Did not find any PersistanceManager wit UUID=%s", uuid));
-		
-		if ( (null != pmUUID) && (!uuid.equals(pmUUID)) ) {
-			DataHive.getInstance().remove(pmUUID); 
-		}
-		
-		this.pmUUID = uuid;
-	}
-	
+
 	/**
 	 * This function is used by the main activity which also set the default PM
 	 * 
@@ -49,33 +33,18 @@ public class MVVMFragment extends Fragment {
 	 */
 	public PersistanceManager getDefaultPM()
 	{
-		if (null == pmUUID)
-			throw new ArgumentException("No default PersistanceManager set yet!");
-					
-		return (PersistanceManager)DataHive.getInstance().get(pmUUID);
+		return getMVVMActivity().getDefaultPM();
 	}
 	
-	public String getPMUUID() { return pmUUID; }
+	public String getPMUUID() { return getMVVMActivity().getPMUUID(); }
 
-    public MVVMActivity getMVVMActivity() { return (MVVMActivity)getActivity(); }
+    public MVVMActivity getMVVMActivity() { return (MVVMActivity)attachedActivity; }
+    protected void setMVVMActivity(MVVMActivity activity) { attachedActivity = activity; }
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		Log.d(getClass().getSimpleName(), "onCreate");
         super.onCreate(savedInstanceState);
-
-        Intent intent = getActivity().getIntent();
-
-        if (null != intent)
-		{
-            Bundle bundle = intent.getExtras();
-            if (null != bundle) {
-                String pmUUID = bundle.getString(MVVMActivity.TAG_PERSISTANCE_MANAGER);
-                if (null != pmUUID) {
-                    setDefaultPM(pmUUID);
-                }
-            }
-        }
     }
 
     @Override
@@ -134,6 +103,7 @@ public class MVVMFragment extends Fragment {
 
 	@Override
 	public void onAttach(Activity activity) {
+        this.attachedActivity = activity;
         Log.d(getClass().getSimpleName(), "onAttach");
 		super.onAttach(activity);
 	}

@@ -184,9 +184,14 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 
             rowView.setTag(holder);
 		}
-		
-        IViewHolder viewHolder = (IViewHolder) rowView.getTag();
-        viewHolder.updateViews(data);
+
+        Object obj = rowView.getTag();
+        if (null != obj) {
+            if (obj instanceof IViewHolder) {
+                IViewHolder viewHolder = (IViewHolder)obj;
+                viewHolder.updateViews(data);
+            }
+        }
 
 
 		if (this.selectionViewId > -1)
@@ -289,6 +294,14 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
         vm.addViewModelListener(this);
     }
 
+    public void clearUpdateViewOnChange()
+    {
+        for (IViewModel vm : updatingVMs)
+            vm.delViewModelListener(this);
+
+        updatingVMs.clear();
+    }
+
     public void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator) {
         MVVMListViewModelAdapter.this.notifyDataSetChanged();
     }
@@ -305,5 +318,6 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
         updatingVMs.clear();
     }
 
+    public Context getContext() { return this.ctx; }
 
 }

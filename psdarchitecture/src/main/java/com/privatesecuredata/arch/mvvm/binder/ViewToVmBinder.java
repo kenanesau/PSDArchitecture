@@ -1,17 +1,5 @@
 package com.privatesecuredata.arch.mvvm.binder;
 
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.IGetVMCommand;
-import com.privatesecuredata.arch.mvvm.IReadViewCommand;
-import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
-import com.privatesecuredata.arch.mvvm.IWriteViewCommand;
-import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
-import com.privatesecuredata.arch.mvvm.vm.IViewModel;
-import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
-import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
-import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
-
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -23,6 +11,18 @@ import android.widget.Checkable;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.exceptions.MVVMException;
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
+import com.privatesecuredata.arch.mvvm.IReadViewCommand;
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
+import com.privatesecuredata.arch.mvvm.IWriteViewCommand;
+import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
+import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
+import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 									implements IModelChangedListener, IViewModelChangedListener
