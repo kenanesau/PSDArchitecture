@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -52,6 +53,12 @@ public class DialogTitlebar extends FrameLayout {
             int txtTitleId = a.getResourceId(R.styleable.psdarch_dialog_titlebar_txt_title, R.string.psdarch_dialog_titlebar_title);
             String title = res.getString(txtTitleId);
             _txtTitle.setText(title);
+
+            boolean hideOk = a.getBoolean(R.styleable.psdarch_dialog_titlebar_hide_ok, false);
+            if (hideOk)
+                _txtActionOk.setVisibility(View.GONE);
+            else
+                _txtActionOk.setVisibility(View.VISIBLE);
 
             int txtOkId = a.getResourceId(R.styleable.psdarch_dialog_titlebar_txt_ok, R.string.psdarch_dialog_titlebar_txt_ok);
             String action = res.getString(txtOkId);

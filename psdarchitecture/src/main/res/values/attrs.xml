@@ -15,6 +15,7 @@
         <attr name="icon_cancel" format="reference" />
         <attr name="txt_title" format="reference" />
         <attr name="txt_ok" format="reference" />
+        <attr name="hide_ok" format="boolean" />
     </declare-styleable>
 </resources>
  
