@@ -3,6 +3,10 @@ package com.privatesecuredata.arch.mvvm.vm;
 import android.widget.Filter;
 import android.widget.Filterable;
 
+import com.privatesecuredata.arch.db.DbId;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.mvvm.MVVM;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -11,10 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
-import com.privatesecuredata.arch.db.DbId;
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * A Viewmodel which is capable of encapsulating a List of models. The List itself is encapsulated 
@@ -272,6 +272,10 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         return listCB.size();
 	}
 
+    public int dirtySize() {
+        return listCB.size() + newItems.size() - deletedItems.size();
+    }
+
 	@Override
 	public boolean isDirty() {
 		return ( (newItems.size()>0) || (deletedItems.size()>0) || super.isDirty());
@@ -366,15 +370,16 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 				return positionToViewModel.get(pos);
 			else
 			{
-				M model = get(pos);
-				if (null != model) {
-					vm = vmConstructor.newInstance(getMVVM(), model);
-					registerChildVM(vm);
-                    vm.addModelListener(this);
-                    positionToViewModel.put(pos, vm);
-				}
-				else
-					throw new ArgumentException("Could not find object at position");
+                if (pos < this.size()) {
+                    M model = get(pos);
+                    if (null != model) {
+                        vm = vmConstructor.newInstance(getMVVM(), model);
+                        registerChildVM(vm);
+                        vm.addModelListener(this);
+                        positionToViewModel.put(pos, vm);
+                    } else
+                        throw new ArgumentException("Could not find object at position");
+                }
 			}
 		}
 		catch (Exception ex)
