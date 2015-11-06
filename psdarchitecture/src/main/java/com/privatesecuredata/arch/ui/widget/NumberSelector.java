@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.ui.widget;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -38,7 +39,18 @@ public class NumberSelector extends FrameLayout
     public NumberSelector(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
-        LayoutInflater.from(context).inflate(R.layout.psdarch_number_selector, this, true);
+        if (attrs != null) {
+            TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_number_selector, 0, 0);
+
+            //1 - Vertical, 0 - Horizontal
+            int orientation = a.getInt(R.styleable.psdarch_number_selector_android_orientation, 1);
+            if (0 == orientation)
+                LayoutInflater.from(context).inflate(R.layout.psdarch_number_selector_horizontal, this, true);
+            else
+                LayoutInflater.from(context).inflate(R.layout.psdarch_number_selector, this, true);
+
+            a.recycle();
+        }
         _txtNumber = (TextView)findViewById(R.id.psdarch_number_selector_txt_number);
 
         Fab fabUp = (Fab)findViewById(R.id.psdarch_number_selector_btn_up);

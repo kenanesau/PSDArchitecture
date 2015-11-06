@@ -15,7 +15,8 @@
         android:layout_marginTop="@dimen/raster4"
         android:src="@drawable/ic_cancel"
         android:clickable="true"
-        android:onClick="onButtonClick"/>
+        android:onClick="onButtonClick"
+        />
 
     <TextView
         android:id="@+id/psdarch_txt_action_move_number_of_items"
