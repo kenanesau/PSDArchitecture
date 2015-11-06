@@ -1,18 +1,5 @@
 package com.privatesecuredata.arch.db;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Proxy;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.List;
-
 import android.database.Cursor;
 import android.database.sqlite.SQLiteStatement;
 
@@ -23,7 +10,16 @@ import com.privatesecuredata.arch.db.annotations.DbMultipleForeignKeyFields;
 import com.privatesecuredata.arch.db.annotations.DbThisToMany;
 import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.DBException;
-import com.privatesecuredata.arch.mvvm.vm.OrderBy;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Hashtable;
+import java.util.List;
 
 public class AutomaticPersister<T extends IPersistable> extends AbstractPersister<T> {
 	
@@ -224,6 +220,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     public List<ObjectRelation> getOneToManyRelations() {
         return _lstOneToManyRelations;
     }
+    public List<ObjectRelation> getThisToOneRelations() { return _lstThisToOneRelations; }
 
     @Override
     protected String getSelectAllStatement(OrderByTerm... terms) {

@@ -1,10 +1,11 @@
 package com.privatesecuredata.arch.db;
 
 import com.privatesecuredata.arch.db.annotations.DbField;
+import com.privatesecuredata.arch.db.annotations.DbThisToMany;
+import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -20,33 +21,42 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         setPM(pm);
 
         setPersistentType(persistentType);
-        setConstructor(persistentType.getConstructor((Class<?>[])null));
+        setConstructor(persistentType.getConstructor(new Class<?>[]{}));
         Field[] fields = persistentType.getDeclaredFields();
         HashMap<String, SqlDataField> fieldMap = new HashMap<String, SqlDataField>();
         for(Field field : fields)
         {
             DbField dbAnno = field.getAnnotation(DbField.class);
-            if (null == dbAnno)
-                continue;
+            if (null != dbAnno)
+                addSqlField(field, dbAnno);
 
-            SqlDataField sqldf = new SqlDataField();
-            sqldf.setId(dbAnno.id());
-            sqldf.setField(field);
+            DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
+            if (null != thisToOneAnno) {
+                field.setAccessible(true);
 
-            fieldMap.put(sqldf.getId(), sqldf);
+                // At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
+                // object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
+                SqlDataField idField = new SqlDataField(field);
+                addSqlField(idField);
+
+                String fldName = String.format("fld_tpy_%s", field.getName());
+                SqlDataField fldTypeName = new SqlDataField(fldName, SqlDataField.SqlFieldType.OBJECT_NAME);
+                fldTypeName.setField(idField.getField());
+                addSqlField(fldTypeName);
+            }
+
+            DbThisToMany oneToManyAnno = field.getAnnotation(DbThisToMany.class);
+            if (null != oneToManyAnno) {
+                field.setAccessible(true);
+                Class referencedType = oneToManyAnno.referencedType();
+
+                /**
+                 * Add table-field for the collection-proxy-size
+                 */
+                SqlDataField collectionProxySizeFld = new SqlDataField(field, referencedType);
+                addSqlField(collectionProxySizeFld);
+            }
         }
-
-        for(SqlDataField fullPersisterField : _fullPersister.getSqlFields())
-        {
-            SqlDataField partialPersisterField = fieldMap.get(fullPersisterField.getId());
-            if (null == partialPersisterField)
-                continue;
-
-            partialPersisterField.setName(fullPersisterField.getSqlName());
-            partialPersisterField.setSqlType(fullPersisterField.getSqlType());
-            partialPersisterField.setTableName(fullPersisterField.getTableName());
-        }
-        setTableFieldsInternal(new ArrayList(fieldMap.values()));
 
         for(ObjectRelation objRel : _fullPersister.getOneToManyRelations())
         {
