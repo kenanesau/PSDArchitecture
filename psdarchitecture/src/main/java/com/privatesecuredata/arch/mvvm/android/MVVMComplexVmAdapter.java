@@ -1,17 +1,18 @@
 package com.privatesecuredata.arch.mvvm.android;
 
+import android.view.View;
+
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.mvvm.IGetVMCommand;
+import com.privatesecuredata.arch.mvvm.binder.DisableViewBinder;
+import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
+import com.privatesecuredata.arch.mvvm.binder.ViewVisibilityBinder;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.binder.DisableViewBinder;
-import com.privatesecuredata.arch.mvvm.IGetVMCommand;
-import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
-import com.privatesecuredata.arch.mvvm.vm.IViewModel;
-
-import android.view.View;
 
 public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
     MVVMActivity ctx;
@@ -59,11 +60,29 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
             adapter.updateVM();
         }
         else {
-            adapter.updateView(view, vm);
+            adapter.updateView(vm);
         }
 
         return adapter;
 	}
+
+    public void updateView()
+    {
+        Set<Integer> keys = view2ModelAdapters.keySet();
+
+        for (Integer key : keys)
+        {
+            List<ViewToVmBinder> adapters = view2ModelAdapters.get(key);
+            if (null != adapters) {
+                for (ViewToVmBinder adapter : adapters) {
+                    /**
+                     * update the view with the current values of the VM
+                     */
+                    adapter.updateView(vm);
+                }
+            }
+        }
+    }
 
     public ViewToVmBinder setDisableViewMapping(int viewId, IGetVMCommand<Boolean> getModelCmd)
     {
@@ -80,7 +99,26 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
             throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
 
         adapter.init(view, vm);
-        adapter.updateView(view, vm);
+        adapter.updateView(vm);
+        return adapter;
+    }
+
+    public ViewToVmBinder setViewVisibilityMapping(int viewId, IGetVMCommand<Boolean> getModelCmd)
+    {
+        List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
+        if (null == adapters) {
+            adapters = new ArrayList<ViewToVmBinder>();
+            view2ModelAdapters.put(viewId, new ArrayList<ViewToVmBinder>());
+        }
+
+        ViewToVmBinder adapter = new ViewVisibilityBinder(getModelCmd);
+        adapters.add(adapter);
+        View view = mainView.findViewById(viewId);
+        if (null == view)
+            throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
+
+        adapter.init(view, vm);
+        adapter.updateView(vm);
         return adapter;
     }
 
@@ -96,6 +134,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
             throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
 
         adapters.add(adapter);
+        adapter.init(view, vm);
         adapter.updateView(view, vm);
     }
 

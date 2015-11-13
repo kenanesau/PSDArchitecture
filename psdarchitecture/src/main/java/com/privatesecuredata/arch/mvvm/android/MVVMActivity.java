@@ -47,7 +47,7 @@ public class MVVMActivity extends FragmentActivity
 	
 	public void setDefaultPM(String uuid)
 	{
-		PersistanceManager pm = (PersistanceManager) DataHive.getInstance().get(uuid);
+		PersistanceManager pm = DataHive.getInstance().get(uuid);
 		
 		if (null == pm)
 			throw new ArgumentException(String.format("Did not find any PersistanceManager wit UUID=%s", uuid));
@@ -190,11 +190,14 @@ public class MVVMActivity extends FragmentActivity
 
 	@Override
 	protected void onResume() {
-		Log.d(getClass().getSimpleName(), "onResume");
-		super.onResume();
+        Log.d(getClass().getSimpleName(), "onResume");
+        super.onResume();
+        doViewToVMMapping();
 	}
 
-	@Override
+    protected void doViewToVMMapping() {}
+
+    @Override
 	protected void onResumeFragments() {
 		Log.d(getClass().getSimpleName(), "onResumeFragments");
 		super.onResumeFragments();
