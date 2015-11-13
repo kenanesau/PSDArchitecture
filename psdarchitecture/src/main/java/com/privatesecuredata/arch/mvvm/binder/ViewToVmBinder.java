@@ -82,7 +82,7 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 					IWriteViewCommand<T> writeCmd = new IWriteViewCommand<T>() {
 							@Override
 							public void set(View view, T val) {
-								if ( !isVMUpdatesView() && (null!=val) ) {
+								if ( null!=val ) {
 									TextView txtView = ((TextView)view);
 									txtView.setText(val.toString());
 								}
@@ -123,6 +123,9 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                                     if (dataType == Integer.class) {
                                         return dataType.cast(Integer.parseInt(strVal));
                                     }
+                                    if (dataType == Long.class) {
+                                        return dataType.cast(Long.parseLong(strVal));
+                                    }
                                     if (dataType == Float.class) {
                                         return dataType.cast(Float.parseFloat(strVal));
                                     }
@@ -131,7 +134,7 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                                     }
                                 }
 
-								return null;
+                                throw new MVVMException("Unable to convert view-value for the viewmodel! Datatype not supported!");
 							}
 							catch (Exception ex)
 							{
@@ -150,7 +153,7 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                     IWriteViewCommand<Object> writeCmd = new IWriteViewCommand<Object>() {
                         @Override
                         public void set(View view, Object val) {
-                            if (!isVMUpdatesView() && (null != val))
+                            if (null != val)
                                 ((IWidgetValueAccessor) view).setValue(val);
                         }
                     };
@@ -177,7 +180,8 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                             new IWidgetValueReceiver() {
                                 @Override
                                 public void notifyWidgetChanged(IWidgetValueAccessor accessor) {
-									viewValueToViewModel(ViewToVmBinder.this.view, vm);
+                                    if (!ViewToVmBinder.this.isVMUpdatesView())
+									    viewValueToViewModel(ViewToVmBinder.this.view, vm);
                                 }
                             };
 
@@ -345,11 +349,9 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 	/**
 	 * Fills the view with new data
 	 * 
-	 * @param v View to write data to
 	 * @param complexVM The complex ViewModel which contains the data to transfer to the view
 	 */
-	@Override
-	public void updateView(View v, IViewModel<?> complexVM)
+	public void updateView(IViewModel<?> complexVM)
 	{
         if (complexVM.getModel() != null) {
             SimpleValueVM<T> simpleVM = this.getSimpleVMCmd.getVM(complexVM);
@@ -357,8 +359,10 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                 this.setVM(simpleVM);
             SimpleValueVM vm = this.getVM();
 
+            vmUpdatesView = true;
             if (null != vm)
-                this.writeViewCmd.set(v, this.getVM().get());
+                this.writeViewCmd.set(this.view, this.getVM().get());
+            vmUpdatesView=false;
         }
 	}
 

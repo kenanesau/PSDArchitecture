@@ -5,7 +5,6 @@ import android.view.View;
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.IReadViewCommand;
 import com.privatesecuredata.arch.mvvm.IWriteViewCommand;
-import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 /**
