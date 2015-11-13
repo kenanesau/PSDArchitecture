@@ -12,4 +12,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DbThisToOne {
 	boolean isMandatory() default false;
+    boolean deleteChildren() default true;
 }

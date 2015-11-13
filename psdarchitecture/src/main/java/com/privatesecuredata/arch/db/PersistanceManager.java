@@ -1,17 +1,9 @@
 package com.privatesecuredata.arch.db;
 
-import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Hashtable;
-
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.util.Pair;
 
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
@@ -22,6 +14,13 @@ import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModelFactory;
+
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Hashtable;
 
 /**
  * 
@@ -82,8 +81,16 @@ public class PersistanceManager {
 	
 				db = SQLiteDatabase.openOrCreateDatabase(dbFile, null);
 	
-				if (createDB)
-					onCreate(getDb());
+				if (createDB) {
+                    try {
+                        onCreate(getDb());
+                    }
+                    catch (DBException ex) {
+                        db.close();
+                        dbFile.delete();
+                        throw ex;
+                    }
+                }
 				else
 				{
 					int currentVersion = getDb().getVersion();
@@ -236,11 +243,16 @@ public class PersistanceManager {
 			{
 				AutomaticPersister<?> persister = (AutomaticPersister)this.getPersister(persistentType);
 				String createSQL = persister.getCreateStatement();
-                if (null != createSQL)
-				    db.execSQL(createSQL);
+                if (null != createSQL) {
+                    db.execSQL(createSQL);
+                }
 			}
 			db.setTransactionSuccessful();
 		}
+        catch (Exception ex) {
+
+            throw new DBException("Error creating DB", ex);
+        }
 		finally
 		{
 			db.endTransaction();
@@ -628,15 +640,6 @@ public class PersistanceManager {
 //		}
 //	}
 
-    public void deleteChildren(IPersistable father, Class referencedChild)
-    {
-        StringBuilder sql = new StringBuilder("DELETE FROM ").append(DbNameHelper.getTableName(referencedChild))
-                .append(" WHERE ").append(DbNameHelper.getForeignKeyFieldName(father.getClass()))
-                .append("=").append(father.getDbId().getId());
-        SQLiteStatement del = getDb().compileStatement(sql.toString());
-        del.executeUpdateDelete();
-    }
-	
 	public <T extends IPersistable> void delete(T persistable) throws DBException
 	{
 		DbId<T> dbId = persistable.getDbId();
@@ -648,15 +651,6 @@ public class PersistanceManager {
 			Class<T> classObj = (Class<T>) persistable.getClass();
 			IPersister<T> persister = (IPersister<T>) getPersister(classObj);
             db.beginTransaction();
-
-            for (SqlDataField field : persister.getSqlFields())
-            {
-                if (field.getSqlType() == SqlDataField.SqlFieldType.COLLECTION_REFERENCE)
-                {
-                    Class referencedType = field.getReferencedType();
-                    deleteChildren(persistable, referencedType);
-                }
-            }
 
 			persister.delete(persistable);
             persistable.setDbId(null);
@@ -677,7 +671,7 @@ public class PersistanceManager {
 		return cursorLoaderMap.get(key);
 	}
 
-        /**
+    /**
      * Get a DB-Cursor with all DB-objects of type referencedType and the foreign-Key
      * referencingType
      *

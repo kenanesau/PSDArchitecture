@@ -15,5 +15,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DbThisToMany {
 	boolean isMandatory() default false;
+    boolean deleteChildren() default true;
 	Class<?> referencedType();
 }

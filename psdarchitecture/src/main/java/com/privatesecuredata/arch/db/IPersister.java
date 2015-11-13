@@ -1,12 +1,12 @@
 package com.privatesecuredata.arch.db;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
+import android.database.Cursor;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
-import android.database.Cursor;
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 
@@ -36,4 +36,13 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 	void delete(T persistable) throws DBException;
 	void updateForeignKey(DbId<T> persistableId, DbId<?> foreignId) throws DBException;
     long updateCollectionProxySize(DbId<T> persistableId, Field field, long newCollectionSize) throws DBException;
+
+    /**
+     * Returns true if a corresponding table in the db exists (If this is a persister
+     * for a father-class that might not be the case).
+     * @return
+     */
+    boolean tableExists();
+    void addExtendingPersister(AutomaticPersister childPersister);
+    List<AutomaticPersister> getExtendingPersisters();
 }

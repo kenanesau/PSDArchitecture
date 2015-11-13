@@ -62,18 +62,17 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         {
             ICursorLoader loader = new IdCursorLoader(getPM(),
                     _fullPersister.getPersistentType(),
-                    objRel.getReferencedType(),
+                    objRel.getReferencingType(),
                     getTableFieldsInternal());
 
             /**
              * Loader gets registered for the persistentType of the partial view-class
              */
-            getPM().registerCursorLoader(persistentType, objRel.getReferencedType(), loader);
+            getPM().registerCursorLoader(persistentType, objRel.getReferencingType(), loader);
         }
 
         createSelectAllSqlString();
         createSelectSingleSqlString();
-        this.init(_fullPersister.getPM());
     }
 
     private void createSelectAllSqlString()
@@ -151,7 +150,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
     public void unregisterCursorLoaders() {
         for(ObjectRelation objRel : _fullPersister.getOneToManyRelations())
         {
-            getPM().unregisterCursorLoader(getPersistentType(), objRel.getReferencedType());
+            getPM().unregisterCursorLoader(getPersistentType(), objRel.getReferencingType());
         }
     }
 }

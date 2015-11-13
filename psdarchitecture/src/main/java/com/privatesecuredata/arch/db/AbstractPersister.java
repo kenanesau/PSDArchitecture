@@ -17,10 +17,12 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	protected static final String DELSQLSTATEMENT = "DELETE FROM %s WHERE _id=?";
 	protected static final String SELECTSINGLESQLSTATEMENT = "SELECT * FROM %s WHERE _id=?";
 	protected static final String SELECTALLSQLSTATEMENT = "SELECT * FROM %s";
-	
+
+    private ArrayList<AutomaticPersister> childPersisters = new ArrayList<>();
 	private PersistanceManager pm;
 	private SQLiteStatement delete;
     private String tableName;
+    private boolean tableExists = false;
 
     /**
      * Update-Statements for the item counts for the foreign key relations
@@ -41,6 +43,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 		Cursor cursor = getDb().rawQuery("SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name = '"+getTableName()+"'", null);
 		if ( (null != cursor) && (cursor.getCount() > 0) ) {
 			String delStatement = String.format(getDelSqlString(), getTableName());
+            tableExists = true;
 			this.delete = getDb().compileStatement(delStatement);
 		}
 		if (null != cursor)
@@ -243,8 +246,8 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     @Override
     public Cursor getLoadAllCursor(OrderByTerm[] orderTerms) {
         StringBuilder selectAll = appendOrderByString(
-                                    new StringBuilder(getSelectAllStatement()),
-                                    orderTerms);
+                new StringBuilder(getSelectAllStatement()),
+                orderTerms);
 
         return getDb().rawQuery(selectAll.toString(), null);
     }
@@ -320,4 +323,12 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
         return updateStatement;
     }
+
+    public boolean tableExists() { return tableExists; }
+
+    public void addExtendingPersister(AutomaticPersister childPersister) {
+        childPersisters.add(childPersister);
+    }
+
+    public List<AutomaticPersister> getExtendingPersisters() { return childPersisters; }
 }

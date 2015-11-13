@@ -1,13 +1,13 @@
 package com.privatesecuredata.arch.db;
 
+import com.google.common.base.MoreObjects;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.exceptions.DBException;
+
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
-
-import com.google.common.base.MoreObjects;
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.exceptions.DBException;
 
 /**
  * Class used by @see AutomaticPersister to save the SQL-data-fields
@@ -143,7 +143,7 @@ public class SqlDataField {
             case OBJECT_REFERENCE:
                 return "INTEGER";
             case OBJECT_NAME:
-                return "Text";
+                return "TEXT";
             case COLLECTION_REFERENCE:
                 return "INTEGER";
             default:
