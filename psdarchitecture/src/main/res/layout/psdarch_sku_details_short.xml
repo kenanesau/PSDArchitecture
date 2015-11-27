@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                      xmlns:app="http://schemas.android.com/apk/res-auto"
+                                      app:columnCount="4"
+                                      android:layout_width="match_parent"
+                                      android:layout_height="@dimen/item_height"
+                                      android:layout_marginLeft="@dimen/raster2"
+                                      android:layout_marginRight="@dimen/raster2"
+                                      android:layout_marginTop="@dimen/raster1"
+                                      android:layout_marginBottom="@dimen/raster1"
+    >
+    <TextView android:id="@+id/txt_sku_details_title"
+              app:layout_gravity="center_vertical"
+              app:layout_column="0"
+              android:text="Feature"
+              android:textAppearance="?android:attr/textAppearanceListItem"/>
+
+    <TextView android:id="@+id/txt_sku_details_price"
+              app:layout_column="2"
+              app:layout_gravity="center_vertical"
+              android:text="0,99 €"
+              android:textAppearance="?android:attr/textAppearanceLarge"/>
+
+    <ImageView android:id="@+id/pic_sku_details_buy"
+               app:layout_gravity="center_vertical"
+               android:layout_width="@dimen/raster12"
+               android:layout_height="@dimen/raster12"
+               android:src="@drawable/ic_cart_dark"
+        />
+
+    <ImageView android:id="@+id/pic_sku_details_available"
+               android:visibility="gone"
+               android:layout_marginStart="@dimen/raster1"
+               app:layout_gravity="center_vertical"
+               android:layout_width="@dimen/raster12"
+               android:layout_height="@dimen/raster12"
+               android:src="@drawable/ic_sku_available"
+        />
+
+</android.support.v7.widget.GridLayout>

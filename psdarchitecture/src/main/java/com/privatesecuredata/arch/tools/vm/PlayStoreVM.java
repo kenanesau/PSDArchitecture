@@ -11,7 +11,9 @@ import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 
 /**
  * Created by kenan on 11/20/15.
@@ -35,6 +37,8 @@ public class PlayStoreVM extends ComplexViewModel {
             else {
                 for (String sku : _appSkus) {
                     SkuDetails details = inventory.getSkuDetails(sku);
+                    if (null == details)
+                        continue;
                     boolean hasPurchase = inventory.hasPurchase(sku);
                     SkuDetailsVM vm = new SkuDetailsVM(details, hasPurchase);
                     _lstSkuDetails.put(sku, vm);
@@ -48,6 +52,21 @@ public class PlayStoreVM extends ComplexViewModel {
         _billingHelper = iabHelper;
         _appSkus = skus;
         initAsync();
+    }
+
+    public List<SkuDetailsVM> getSkuList() {
+        List<SkuDetailsVM> lst = null;
+        if (_connected.get() && !_error.get()) {
+            lst = new ArrayList<>();
+            Enumeration<SkuDetailsVM> details = _lstSkuDetails.elements();
+            while (details.hasMoreElements())
+            {
+                SkuDetailsVM skuDetailsVM = details.nextElement();
+                lst.add(skuDetailsVM);
+            }
+        }
+
+        return lst;
     }
 
     public void initAsync()
