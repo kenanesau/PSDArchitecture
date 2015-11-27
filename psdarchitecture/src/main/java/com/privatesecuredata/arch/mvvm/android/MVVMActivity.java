@@ -226,7 +226,7 @@ public class MVVMActivity extends FragmentActivity
      * into the VM (normally it is the other way 'round)
      *
      * @return Returns true if the activity is resumed and an instance-state is restored.
-     * @see MVVMComplexVmAdapter#setModelMapping(Class, int, IGetVMCommand)
+     * @see MVVMComplexVmAdapter#setMapping(Class, int, IGetVMCommand)
      */
     public boolean isResumedActivity() {
         return this.isResumed;
