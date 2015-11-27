@@ -1,14 +1,14 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.mvvm.MVVM;
+
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * A Viewmodel which is capable of encapsulating Lists of models.
@@ -26,7 +26,7 @@ import com.privatesecuredata.arch.mvvm.MVVM;
  * @see SimpleValueVM<>
  * @see IViewModel<>
  */
-public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<Collection<M>> implements List<E> {
+public class ListViewModel<M, E extends IViewModel> extends ComplexViewModel<Collection<M>> implements List<E> {
 	
 	public interface ICommitItemCallback<M>
 	{
@@ -282,7 +282,7 @@ public class ListViewModel<M, E extends IViewModel<M>> extends ComplexViewModel<
 		
 		for (Iterator<E> iterator = newItems.iterator(); iterator.hasNext();) {
 			E vm = iterator.next();
-			ret = model.add(vm.getModel());
+			ret = model.add((M) vm.getModel());
 			if (itemCB != null)
 				itemCB.addItem(vm);
 		}

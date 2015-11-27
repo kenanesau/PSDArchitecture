@@ -3,19 +3,16 @@ package com.privatesecuredata.arch.mvvm.vm;
 import android.widget.Filter;
 
 import com.privatesecuredata.arch.db.DbId;
-import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
-import com.privatesecuredata.arch.mvvm.MVVM;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 
 /**
  * Created by kenan on 12/17/14.
  */
-public interface IListViewModel<M, VM extends IViewModel<M>> extends IViewModelChangedListener, IModelChangedListener, IViewModel<List<M>> {
+public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChangedListener, IModelChangedListener, IViewModel<List<M>> {
     void init(ComplexViewModel<?> parentVM, Field modelField);
     boolean add(VM vm);
     boolean add(M object);
