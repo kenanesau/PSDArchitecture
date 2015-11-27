@@ -36,7 +36,13 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
     private IWidgetValueReceiver widgetValueReceiver;
 	private SimpleValueVM<T> vm;
 	private boolean vmUpdatesView = false;
-	
+
+    public ViewToVmBinder(Class<T> type, IGetVMCommand<T> getVMCommand, boolean readOnly)
+    {
+        this(type, getVMCommand);
+        this.setReadOnly(readOnly);
+    }
+
 	public ViewToVmBinder(Class<T> type, IGetVMCommand<T> getVMCommand)
 	{
 		super(type);
@@ -50,6 +56,7 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 		this.setGetVMCommand(other.getGetVMCommand());
 		this.setReadViewCommand(other.getReadViewCommand());
 		this.setWriteViewCommand(other.getWriteViewCommand());
+        this.setReadOnly(other.isReadOnly());
 	}
 	
 	protected void setVMUpdatesView() { this.vmUpdatesView = true; }
@@ -290,8 +297,8 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 
 	protected void unregisterListeners()
 	{
-		this.view.setOnFocusChangeListener(null);
-		this.view.removeOnAttachStateChangeListener(attachStateChangedListener);
+		//this.view.setOnFocusChangeListener(null);
+		//this.view.removeOnAttachStateChangeListener(attachStateChangedListener);
 		
 		if (this.view instanceof EditText)
 		{
@@ -324,6 +331,16 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 		if (null != this.getGetVMCommand())
 			this.setVM( this.getGetVMCommand().getVM(complexVM) );
 	}
+
+    /**
+     * Reinitialize adapter when a new VM is set
+     *
+     * @param complexVM
+     */
+    public void reinit(IViewModel<?> complexVM)
+    {
+        this.init(this.view, complexVM);
+    }
 	
 	public boolean isViewChanged() {
 		return viewChanged;

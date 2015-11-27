@@ -35,11 +35,10 @@ import java.util.List;
  * @param <M> Type of Model
  * @param <COMPLEXVM> Type of ViewModel
  */
-public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extends BaseAdapter
+public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends BaseAdapter
 															implements IModelChangedListener, Filterable,
                                                             IViewModelChangedListener
 {
-	Class<M> modelType;
 	Class<COMPLEXVM> viewModelType;
 	private final Context ctx;
 	private IListViewModel<M, COMPLEXVM> data;
@@ -63,16 +62,15 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
     private String filteredColumn = null;
 
-    public MVVMListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx)
+    public MVVMListViewModelAdapter(Class<COMPLEXVM> vmClass, Context ctx)
 	{
-		modelType = modelClass;
 		viewModelType = vmClass;
 		this.ctx = ctx;
 	}
 
-	public MVVMListViewModelAdapter(Class<M> modelClass, Class<COMPLEXVM> vmClass, Context ctx, IListViewModel<M, COMPLEXVM> lstVMs)
+	public MVVMListViewModelAdapter(Class<COMPLEXVM> vmClass, Context ctx, IListViewModel<M, COMPLEXVM> lstVMs)
 	{
-		this(modelClass, vmClass, ctx);		
+		this(vmClass, ctx);
 		setData(lstVMs);
 	}
 	
@@ -115,14 +113,14 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel<M>> extend
 	
 	protected int getRowViewId() { return this.rowViewId; }
 	
-	public <T> void setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getModelCmd)
+	public <T> void setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getVMCommand)
 	{
 		TransientViewToVmBinder<T> adapter = (TransientViewToVmBinder<T>)view2ModelAdapters.get(viewId);
 		if (null==adapter) {
 			adapter=new TransientViewToVmBinder<T>(type);
 			view2ModelAdapters.put(viewId, adapter);
 		}
-		adapter.setGetVMCommand(getModelCmd);
+		adapter.setGetVMCommand(getVMCommand);
 	}
 	
 	/**

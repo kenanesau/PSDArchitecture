@@ -34,6 +34,8 @@ public class TransientViewToVmBinder<T> {
 	protected IWriteViewCommand<T> writeViewCmd;
 	
 	protected IGetVMCommand<T> getSimpleVMCmd;
+    private boolean readOnly = false;
+
 	
 	public void setGetVMCommand(IGetVMCommand<T> cmd) { this.getSimpleVMCmd = cmd; }
 	public IGetVMCommand<T> getGetVMCommand() { return this.getSimpleVMCmd; }
@@ -41,6 +43,7 @@ public class TransientViewToVmBinder<T> {
 	public void setWriteViewCommand(IWriteViewCommand<T> cmd) { this.writeViewCmd = cmd; }
 	public IReadViewCommand<T> getReadViewCommand() { return this.readViewCmd; }
 	public IWriteViewCommand<T> getWriteViewCommand() { return this.writeViewCmd; }
+    public Class<T> getDataType() { return this.dataType; }
 	
 	/**
 	 * Set the commands for reading and writing the View
@@ -88,6 +91,9 @@ public class TransientViewToVmBinder<T> {
 	 */
 	protected boolean needsReadViewCommand()
 	{
+        if (isReadOnly())
+            return false;
+
 		if ( (null != getSimpleVMCmd) && (null == readViewCmd))
 			return true;
 		else
@@ -120,4 +126,12 @@ public class TransientViewToVmBinder<T> {
 	{
 		return new ViewToVmBinder<T>(this);
 	}
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+    }
 }

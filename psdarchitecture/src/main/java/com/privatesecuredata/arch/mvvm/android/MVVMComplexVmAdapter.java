@@ -15,9 +15,10 @@ import java.util.List;
 import java.util.Set;
 
 public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
-    MVVMActivity ctx;
-	View mainView;
-	COMPLEXVM vm;
+    private MVVMActivity ctx;
+    private View mainView;
+    private COMPLEXVM vm;
+    private boolean readOnly = false;
     /**
      * View-ID -> ViewtoVM-Adapter
      */
@@ -33,14 +34,48 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
 		this.vm = vm;
 	}
 
+    public MVVMComplexVmAdapter(MVVMActivity ctx, View mainView, COMPLEXVM vm, boolean readOnly) {
+        this(ctx, mainView, vm);
+        this.readOnly = readOnly;
+    }
+
     public MVVMComplexVmAdapter(MVVMActivity ctx, View mainView, COMPLEXVM vm) {
         this (mainView, vm);
 
         this.ctx = ctx;
         this.ctx.registerMVVMAdapter(this);
     }
-	
-	
+
+    public MVVMComplexVmAdapter(MVVMActivity ctx, MVVMComplexVmAdapterTemplate<COMPLEXVM> template,
+                                View mainView, COMPLEXVM vm)
+    {
+        this(ctx, mainView, vm);
+
+        this.vm = vm;
+        Set<Integer> keys = template.getViewToModelAdapters().keySet();
+
+        for (Integer key : keys)
+        {
+            List<ViewToVmBinder> adapters = template.getViewToModelAdapters().get(key);
+            if (null != adapters) {
+                for (ViewToVmBinder adapter : adapters) {
+                    /**
+                     * update the view with the current values of the VM
+                     */
+                    setModelMapping(adapter.getDataType(), key, adapter.getGetVMCommand());
+                }
+            }
+        }
+
+    }
+
+    public MVVMComplexVmAdapter(MVVMActivity ctx, MVVMComplexVmAdapterTemplate<COMPLEXVM> template,
+                                View mainView, COMPLEXVM vm, boolean readOnly)
+    {
+        this(ctx, template, mainView, vm);
+        this.readOnly = readOnly;
+    }
+
 	public <T> ViewToVmBinder setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getSimpleVmCmd)
 	{
 		List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
@@ -49,7 +84,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
             view2ModelAdapters.put(viewId, adapters);
         }
 
-        ViewToVmBinder adapter = new ViewToVmBinder(type, getSimpleVmCmd);
+        ViewToVmBinder adapter = new ViewToVmBinder(type, getSimpleVmCmd, isReadOnly());
         adapters.add(adapter);
         View view = mainView.findViewById(viewId);
         if (null == view)
@@ -66,6 +101,9 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
         return adapter;
 	}
 
+    /**
+     * Write all values from the VM to the View
+     */
     public void updateView()
     {
         Set<Integer> keys = view2ModelAdapters.keySet();
@@ -79,6 +117,30 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
                      * update the view with the current values of the VM
                      */
                     adapter.updateView(vm);
+                }
+            }
+        }
+    }
+
+    /**
+     * Set a new VM an redo all the wiring with the ViewToVmBinders
+     *
+     * @param vm The ViewModel
+     */
+    public void updateViewModel(COMPLEXVM vm)
+    {
+        this.vm = vm;
+        Set<Integer> keys = view2ModelAdapters.keySet();
+
+        for (Integer key : keys)
+        {
+            List<ViewToVmBinder> adapters = view2ModelAdapters.get(key);
+            if (null != adapters) {
+                for (ViewToVmBinder adapter : adapters) {
+                    /**
+                     * update the view with the current values of the VM
+                     */
+                    adapter.reinit(vm);
                 }
             }
         }
@@ -156,5 +218,9 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
         }
 
         view2ModelAdapters.clear();
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
     }
 }
