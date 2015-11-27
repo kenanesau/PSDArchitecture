@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
+public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComplexVmAdapter {
     private MVVMActivity ctx;
     private View mainView;
     private COMPLEXVM vm;
@@ -62,7 +62,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
                     /**
                      * update the view with the current values of the VM
                      */
-                    setModelMapping(adapter.getDataType(), key, adapter.getGetVMCommand());
+                    setMapping(adapter.getDataType(), key, adapter.getGetVMCommand());
                 }
             }
         }
@@ -76,7 +76,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
         this.readOnly = readOnly;
     }
 
-	public <T> ViewToVmBinder setModelMapping(Class<T> type, int viewId, IGetVMCommand<T> getSimpleVmCmd)
+	public <T> ViewToVmBinder setMapping(Class<T> type, int viewId, IGetVMCommand<T> getSimpleVmCmd)
 	{
 		List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
 		if (null == adapters) {
@@ -146,7 +146,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
         }
     }
 
-    public ViewToVmBinder setDisableViewMapping(int viewId, IGetVMCommand<Boolean> getModelCmd)
+    public ViewToVmBinder setViewDisableMapping(int viewId, IGetVMCommand<Boolean> getModelCmd)
     {
         List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
         if (null == adapters) {
@@ -184,7 +184,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> {
         return adapter;
     }
 
-    public void setViewMapping(int viewId, ViewToVmBinder adapter)
+    public void setMapping(int viewId, ViewToVmBinder adapter)
     {
         List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
         if (null == adapters) {
