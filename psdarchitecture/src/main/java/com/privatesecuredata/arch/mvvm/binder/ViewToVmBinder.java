@@ -24,6 +24,12 @@ import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
+/**
+ * Objects of this type can be used to establish a binding between a View and a corresponding
+ * SimpleViewModel.
+ *
+ * @param <T> Datatype of the underlying SimpleValueVM
+ */
 public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 									implements IModelChangedListener, IViewModelChangedListener
 {
