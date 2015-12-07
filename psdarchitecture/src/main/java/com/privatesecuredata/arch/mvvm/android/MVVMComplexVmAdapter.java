@@ -62,7 +62,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
                     /**
                      * update the view with the current values of the VM
                      */
-                    setMapping(adapter.getDataType(), key, adapter.getGetVMCommand());
+                    setMapping(key, adapter);
                 }
             }
         }
@@ -188,7 +188,8 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
     {
         List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
         if (null == adapters) {
-            view2ModelAdapters.put(viewId, new ArrayList<ViewToVmBinder>());
+            adapters = new ArrayList<>();
+            view2ModelAdapters.put(viewId, adapters);
         }
 
         View view = mainView.findViewById(viewId);

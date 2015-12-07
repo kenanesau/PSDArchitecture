@@ -54,7 +54,7 @@ public class MVVMComplexVmAdapterTemplate<COMPLEXVM extends IViewModel> implemen
         List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
         if (null == adapters) {
             adapters = new ArrayList<ViewToVmBinder>();
-            view2ModelAdapters.put(viewId, new ArrayList<ViewToVmBinder>());
+            view2ModelAdapters.put(viewId, adapters);
         }
 
         ViewToVmBinder adapter = new DisableViewBinder(getModelCmd);
@@ -68,7 +68,7 @@ public class MVVMComplexVmAdapterTemplate<COMPLEXVM extends IViewModel> implemen
         List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
         if (null == adapters) {
             adapters = new ArrayList<ViewToVmBinder>();
-            view2ModelAdapters.put(viewId, new ArrayList<ViewToVmBinder>());
+            view2ModelAdapters.put(viewId, adapters);
         }
 
         ViewToVmBinder adapter = new ViewVisibilityBinder(getModelCmd);
