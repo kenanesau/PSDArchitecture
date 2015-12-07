@@ -36,7 +36,7 @@
         android:layout_marginEnd="@dimen/keyline1"
         android:textColor="@color/light_text_on_dark_bg_color"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/action_move"
+        android:text="@string/psdarch_action_move"
         android:clickable="true"
         android:onClick="onButtonClick"
         />
