@@ -1,10 +1,13 @@
 package com.privatesecuredata.arch.tools.vm;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.util.Log;
 
 import com.privatesecuredata.arch.billing.IabHelper;
 import com.privatesecuredata.arch.billing.IabResult;
 import com.privatesecuredata.arch.billing.Inventory;
+import com.privatesecuredata.arch.billing.Purchase;
 import com.privatesecuredata.arch.billing.SkuDetails;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
@@ -19,13 +22,14 @@ import java.util.List;
  * Created by kenan on 11/20/15.
  */
 public class PlayStoreVM extends ComplexViewModel {
-
+    private static String TAG = "PlayStoreVM";
     private IabHelper _billingHelper;
     private String[] _appSkus;
     private SimpleValueVM<Boolean> _connected = new SimpleValueVM<Boolean>(false);
     private SimpleValueVM<Boolean> _error = new SimpleValueVM<Boolean>(false);
     private SimpleValueVM<String> _errorMsg = new SimpleValueVM<String>("");
     private Dictionary<String, SkuDetailsVM> _lstSkuDetails = new Hashtable<>();
+    private SkuDetailsVM _skuInPurchase = null;
 
     IabHelper.QueryInventoryFinishedListener _gotInventoryListener = new IabHelper.QueryInventoryFinishedListener() {
         public void onQueryInventoryFinished(IabResult result,
@@ -44,6 +48,20 @@ public class PlayStoreVM extends ComplexViewModel {
                     _lstSkuDetails.put(sku, vm);
                     registerChildVM(vm);
                 }
+            }
+        }
+    };
+
+    IabHelper.OnIabPurchaseFinishedListener _purchaseFinishedListener
+            = new IabHelper.OnIabPurchaseFinishedListener() {
+        public void onIabPurchaseFinished(IabResult result, Purchase purchase)
+        {
+            if (result.isFailure()) {
+                Log.d(TAG, "Error purchasing: " + result);
+                return;
+            }
+            else if (purchase.getSku().equals(_skuInPurchase.getSku())) {
+                _skuInPurchase.buy();
             }
         }
     };
@@ -100,5 +118,20 @@ public class PlayStoreVM extends ComplexViewModel {
         _billingHelper = null;
     }
 
+    public void buy(Activity activity, SkuDetailsVM sku, int requestCode) {
+        _skuInPurchase=sku;
+        _billingHelper.launchPurchaseFlow(activity, sku.getSku().get(), requestCode,
+                _purchaseFinishedListener, "");
+    }
 
+    public boolean isSkuLicensed(String sku)
+    {
+        return _lstSkuDetails.get(sku).isAvailable().get();
+    }
+
+    public void checkShoppingResult(int requestCode, int resultCode, Intent intent) {
+        if (_billingHelper.handleActivityResult(requestCode, resultCode, intent)) {
+            _skuInPurchase.buy();
+        }
+    }
 }

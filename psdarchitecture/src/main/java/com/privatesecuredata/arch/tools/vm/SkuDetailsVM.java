@@ -86,4 +86,8 @@ public class SkuDetailsVM extends ComplexViewModel<SkuDetails> {
     public SimpleValueVM<Boolean> isBuyable() {
         return _isBuyable;
     }
+
+    public void buy() {
+        _isAvailable.set(false);
+    }
 }
