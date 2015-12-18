@@ -29,7 +29,7 @@
         <!--item name="android:logo">@drawable/psd_icon</item-->
         <item name="background">@drawable/actionbar_background</item>
         <item name="android:background">@drawable/actionbar_background</item>
-        <item name="actionBarDivider">@color/transparent</item>
+        <item name="actionBarDivider">@android:color/transparent</item>
         <item name="titleTextStyle">@style/ActionBar.TitleText</item>
         <item name="android:textColor">#fff</item>
         <item name="actionModeBackground">@drawable/actionbar_background</item>
