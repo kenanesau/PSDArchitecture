@@ -838,6 +838,11 @@ public class IabHelper {
 
     int queryPurchases(Inventory inv, String itemType) throws JSONException, RemoteException {
         // Query purchases
+
+        // Someone disposed us before this was run...
+        if (mContext == null)
+            return BILLING_RESPONSE_RESULT_OK;
+
         logDebug("Querying owned items, item type: " + itemType);
         logDebug("Package name: " + mContext.getPackageName());
         boolean verificationFailed = false;
@@ -911,6 +916,10 @@ public class IabHelper {
                 }
             }
         }
+
+        //Someone disposed the billing-helper before this could run...
+        if (mContext == null)
+            return BILLING_RESPONSE_RESULT_OK;
 
         if (skuList.size() == 0) {
             logDebug("queryPrices: nothing to do because there are no SKUs.");

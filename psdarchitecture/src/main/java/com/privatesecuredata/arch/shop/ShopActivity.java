@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.shop;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -54,7 +55,15 @@ public class ShopActivity extends MVVMActivity implements SkuListFragment.OnSkuC
         SkuListFragment frag = (SkuListFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_shop);
         PlayStoreVM store = frag.getPlayStore();
 
-        store.buy(this, sku, REQUESTCODE_SHOP);
+        if (store.isSkuLicensed(sku.getSku().get()))
+        {
+            new AlertDialog.Builder(ShopActivity.this).setTitle(getResources().getString(R.string.psdarch_already_bought_title))
+                    .setMessage(getResources().getString(R.string.psdarch_already_bought_message))
+                    .setPositiveButton(getResources().getString(R.string.psdarchj_ok), null)
+                    .show();
+        }
+        else
+            store.buy(this, sku, REQUESTCODE_SHOP);
     }
 
     @Override
