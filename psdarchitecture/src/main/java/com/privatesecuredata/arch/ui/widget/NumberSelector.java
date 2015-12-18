@@ -1,7 +1,9 @@
 package com.privatesecuredata.arch.ui.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.os.Build;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -25,20 +27,26 @@ public class NumberSelector extends FrameLayout
     private ArrayList<IWidgetValueReceiver> valueReceivers = new ArrayList<IWidgetValueReceiver>();
 
     public NumberSelector(Context context) {
-        this(context, null, 0, 0);
+        this(context, null, 0);
     }
 
     public NumberSelector(Context context, AttributeSet attrs) {
-        this(context, attrs, 0, 0);
+        this(context, attrs, 0);
     }
 
     public NumberSelector(Context context, AttributeSet attrs, int defStyleAttr) {
-        this(context, attrs, defStyleAttr, 0);
+        super(context, attrs, defStyleAttr);
+        init(context, attrs, defStyleAttr);
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public NumberSelector(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        init(context, attrs, defStyleAttr);
+    }
 
+    protected void init(Context context, AttributeSet attrs, int defStyleAttr)
+    {
         if (attrs != null) {
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_number_selector, 0, 0);
 
@@ -74,7 +82,7 @@ public class NumberSelector extends FrameLayout
     {
         _number = _num;
         if (null != _txtNumber)
-            _txtNumber.setText(new Long(_number).toString());
+            _txtNumber.setText(Long.toString(_number));
 
         for(IWidgetValueReceiver rec : this.valueReceivers)
             rec.notifyWidgetChanged(this);

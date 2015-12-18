@@ -19,15 +19,47 @@
         <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
     </style>
 
-
     <style name="PsdTitle">
         <item name="android:textSize">26sp</item>
     </style>
 
-    <style name="AppBaseTheme" parent="android:Theme.Holo.Light">
-        <item name="android:actionBarStyle">@style/ActionBar</item>
-        <item name="android:titleTextAppearance">@style/ActionBar.TitleText</item>
-        <item name="android:icon">@drawable/psd_icon</item>
+    <!-- The part just containing the menus -->
+    <style name="ActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar"> <!--ThemeOverlay.AppCompat.Dark.ActionBar"> <android:Widget.ActionBar"-->
+        <!--item name="displayOptions">showHome</item-->
+        <!--item name="android:logo">@drawable/psd_icon</item-->
+        <item name="background">@drawable/actionbar_background</item>
+        <item name="android:background">@drawable/actionbar_background</item>
+        <item name="actionBarDivider">@color/transparent</item>
+        <item name="titleTextStyle">@style/ActionBar.TitleText</item>
+        <item name="android:textColor">#fff</item>
+        <item name="actionModeBackground">@drawable/actionbar_background</item>
+        <item name="android:actionModeBackground">@drawable/actionbar_background</item>
+        <item name="actionModeCloseDrawable">?android:attr/actionModeCloseDrawable</item>
+
+    </style>
+
+    <style name="ActionBar.TitleText" >
+        <item name="android:textSize">22sp</item>
+    </style>
+
+    <!-- The part containing the Actionbar plus additional information -->
+    <style name="HeaderBar" >
+        <item name="android:background">@color/primary</item>
+        <item name="android:textColor">#fff</item>
+    </style>
+
+    <style name="AppBaseTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="actionBarStyle">@style/ActionBar</item>
+        <item name="actionModeBackground">@drawable/actionbar_background</item>
+        <item name="actionModeSplitBackground">@drawable/actionbar_background</item>
+        <item name="actionModeStyle">@style/ActionBar</item>
+        <item name="icon">@drawable/psd_icon</item>
+        <item name="android:colorActivatedHighlight">@color/accent</item>
+        <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
+        <item name="android:actionModeStyle">@style/ActionBar</item>
+
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
 
         <!--
             Theme customizations available in newer API levels can go in
@@ -41,26 +73,8 @@
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
     </style>
 
-    <!-- The part just containing the menus -->
-    <style name="ActionBar" parent="AppBaseTheme">
-        <item name="android:displayOptions">showHome|showTitle</item>
-        <!--item name="android:icon">@drawable/psd_icon</item-->
-        <item name="android:logo">@drawable/psd_icon</item>
-        <item name="android:background">@drawable/actionbar_background</item>
-        <item name="android:titleTextStyle">@style/ActionBar.TitleText</item>
-    </style>
-
-    <style name="ActionBar.TitleText" parent="AppTheme">
-        <item name="android:textColor">#fff</item>
-        <item name="android:textSize">22sp</item>
-    </style>
-
-    <!-- The part containing the Actionbar plus additional information -->
-    <style name="HeaderBar" parent="AppTheme">
-        <item name="android:background">?android:colorPrimary</item>
-        <item name="android:textColor">#fff</item>
-    </style>
-
     <!-- activated-Style for pre-HoneyComb-Devices see BCG chapter "Choice Modes and the Activated Style" -->
-    <style name="activated"></style>
+    <style name="activated" parent="AppBaseTheme">
+        <item name="android:background">?android:attr/activatedBackgroundIndicator</item>
+    </style>
 </resources>

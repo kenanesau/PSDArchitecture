@@ -3,13 +3,16 @@
                                       xmlns:app="http://schemas.android.com/apk/res-auto"
                                       android:layout_width="match_parent"
                                       android:layout_height="wrap_content"
+                                      android:layout_marginRight="@dimen/raster2"
                                       android:layout_marginEnd="@dimen/raster2"
                                       android:layout_marginTop="@dimen/raster1"
                                       android:layout_marginBottom="@dimen/raster1"
     >
 
     <TextView android:id="@+id/txt_sku_details_title"
+              android:layout_alignParentLeft="true"
               android:layout_alignParentStart="true"
+              android:layout_marginLeft="@dimen/raster2"
               android:layout_marginStart="@dimen/raster2"
               android:layout_alignParentTop="true"
               android:layout_width="wrap_content"
@@ -19,7 +22,9 @@
               android:textAppearance="?android:attr/textAppearanceListItem"/>
 
     <TextView android:id="@+id/txt_sku_details_price"
+              android:layout_marginLeft="@dimen/raster1"
               android:layout_marginStart="@dimen/raster1"
+              android:layout_toLeftOf="@+id/pic_sku_details"
               android:layout_toStartOf="@+id/pic_sku_details"
               android:layout_height="@dimen/raster12"
               android:layout_alignParentTop="true"
@@ -30,12 +35,15 @@
               />
 
     <FrameLayout
-        android:id="@+id/pic_sku_details"
+            android:id="@+id/pic_sku_details"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/raster2"
         android:layout_marginStart="@dimen/raster2"
         android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true">
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        >
 
 
         <ImageView android:id="@+id/pic_sku_details_buy"
@@ -59,7 +67,9 @@
               android:layout_height="wrap_content"
               android:layout_width="match_parent"
               android:layout_below="@+id/txt_sku_details_title"
+              android:layout_alignParentLeft="true"
               android:layout_alignParentStart="true"
+              android:layout_marginLeft="@dimen/raster2"
               android:layout_marginStart="@dimen/raster2"
               android:textAppearance="?android:attr/textAppearanceListItem"
               android:text="blah blubber ..."

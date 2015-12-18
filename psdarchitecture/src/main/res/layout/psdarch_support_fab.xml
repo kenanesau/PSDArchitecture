@@ -5,21 +5,25 @@
     android:id="@+id/psdarch_fab"
     >
     
-	<ImageView android:id="@+id/psdarch_fab_icon"
+	<android.support.design.widget.FloatingActionButton android:id="@+id/psdarch_fab_icon"
 		        android:layout_width="match_parent"
 		        android:layout_height="match_parent"
 		        android:scaleType="center"
 		        android:contentDescription="@null"
 		        android:layout_gravity="center"
+                app:borderWidth="0dp"
+                app:backgroundTint="@color/accent"
 				android:stateListAnimator="@anim/fab_animate_elevation" />
 	
-	<ImageView android:id="@+id/psdarch_checked_fab_icon"
+	<android.support.design.widget.FloatingActionButton android:id="@+id/psdarch_checked_fab_icon"
 		        android:layout_width="match_parent"
 		        android:layout_height="match_parent"
 		        android:scaleType="center"
 		        android:visibility="invisible"
 		        android:contentDescription="@null"
 		        android:layout_gravity="center"
+                app:borderWidth="0dp"
+                app:backgroundTint="@color/accent"
 		        android:stateListAnimator="@anim/fab_animate_elevation" />
     
 </merge>

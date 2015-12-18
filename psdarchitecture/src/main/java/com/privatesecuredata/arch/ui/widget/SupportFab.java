@@ -6,45 +6,44 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Outline;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 import com.privatesecuredata.arch.R;
 
 
-public class Fab extends FrameLayout 
+public class SupportFab extends FrameLayout
 {
 	private Drawable _defaultDrawable;
-	private ImageView _defaultImageView;
+	private FloatingActionButton _defaultImageView;
 	private Animator _defaultAnimator;
 	private int _color;
     private boolean _disableOutline;
-	
-	public Fab(Context context) {
+
+	public SupportFab(Context context) {
 		this(context, null, 0);
 	}
 
-	public Fab(Context context, AttributeSet attrs) {
+	public SupportFab(Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
 
-	public Fab(Context context, AttributeSet attrs, int defStyleAttr) {
+	public SupportFab(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 
         setClickable(true);
         setFocusable(true);
-        //setBackgroundResource(android.R.color.transparent);
+        setBackgroundResource(android.R.color.transparent);
 
-        LayoutInflater.from(context).inflate(R.layout.psdarch_fab, this, true);
-        _defaultImageView = (ImageView)findViewById(R.id.psdarch_fab_icon);
+        LayoutInflater.from(context).inflate(R.layout.psdarch_support_fab, this, true);
+        _defaultImageView = (FloatingActionButton)findViewById(R.id.psdarch_fab_icon);
 
         _color = ContextCompat.getColor(context, R.color.accent_light);
 
@@ -54,7 +53,7 @@ public class Fab extends FrameLayout
             int defaultDrawableId = a.getResourceId(R.styleable.psdarch_fab_icon_default, R.drawable.ic_action_add_small);
             _defaultDrawable = ContextCompat.getDrawable(context, defaultDrawableId);
             getDefaultImageView().setImageDrawable(_defaultDrawable);
-            getDefaultImageView().setColorFilter(_color, PorterDuff.Mode.DST);
+            getDefaultImageView().setRippleColor(_color);
 
             int defaultAnimationId = a.getResourceId(R.styleable.psdarch_fab_default_animation, R.animator.fab_animation_default);
             _defaultAnimator = (Animator) AnimatorInflater.loadAnimator(context, defaultAnimationId);
@@ -63,17 +62,17 @@ public class Fab extends FrameLayout
 
             a.recycle();
 
-            getDefaultAnimator().setTarget(getDefaultImageView());
+            getDefaultAnimator().setTarget(_defaultDrawable);
         }
 	}
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public Fab(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public SupportFab(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
 		super(context, attrs, defStyleAttr, defStyleRes);
 	}
 	
 	protected Drawable getDefaultDrawable() { return _defaultDrawable; }
-	public ImageView getDefaultImageView() { return _defaultImageView; }
+	public FloatingActionButton getDefaultImageView() { return _defaultImageView; }
 	public Animator getDefaultAnimator() { return _defaultAnimator; }
 	protected int getBgColor() { return _color; }
 	

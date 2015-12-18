@@ -3,7 +3,7 @@ package com.privatesecuredata.arch.mvvm.android;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.privatesecuredata.arch.db.IDbDescription;
@@ -22,7 +22,7 @@ import java.util.List;
  * Activity which supports easier restoration and saving of instance state. It also provides
  * access to the Default-Persistance-Manager
  */
-public class MVVMActivity extends FragmentActivity
+public class MVVMActivity extends AppCompatActivity
     implements MVVMInstanceStateHandler.IInstanceStateHandler {
 	public static final String TAG_PERSISTANCE_MANAGER = "mvvm_pm";
     private String pmUUID;

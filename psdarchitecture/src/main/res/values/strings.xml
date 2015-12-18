@@ -8,4 +8,7 @@
     <string name="psdarch_titlebar_title_sku_list">Shop</string>
     <string name="pic_content_buy_item">You can buy this item!</string>
     <string name="pic_content_bought_item">You already bought this item!</string>
+    <string name="psdarch_already_bought_title">Already bought!</string>
+    <string name="psdarch_already_bought_message">You already bought that item!</string>
+    <string name="psdarchj_ok">OK</string>
 </resources>

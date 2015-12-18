@@ -20,6 +20,7 @@
             app:icon_default="@drawable/ic_arrow_left"
             app:disable_outline="true"
             android:onClick="onButtonClick"
+            android:layout_marginRight="@dimen/raster2"
             android:layout_marginEnd="@dimen/raster2"
             />
 
@@ -33,6 +34,7 @@
                   android:textAlignment="center"
                   android:textColor="@color/black"
                   android:elevation="0dp"
+                  android:layout_marginRight="@dimen/raster2"
                   android:layout_marginEnd="@dimen/raster2"/>
 
         <com.privatesecuredata.arch.ui.widget.Fab

@@ -6,7 +6,7 @@
         <item name="android:elevation">@dimen/raster1</item>
     </style>
 
-    <style name="AppBaseTheme" parent="android:Theme.Material.Light.DarkActionBar">
+    <style name="AppBaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Main theme colors -->
         <!--   your app's branding color (for the app bar) -->
         <item name="android:colorPrimary">@color/primary</item>
@@ -15,25 +15,13 @@
         <!--   theme UI controls like checkboxes and text fields -->
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:actionModeBackground">@color/primary</item>
-        <item name="android:actionBarStyle">@style/ActionBar</item>
+        <item name="android:toolbarStyle">@style/ActionBar</item>
         <item name="android:titleTextAppearance">@style/ActionBar.TitleText</item>
-    </style>
 
-    <!-- Application theme. -->
-    <style name="AppTheme" parent="AppBaseTheme">
-        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <style name="activated" parent="android:Theme.Material.Light">
-        <item name="android:background">?android:attr/activatedBackgroundIndicator</item>
-    </style>
-
-    <!-- The part containing the Actionbar plus additional information -->
-    <style name="HeaderBar" parent="AppTheme">
-        <item name="android:elevation">@dimen/elevation</item>
-        <item name="android:background">?android:colorPrimary</item>
-        <item name="android:textColor">#fff</item>
-    </style>
 </resources>

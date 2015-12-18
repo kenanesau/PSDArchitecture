@@ -1,9 +1,11 @@
 package com.privatesecuredata.arch.ui.widget;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,16 +28,24 @@ public class DialogTitlebar extends FrameLayout {
     }
 
     public DialogTitlebar(Context context, AttributeSet attrs) {
-        this(context, attrs, 0, 0);
+        this(context, attrs, 0);
     }
 
     public DialogTitlebar(Context context, AttributeSet attrs, int defStyleAttr) {
-        this(context, attrs, defStyleAttr, 0);
+        super(context, attrs, defStyleAttr);
+
+        init(context, attrs, defStyleAttr);
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public DialogTitlebar(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
 
+        init(context, attrs, defStyleAttr);
+    }
+
+    protected void init(Context context, AttributeSet attrs, int defStyleAttr)
+    {
         LayoutInflater.from(context).inflate(R.layout.psdarch_dialog_titlebar, this, true);
         _defaultCancelIcon = (ImageView)findViewById(R.id.psdarch_btn_cancel);
         _txtTitle = (TextView)findViewById(R.id.psdarch_dialog_titlebar_txt_title);

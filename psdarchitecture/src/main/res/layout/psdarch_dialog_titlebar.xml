@@ -9,6 +9,7 @@
         android:id="@+id/psdarch_btn_cancel"
         android:layout_width="@dimen/raster6"
         android:layout_height="@dimen/raster6"
+        android:layout_marginLeft="@dimen/keyline1"
         android:layout_marginStart="@dimen/keyline1"
         android:layout_marginTop="@dimen/raster4"
         android:src="@drawable/ic_cancel"
@@ -23,6 +24,7 @@
         android:layout_width="wrap_content"
         android:textColor="@color/background_light"
         android:text="@string/psdarch_dialog_titlebar_title"
+        android:layout_marginLeft="@dimen/keyline2"
         android:layout_marginStart="@dimen/keyline2"
         android:layout_gravity="center_vertical" />
 
@@ -31,6 +33,7 @@
         android:layout_gravity="end|center_vertical"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:layout_marginRight="@dimen/keyline1"
         android:layout_marginEnd="@dimen/keyline1"
         android:textColor="@color/background_light"
         android:textAppearance="?android:attr/textAppearanceLarge"

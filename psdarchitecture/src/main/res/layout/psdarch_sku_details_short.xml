@@ -30,6 +30,7 @@
 
     <ImageView android:id="@+id/pic_sku_details_available"
                android:visibility="gone"
+               android:layout_marginLeft="@dimen/raster1"
                android:layout_marginStart="@dimen/raster1"
                app:layout_gravity="center_vertical"
                android:layout_width="@dimen/raster12"
