@@ -21,47 +21,6 @@
               android:text="Feature"
               android:textAppearance="?android:attr/textAppearanceListItem"/>
 
-    <TextView android:id="@+id/txt_sku_details_price"
-              android:layout_marginLeft="@dimen/raster1"
-              android:layout_marginStart="@dimen/raster1"
-              android:layout_toLeftOf="@+id/pic_sku_details"
-              android:layout_toStartOf="@+id/pic_sku_details"
-              android:layout_height="@dimen/raster12"
-              android:layout_alignParentTop="true"
-              android:gravity="center_vertical|right"
-              android:layout_width="96dp"
-              android:text="0,99 €"
-              android:textAppearance="?android:attr/textAppearanceLarge"
-              />
-
-    <FrameLayout
-            android:id="@+id/pic_sku_details"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/raster2"
-        android:layout_marginStart="@dimen/raster2"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        >
-
-
-        <ImageView android:id="@+id/pic_sku_details_buy"
-                   android:src="@drawable/ic_cart_dark"
-                   android:layout_width="@dimen/raster12"
-                   android:layout_height="@dimen/raster12"
-                   android:contentDescription="@string/pic_content_buy_item"
-                   />
-
-        <ImageView android:id="@+id/pic_sku_details_available"
-                   android:visibility="gone"
-                   android:layout_width="@dimen/raster12"
-                   android:layout_height="@dimen/raster12"
-                   android:src="@drawable/ic_sku_available"
-                   android:contentDescription="@string/pic_content_bought_item"
-            />
-    </FrameLayout>
-
     <TextView android:id="@+id/txt_sku_details_description"
               android:layout_marginTop="@dimen/raster1"
               android:layout_height="wrap_content"
@@ -74,5 +33,46 @@
               android:textAppearance="?android:attr/textAppearanceListItem"
               android:text="blah blubber ..."
         />
+
+    <TextView android:id="@+id/txt_sku_details_price"
+              android:layout_marginLeft="@dimen/raster1"
+              android:layout_marginStart="@dimen/raster1"
+              android:layout_toLeftOf="@+id/pic_sku_details"
+              android:layout_toStartOf="@+id/pic_sku_details"
+              android:layout_below="@+id/txt_sku_details_description"
+              android:layout_height="@dimen/raster12"
+              android:gravity="center_vertical|right"
+              android:layout_width="96dp"
+              android:text="0,99 €"
+              android:textAppearance="?android:attr/textAppearanceLarge"
+        />
+
+    <FrameLayout
+        android:id="@+id/pic_sku_details"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/raster2"
+        android:layout_marginStart="@dimen/raster2"
+        android:layout_below="@+id/txt_sku_details_description"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        >
+
+
+        <ImageView android:id="@+id/pic_sku_details_buy"
+                   android:src="@drawable/ic_cart_dark"
+                   android:layout_width="@dimen/raster12"
+                   android:layout_height="@dimen/raster12"
+                   android:contentDescription="@string/pic_content_buy_item"
+            />
+
+        <ImageView android:id="@+id/pic_sku_details_available"
+                   android:visibility="gone"
+                   android:layout_width="@dimen/raster12"
+                   android:layout_height="@dimen/raster12"
+                   android:src="@drawable/ic_sku_available"
+                   android:contentDescription="@string/pic_content_bought_item"
+            />
+    </FrameLayout>
 
 </RelativeLayout>

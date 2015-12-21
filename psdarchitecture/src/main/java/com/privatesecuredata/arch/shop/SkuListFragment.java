@@ -100,11 +100,9 @@ public class SkuListFragment extends MVVMFragment
 		super.onCreate(savedInstanceState);
         Bundle bundle = getActivity().getIntent().getExtras();
         if (playStoreVM == null) {
-            if (savedInstanceState == null) {
-                String uuid = (String) bundle.get(TAG_SHOP);
-                if (null != uuid) {
-                    playStoreVM = DataHive.getInstance().remove(uuid);
-                }
+            String uuid = (String) bundle.get(TAG_SHOP);
+            if (null != uuid) {
+                playStoreVM = DataHive.getInstance().get(uuid);
             }
         }
         MVVM mvvm = getMVVMActivity().getDefaultPM().createMVVM();
