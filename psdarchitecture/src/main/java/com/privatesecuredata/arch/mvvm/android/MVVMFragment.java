@@ -1,6 +1,6 @@
 package com.privatesecuredata.arch.mvvm.android;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,9 +15,13 @@ import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
+import java.util.HashMap;
+
 public class MVVMFragment extends Fragment {
     private final static String KEY_DEFAULT_PM_UUID = "PSDARCH_MVVMFRAGMENT_PM_UUID";
-    private Activity attachedActivity;
+    private Context attachedActivity;
+    private IViewModel[] rememberedInstanceStateChache;
+    private HashMap<String, IViewModel> rememberedInstanceStateDictCache;
 
 	public PersistanceManager createPM(IDbDescription desc)
 	{
@@ -55,19 +59,55 @@ public class MVVMFragment extends Fragment {
     protected void doViewToVMMapping() {}
 
     protected void rememberInstanceState(IViewModel... vms) {
-        getMVVMActivity().rememberInstanceState(vms);
+        MVVMActivity act = getMVVMActivity();
+
+        if (act != null)
+            act.rememberInstanceState(vms);
+        else
+        {
+            rememberedInstanceStateChache = vms;
+        }
     }
 
     protected void rememberInstanceState(String key, IViewModel vm) {
-        getMVVMActivity().rememberInstanceState(key, vm);
+        MVVMActivity act = getMVVMActivity();
+
+        if (null != act)
+            act.rememberInstanceState(key, vm);
+        else {
+            if (rememberedInstanceStateDictCache == null)
+                rememberedInstanceStateDictCache = new HashMap<>();
+            rememberedInstanceStateDictCache.put(key, vm);
+        }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        this.attachedActivity = context;
+        Log.d(getClass().getSimpleName(), "onAttach");
+
+        if (rememberedInstanceStateChache != null) {
+            getMVVMActivity().rememberInstanceState(rememberedInstanceStateChache);
+            rememberedInstanceStateChache = null;
+        }
+        if (rememberedInstanceStateDictCache != null) {
+            for(String key : rememberedInstanceStateDictCache.keySet())
+            {
+            getMVVMActivity().rememberInstanceState(key, rememberedInstanceStateDictCache.get(key));
+            }
+            rememberedInstanceStateDictCache = null;
+        }
+        super.onAttach(context);
     }
 
     protected void forgetInstanceState(IViewModel... vms) {
-        getMVVMActivity().forgetInstanceState(vms);
+        if (getMVVMActivity() != null)
+            getMVVMActivity().forgetInstanceState(vms);
     }
 
     protected void forgetInstanceState(String key, IViewModel vm) {
-        getMVVMActivity().forgetInstanceState(key, vm);
+        if (getMVVMActivity() != null)
+            getMVVMActivity().forgetInstanceState(key, vm);
     }
 
     public <T extends IPersistable> T getModel(Class type) {
@@ -100,13 +140,6 @@ public class MVVMFragment extends Fragment {
         Log.d(getClass().getSimpleName(), "saveInstanceState");
         super.onSaveInstanceState(outState);
     }
-
-	@Override
-	public void onAttach(Activity activity) {
-        this.attachedActivity = activity;
-        Log.d(getClass().getSimpleName(), "onAttach");
-		super.onAttach(activity);
-	}
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
