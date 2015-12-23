@@ -50,7 +50,7 @@ public class ItemMoverFragment extends MVVMFragment {
                 /** Cancel action ... **/
                 View btn = view.findViewById(R.id.psdarch_btn_action_move_cancel);
                 if (btn != null)
-                    btn.callOnClick();
+                    btn.performClick();
             }
         }
 
@@ -102,6 +102,7 @@ public class ItemMoverFragment extends MVVMFragment {
         getActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .remove(this)
+                .disallowAddToBackStack()
                 .commit();
         this.getItemMover().clear();
         this.setItemMoverVM(null);
