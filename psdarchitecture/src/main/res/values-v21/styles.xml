@@ -15,6 +15,7 @@
         <!--   theme UI controls like checkboxes and text fields -->
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:actionModeBackground">@color/primary</item>
+        <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
         <item name="android:toolbarStyle">@style/ActionBar</item>
         <item name="android:titleTextAppearance">@style/ActionBar.TitleText</item>
 
