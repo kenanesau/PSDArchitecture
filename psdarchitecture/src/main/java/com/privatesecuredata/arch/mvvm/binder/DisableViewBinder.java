@@ -15,8 +15,8 @@ public class DisableViewBinder extends ManipulateViewBinder<Boolean> {
 
             @Override
             public void execute(View view, Boolean data) {
-                if (!DisableViewBinder.this.isVMUpdatesView())
-                    view.setEnabled(data);
+                //if (!DisableViewBinder.this.isVMUpdatesView())
+                view.setEnabled(data);
             }
         });
     }

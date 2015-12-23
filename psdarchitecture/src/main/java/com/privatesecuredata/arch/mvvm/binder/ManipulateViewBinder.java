@@ -4,7 +4,6 @@ import android.view.View;
 
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.IWriteViewCommand;
-import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
 /**
  * Created by kenan on 9/1/15.
@@ -37,8 +36,8 @@ public class ManipulateViewBinder<T> extends ViewToVmBinder<T> {
         setWriteViewCommand(new IWriteViewCommand<T>() {
             @Override
             public void set(View view, T val) {
-                if (!isVMUpdatesView())
-                    _cmd.execute(view, val);
+                //if (!isVMUpdatesView())
+                _cmd.execute(view, val);
             }
         });
     }
