@@ -59,7 +59,7 @@ public class ShopActivity extends MVVMActivity implements SkuListFragment.OnSkuC
         {
             new AlertDialog.Builder(ShopActivity.this).setTitle(getResources().getString(R.string.psdarch_already_bought_title))
                     .setMessage(getResources().getString(R.string.psdarch_already_bought_message))
-                    .setPositiveButton(getResources().getString(R.string.psdarchj_ok), null)
+                    .setPositiveButton(getResources().getString(R.string.psdarch_ok), null)
                     .show();
         }
         else

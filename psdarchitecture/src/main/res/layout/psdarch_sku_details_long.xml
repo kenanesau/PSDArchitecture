@@ -63,7 +63,7 @@
                    android:src="@drawable/ic_cart_dark"
                    android:layout_width="@dimen/raster12"
                    android:layout_height="@dimen/raster12"
-                   android:contentDescription="@string/pic_content_buy_item"
+                   android:contentDescription="@string/psdarch_content_buy_item"
             />
 
         <ImageView android:id="@+id/pic_sku_details_available"
@@ -71,7 +71,7 @@
                    android:layout_width="@dimen/raster12"
                    android:layout_height="@dimen/raster12"
                    android:src="@drawable/ic_sku_available"
-                   android:contentDescription="@string/pic_content_bought_item"
+                   android:contentDescription="@string/psdarch_content_bought_item"
             />
     </FrameLayout>
 
