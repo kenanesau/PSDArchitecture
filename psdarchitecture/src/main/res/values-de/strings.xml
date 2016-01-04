@@ -1,0 +1,14 @@
+<resources>
+
+    <string name="app_name">PSDArchitecture</string>
+    <string name="psdarch_dialog_titlebar_title">Title</string>
+    <string name="psdarch_dialog_titlebar_txt_ok">Speicher</string>
+    <string name="psdarch_fragment_action_move_number_of_items">zu Verschiebende Items</string>
+    <string name="psdarch_action_move">Verschieben</string>
+    <string name="psdarch_titlebar_title_sku_list">Laden</string>
+    <string name="psdarch_content_buy_item">Sie können dies kaufen!</string>
+    <string name="psdarch_content_bought_item">Das haben Sie schon gekauft!</string>
+    <string name="psdarch_already_bought_title">Schon gekauft!</string>
+    <string name="psdarch_already_bought_message">Das haben Sie schon gekauft!</string>
+    <string name="psdarch_ok">OK</string>
+</resources>
