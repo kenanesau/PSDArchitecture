@@ -543,7 +543,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             }
         } catch (Exception ex) {
             throw new DBException(String.format("Error saving one-to-one relation in type \"%s\"!",
-                    persistable.getClass().getName()));
+                    persistable.getClass().getName()), ex);
         }
 
         bind(insert, persistable);
