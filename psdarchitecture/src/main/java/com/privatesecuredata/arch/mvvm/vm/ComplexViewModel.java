@@ -3,6 +3,15 @@ package com.privatesecuredata.arch.mvvm.vm;
 import android.content.Context;
 import android.content.res.Resources;
 
+import com.google.common.base.Objects;
+import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.exceptions.MVVMException;
+import com.privatesecuredata.arch.mvvm.MVVM;
+import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
+import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
+import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -13,15 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
-import com.google.common.base.Objects;
-import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.MVVM;
-import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
-import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
-import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
 
 /**
  * @author kenan
@@ -298,7 +298,23 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             }
             vms.clear();
         }
-        Field[] fields = m.getClass().getDeclaredFields();
+        Class cls = m.getClass();
+        Field[] fields = cls.getDeclaredFields();
+
+        ArrayList<Field> tmpFields = new ArrayList<Field>();
+        for (Field fld : fields)
+            tmpFields.add(fld);
+
+        while( !cls.getSuperclass().equals(Object.class))
+        {
+            cls = cls.getSuperclass();
+            fields = cls.getDeclaredFields();
+            for (Field fld : fields)
+                tmpFields.add(fld);
+        }
+
+        fields = new Field[tmpFields.size()];
+        tmpFields.toArray(fields);
 
         for (Field field : fields)
         {
@@ -345,8 +361,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	{
 		String propName = field.getName();
 		propName = Character.toUpperCase(propName.charAt(0)) + propName.substring(1);
-		String name = String.format("get%s", propName); 
-		return getModel().getClass().getDeclaredMethod(name, (Class[])null);
+		String name = String.format("get%s", propName);
+        return getModel().getClass().getMethod(name, (Class[])null);
 	}
 	
 	protected Method createSetter(Field field, Class<?> valType) throws NoSuchMethodException
@@ -354,7 +370,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		String propName = field.getName();
 		propName = Character.toUpperCase(propName.charAt(0)) + propName.substring(1);
 		String name = String.format("set%s", propName); 
-		return getModel().getClass().getDeclaredMethod(name, new Class[]{valType});
+		return getModel().getClass().getMethod(name, new Class[]{valType});
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -430,6 +446,10 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                 childModels.put(field.getName(), vm);
                 registerChildVM(vm); //This was missing!?!?!
             }
+        }
+        catch (InvocationTargetException ex)
+        {
+            throw new MVVMException("Could not find default-constructor.", ex);
         }
         catch (NoSuchMethodException ex)
         {
