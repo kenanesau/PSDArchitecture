@@ -105,7 +105,8 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
     /**
      * Add a new Item for the move-operation
      *
-     * @param dbIds dbId of the item
+     * @param dbIds List of pairs of position in the list to move from and references
+     *              to DbId-object of the items to move
      */
     public void addItems(List<Pair<Integer, DbId>> dbIds)
     {

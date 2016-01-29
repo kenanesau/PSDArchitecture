@@ -1,15 +1,15 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.base.Objects;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.CommitException;
 import com.privatesecuredata.arch.mvvm.CommitCommand;
 import com.privatesecuredata.arch.mvvm.ICommitCommand;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class to encapsulate primitive values. All ComplexViewModels are composed of SimpleValueVMs

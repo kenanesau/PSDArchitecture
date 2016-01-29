@@ -15,12 +15,10 @@ public class ViewVisibilityBinder extends ManipulateViewBinder<Boolean> {
 
             @Override
             public void execute(View view, Boolean visible) {
-                if (!ViewVisibilityBinder.this.isVMUpdatesView()) {
-                    if (visible)
-                        view.setVisibility(View.VISIBLE);
-                    else
-                        view.setVisibility(View.GONE);
-                }
+            if (visible)
+                view.setVisibility(View.VISIBLE);
+            else
+                view.setVisibility(View.GONE);
             }
         });
     }

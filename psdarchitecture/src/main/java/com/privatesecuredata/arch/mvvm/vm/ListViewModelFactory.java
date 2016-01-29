@@ -1,6 +1,5 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
-import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
 
 import java.lang.reflect.Field;

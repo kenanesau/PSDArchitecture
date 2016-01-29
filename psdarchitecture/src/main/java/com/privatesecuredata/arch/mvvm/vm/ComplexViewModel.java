@@ -151,7 +151,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		if (null != getModelField()) {
 			try {
                 Object parentModel = getParentModel();
-                if ( (null != parentModel) && (isLazy()) ) {
+                if (null != parentModel) {
                     Field fld = getModelField();
                     MODEL model = (MODEL) fld.get(parentModel); //(MODEL) getModelGetter().invoke(getParentModel(), (Object[]) null);
                     if ((null != model) && (Proxy.isProxyClass(model.getClass()))) {
@@ -282,7 +282,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	private HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL m)
 	{
 		HashMap<String, IViewModel<?>> childViewModels = new HashMap<String, IViewModel<?>>();
-        if (null != getModel())
+        if (this.hasModel())
             throw new ArgumentException("This Viewmodel already has a Model, don't do this twice!!!");
         if (null == m)
             throw new ArgumentException("Your model is null -- this does not make any sense!!!");
