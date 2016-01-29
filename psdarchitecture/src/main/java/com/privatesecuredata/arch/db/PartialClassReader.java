@@ -136,10 +136,10 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
     }
 
     @Override
-    protected String getSelectAllStatement() { return _selectAllSqlString; }
+    public String getSelectAllStatement() { return _selectAllSqlString; }
 
     @Override
-    protected String getSelectSingleSqlString() { return _selectSingleSqlString; }
+    public String getSelectSingleSqlString() { return _selectSingleSqlString; }
 
     @Override
     protected String getUpdateStatement() { return null; }

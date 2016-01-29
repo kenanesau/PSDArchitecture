@@ -1,10 +1,10 @@
 package com.privatesecuredata.arch.db;
 
-import java.util.List;
+import android.database.Cursor;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
-import android.database.Cursor;
+import java.util.Collection;
 
 /**
  * This Cursorloader tries to load a cursor which is retrieved from a SQL-statement
@@ -19,7 +19,7 @@ public class IdCursorLoader implements ICursorLoader {
 	private PersistanceManager _pm;
 	private String _tableName;
 	private String _foreignKeyColumn;
-    private List<SqlDataField> _fields;
+    private Collection<SqlDataField> _fields;
 
 	private String _selectAllRawString;
 	private String _selectIdRawString;
@@ -31,7 +31,7 @@ public class IdCursorLoader implements ICursorLoader {
      * @param referencedType
      * @param fields
      */
-    public IdCursorLoader(PersistanceManager pm, Class referencingType, Class referencedType, List<SqlDataField> fields)
+    public IdCursorLoader(PersistanceManager pm, Class referencingType, Class referencedType, Collection<SqlDataField> fields)
     {
         init (pm, referencedType, referencingType, fields);
     }
@@ -63,7 +63,7 @@ public class IdCursorLoader implements ICursorLoader {
 		init(pm, table, foreignKeyColumn, persister.getSqlFields());
 	}
 
-    protected void init(PersistanceManager pm, String tableName, String foreignKeyColumn, List<SqlDataField> fields)
+    protected void init(PersistanceManager pm, String tableName, String foreignKeyColumn, Collection<SqlDataField> fields)
     {
         this._pm = pm;
         this._tableName = tableName;
@@ -118,7 +118,7 @@ public class IdCursorLoader implements ICursorLoader {
         */
     }
 
-	protected void init(PersistanceManager pm, Class referencedType, Class referencingType, List<SqlDataField> fields)
+	protected void init(PersistanceManager pm, Class referencedType, Class referencingType, Collection<SqlDataField> fields)
 	{
         init(pm, DbNameHelper.getTableName(referencedType), DbNameHelper.getForeignKeyFieldName(referencingType), fields);
 	}

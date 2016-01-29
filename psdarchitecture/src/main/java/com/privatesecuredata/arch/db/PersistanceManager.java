@@ -929,5 +929,12 @@ public class PersistanceManager {
     {
         return new OrderByTerm(objFieldName, ascending);
     }
+
+    public void registerQuery(QueryBuilder qb) {
+    }
+
+    public Query getQuery(Class type, String queryId) {
+        return null;
+    }
 }
  

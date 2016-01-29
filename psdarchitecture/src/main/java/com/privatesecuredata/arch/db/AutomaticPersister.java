@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AutomaticPersister<T extends IPersistable> extends AbstractPersister<T> {
     protected SQLiteStatement insert;
@@ -27,7 +29,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
     public static final String DATE_FORMAT = "yyyy-MM-dd";
 
-    private List<SqlDataField> _tableFields = new ArrayList<SqlDataField>();
+    private Map<String, SqlDataField> _tableFields = new LinkedHashMap<>();
     private List<SqlDataField> _proxyCntFields;
 
     /**
@@ -145,7 +147,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
     public void extendsPersister(AutomaticPersister<?> parentPersister) {
         for (SqlDataField fld : parentPersister.getTableFieldsInternal())
-            _tableFields.add(fld);
+            _tableFields.put(fld.getSqlName(), fld);
 
         if (parentPersister._proxyCntFields != null) {
             for (SqlDataField fld : parentPersister._proxyCntFields)
@@ -163,12 +165,18 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         parentPersister.addExtendingPersister(this);
     }
 
-    protected List<SqlDataField> getTableFieldsInternal() {
-        return _tableFields;
+    protected Collection<SqlDataField> getTableFieldsInternal() {
+        return _tableFields.values();
     }
 
-    protected void setTableFieldsInternal(List<SqlDataField> _tableFields) {
-        this._tableFields = _tableFields;
+    protected void addTableFieldsInternal(SqlDataField field)
+    {
+        _tableFields.put(field.getSqlName(), field);
+    }
+
+    protected void setTableFieldsInternal(Collection<SqlDataField> tableFields) {
+        for (SqlDataField field : tableFields)
+            this._tableFields.put(field.getSqlName(), field);
     }
 
     /**
@@ -197,8 +205,12 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         return new ArrayList<SqlDataField>(getTableFieldsInternal());
     }
 
+    public Map<String, SqlDataField> getFieldMap() {
+        return new LinkedHashMap<>(_tableFields);
+    }
+
     protected void addSqlField(SqlDataField sqlField) {
-        getTableFieldsInternal().add(sqlField);
+        addTableFieldsInternal(sqlField);
     }
 
     protected void addSqlField(Field field, DbField anno) {
@@ -224,7 +236,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     }
 
     @Override
-    protected String getSelectAllStatement(OrderByTerm... terms) {
+    public String getSelectAllStatement(OrderByTerm... terms) {
         if (getTableFieldsInternal().isEmpty())
             return null;
 
@@ -627,6 +639,11 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         }
     }
 
+    @Override
+    public Query getQuery(String queryId) {
+        return null;
+    }
+
     protected void deleteChildren(IPersistable father, Class referencedChild) {
         StringBuilder sql = new StringBuilder("DELETE FROM ").append(DbNameHelper.getTableName(referencedChild))
                 .append(" WHERE ").append(DbNameHelper.getForeignKeyFieldName(father.getClass()))
@@ -662,7 +679,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     @Override
 	public T rowToObject(int pos, Cursor csr) throws DBException {
 		T obj = null;
-		SqlDataField field = null;
+		SqlDataField currentField = null;
         long referencedObjectId = -1;
         Field referencedObjectField = null;
 
@@ -671,16 +688,24 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 			csr.moveToPosition(pos);
             getPM().assignDbId(obj, csr.getLong(0));
 
-            //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fields
-			for (int colIndex=1; colIndex< getTableFieldsInternal().size() + 1; colIndex++)
-			{
-				field = getTableFieldsInternal().get(colIndex - 1);
-				//int colIndex = csr.getColumnIndex(field.getSqlName());
+            /**
+             * Old start of loop
 
-				Field fld = field.getField();
-				fld.setAccessible(true);
-				switch(field.getSqlType())
-				{
+            for (int colIndex=1; colIndex< getTableFieldsInternal().size() + 1; colIndex++)
+            {
+                field = getTableFieldsInternal().get(colIndex - 1);
+
+             **/
+            //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fields
+            int colIndex = 1;
+            Collection<SqlDataField> coll = _tableFields.values();
+            for (SqlDataField field : coll) {
+                currentField = field;
+
+                Field fld = field.getField();
+                fld.setAccessible(true);
+                switch(field.getSqlType())
+                {
                     case DATE:
                         String dateStr = csr.getString(colIndex);
                         java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
@@ -740,14 +765,20 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
                     default:
                         throw new DBException("Unknow data-type");
-				}
+                }
+
+                colIndex++;
+
+                if (colIndex ==  getTableFieldsInternal().size() + 1)
+                    break;
+
 			}
 
         } catch (Exception e) {
-			if (field != null) {
+			if (currentField != null) {
 				throw new DBException(
 					String.format("Error converting value for Field \"%s\" in object of type \"%s\"",
-							field.getSqlName(),
+							currentField.getSqlName(),
 							getPersistentType().getName()), e);
 			}
 			else {
