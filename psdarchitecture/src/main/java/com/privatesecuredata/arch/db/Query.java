@@ -3,6 +3,8 @@ package com.privatesecuredata.arch.db;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -43,13 +45,37 @@ public class Query<T> {
         params.get(paraId).setValue(value);
     }
 
+    public void setParameter(String paraId, Class value)
+    {
+        params.get(paraId).setValue(value.getName());
+    }
+
     /**
      * @param pm
      * @param sql
      */
-    public void prepare(PersistanceManager pm, String sql) {
+    public void prepare(PersistanceManager pm, AutomaticPersister persister,
+                        Map<String, SqlDataField> fields, String sql) {
         this.db = pm.getDb();
         this.sql = sql;
+
+        /**
+         * Set default values
+         */
+        for(QueryCondition cond : conditions.values()) {
+            if (!cond.isTypeCondition())
+                continue;
+
+            for (QueryParameter para : cond.parameters()) {
+                /**
+                 * Set default if no value set yet
+                 */
+                if (null == para.value()) {
+                    SqlDataField sqlField= fields.get(DbNameHelper.getFieldName(para.fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME));
+                    para.setValue(sqlField.getField().getType().getName());
+                }
+            }
+        }
     }
 
     public Cursor run() {
@@ -57,7 +83,10 @@ public class Query<T> {
         int i=0;
         for(QueryParameter para : params.values())
         {
-            args[i++] = para.toString();
+            if (null == para.value())
+                throw new ArgumentException(String.format("Parameter with ID \"%s\" has no value", para.id()));
+
+            args[i++] = para.value().toString();
         }
         return this.db.rawQuery(this.sql, args);
     }

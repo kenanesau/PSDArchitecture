@@ -10,6 +10,9 @@ public class QueryBuilder<T> {
 
     private Class type;
     private String queryId;
+    /**
+     * Condition-ID -> Condition
+     */
     private HashMap<String, QueryCondition> conditions = new HashMap<>();
 
     public QueryBuilder(Class type, String queryId) {
@@ -25,11 +28,22 @@ public class QueryBuilder<T> {
         addCondition(new QueryCondition(fldName));
     }
 
-    public void addCondition(String queryId, String fldName) {
-        addCondition(new QueryCondition(queryId, fldName));
+    public void addCondition(String condId, String fldName) {
+        addCondition(new QueryCondition(condId, fldName));
     }
 
-    public void addCondition(String fldName, Class type) {
+    public void addTypeCondition(String condId, String paraId, String fldName) {
+        QueryCondition cond = new QueryCondition(condId, paraId, fldName);
+        cond.setTypeCondition();
+        addCondition(cond);
+    }
+
+    public void addTypeCondition(String condId, String fldName) {
+        addTypeCondition(condId, fldName, fldName);
+    }
+
+    public void addTypeCondition(String fldNameAndId) {
+        addTypeCondition(fldNameAndId, fldNameAndId, fldNameAndId);
     }
 
     public String id() { return queryId; }
@@ -51,11 +65,9 @@ public class QueryBuilder<T> {
             query.addCondition(cond);
         }
 
-        query.prepare(pm, sb.toString());
-        /** maybe prohbit future changes...
+        query.prepare(pm, persister, fields, sb.toString());
+        /** maybe prohibit future changes...
         query.seal() **/
-
-        //AbstractPersister.appendWhereClause(sb, )
 
         return query;
     }

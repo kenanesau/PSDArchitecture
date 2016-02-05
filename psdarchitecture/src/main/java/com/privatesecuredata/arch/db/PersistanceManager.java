@@ -20,6 +20,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 /**
@@ -44,6 +45,7 @@ public class PersistanceManager {
 	private MVVM mvvm = null;
 	private Context ctx;
     private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
+    private HashMap<String, QueryBuilder> queries = new HashMap<>();
 	
 	public PersistanceManager(IDbDescription dbDesc) 
 	{
@@ -931,10 +933,11 @@ public class PersistanceManager {
     }
 
     public void registerQuery(QueryBuilder qb) {
+        this.queries.put(qb.id(), qb);
     }
 
-    public Query getQuery(Class type, String queryId) {
-        return null;
+    public Query getQuery(String queryId) {
+        return this.queries.get(queryId).createQuery(this);
     }
 }
  

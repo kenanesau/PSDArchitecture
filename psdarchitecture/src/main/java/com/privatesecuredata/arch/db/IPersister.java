@@ -45,4 +45,6 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
     boolean tableExists();
     void addExtendingPersister(AutomaticPersister childPersister);
     List<AutomaticPersister> getExtendingPersisters();
+
+    Query getQuery(String queryId);
 }

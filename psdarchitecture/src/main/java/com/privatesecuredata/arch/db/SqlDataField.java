@@ -44,7 +44,12 @@ public class SqlDataField {
 	public SqlDataField(String table, String name, SqlFieldType type)
 	{
 		_tableName = ((table == null) ? null : table.toLowerCase(Locale.US));
-		_name = name;
+        if (type == type.OBJECT_NAME)
+        {
+            _name = DbNameHelper.getFieldName(name, type);
+        }
+        else
+		    _name = name;
 		_type = type;
 	}
 	
@@ -56,10 +61,15 @@ public class SqlDataField {
 	public SqlDataField(Field field, Class<?> referencedType)
 	{
 		this(field);
-		if (!Collection.class.isAssignableFrom(field.getType()))
-			throw new ArgumentException("FATAL: Field is not a collection reference!");
-		
-		_referencedType = referencedType;
+		if (Collection.class.isAssignableFrom(field.getType())) {
+            //It's a Collection-Proxy-Size-field
+            _referencedType = referencedType;
+        }
+        else {
+            //It's a Object-Name of a OneToMany-relationship
+            _type = SqlFieldType.OBJECT_NAME;
+            _name = DbNameHelper.getFieldName(field, _type);
+        }
 	}
 	
 	public SqlDataField(Field field)

@@ -3,6 +3,7 @@ package com.privatesecuredata.arch.db;
 import android.database.Cursor;
 import android.widget.Filter;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
 import com.privatesecuredata.arch.mvvm.vm.IDataChangedListener;
@@ -25,6 +26,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 {
 	private PersistanceManager pm;
 	private Cursor csr;
+    private Query query;
     private IDataChangedListener listener;
 	private IPersister<M> persister;
 	private Class<?> parentClazz;
@@ -53,32 +55,45 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	{
 		return csrListeners.remove(listener);
 	}
-	
+
+    private void updateCursor() {
+        if (null == query) {
+            if (null == parent) {
+                this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
+
+                if (null == csr)
+                    throw new DBException("Unable to load cursor");
+            } else {
+                // Only load a cursor if there can be something in the DB
+                // If it is a new object (no DB-ID) -> don't load the cursor
+                if (((IPersistable)parent).getDbId() != null) {
+                    this.csr = pm.getCursor((IPersistable) parent, childClazz, sortOrderTerms);
+
+                    if (null == csr)
+                        throw new DBException("Unable to load cursor");
+                }
+            }
+        }
+        else
+        {
+            this.csr = query.run();
+
+            if (null == csr)
+                throw new DBException("Unable to run query using query");
+        }
+    }
+
 	public Cursor getCursor() { return this.csr; }
 
     @Override
 	public void init(Class<?> parentClazz, Object parent, Class<M> childClazz) {
-        if (null == parent) {
-            this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
+        this.parentClazz = parentClazz;
+        this.parent = (IPersistable) parent;
+        this.childClazz = childClazz;
 
-            if (null == csr)
-                throw new DBException("Unable to load cursor");
-        } else {
-            // Only load a cursor if there can be something in the DB
-            // If it is a new object (no DB-ID) -> don't load the cursor
-            if (((IPersistable)parent).getDbId() != null) {
-                this.csr = pm.getCursor((IPersistable) parent, childClazz, sortOrderTerms);
+        updateCursor();
 
-                if (null == csr)
-                    throw new DBException("Unable to load cursor");
-            }
-        }
-
-		
 		persister = pm.getPersister(childClazz);
-		this.parentClazz = parentClazz;
-		this.parent = (IPersistable) parent;
-		this.childClazz = childClazz;
 	}
 
     @Override
@@ -215,5 +230,32 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     @Override
     public void registerForDataChange(IDataChangedListener listener) {
         this.listener = listener;
+    }
+
+    @Override
+    public void setQuery(String queryId) {
+        query = persister.getQuery(queryId);
+        if (null == query)
+            throw new ArgumentException(String.format("No Query with Id \"%s\" found!", queryId));
+    }
+
+    @Override
+    public void where(String paramId, Object value) {
+        if (null == query)
+            throw new ArgumentException("No Query set yet. Use setQuery() first!");
+
+        query.setParameter(paramId, value);
+    }
+
+    public void where(String paramId, Class type) {
+        if (null == query)
+            throw new ArgumentException("No Query set yet. Use setQuery() first!");
+
+        query.setParameter(paramId, type);
+    }
+
+    @Override
+    public void runQuery() {
+        changeCursor(query.run());
     }
 }

@@ -25,33 +25,79 @@ public class QueryCondition {
 
     }
 
+    public enum ConditionType {
+        VALUE(1),
+        TYPE(1);
+
+        private int value;
+
+        private ConditionType(int value) {
+            this.value = value;
+        }
+    }
+
     private QueryParameter[] params = new QueryParameter[1];
     private String condId;
     private Operations op;
+    private ConditionType type = ConditionType.VALUE;
 
     protected QueryCondition() {}
 
+    /**
+     * Create a query
+     *
+     * @param fieldName Fieldname of field in Object
+     */
     public QueryCondition(String fieldName) {
         this(fieldName, fieldName);
     }
 
+    /**
+     * Create a query
+     *
+     * @param condId ID of the condition
+     * @param fieldName Fieldname of field in Object
+     */
     public QueryCondition(String condId, String fieldName) {
         this(condId, fieldName, fieldName);
     }
 
+    /**
+     * Create a query
+     *
+     * @param condId ID of the condition
+     * @param paraId ID of the parameter
+     * @param fieldName Fieldname of field in Object
+     */
     public QueryCondition(String condId, String paraId, String fieldName) {
         this.params[0] = new QueryParameter(paraId, fieldName);
         this.condId = condId;
         op = Operations.EQUALS;
     }
 
+    public void setTypeCondition() { this.type = ConditionType.TYPE; }
+    public boolean isTypeCondition() { return this.type == ConditionType.TYPE; }
+
+    /**
+     * Append condition to an SQL-Query
+     *
+     * @param fields All fields contained in the persister (Map Sql-Fieldname -> SqlDataField)
+     * @param sb Stringbuilder which contains the SQL-Query to append the condition to
+     * @return SQL-Query with appended condition
+     */
     public StringBuilder append(Map<String, SqlDataField> fields, StringBuilder sb) {
+        String sqlFieldName = null;
+        SqlDataField sqlField = null;
+        if (isTypeCondition())
+            sqlFieldName = DbNameHelper.getFieldName(params[0].fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
+        else
+            sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
 
-        SqlDataField field = fields.get(params[0].fieldName());
-        if (null == field)
-            throw new DBException(String.format("Unable to create query: Could not find field with name \"%s\"", params[0].fieldName()));
+        sqlField = fields.get(sqlFieldName);
+        if (null == sqlField)
+            throw new DBException(String.format("Unable to create query: Could not find sqlField with name \"%s\"", params[0].fieldName()));
 
-        sb.append(field.getSqlName());
+        sb.append(sqlField.getSqlName());
 
         switch (op)
         {
@@ -84,6 +130,10 @@ public class QueryCondition {
         return condId;
     }
 
+    public Operations op() {
+        return op;
+    }
+
     public QueryParameter[] parameters() {
         return params;
     }
@@ -99,6 +149,7 @@ public class QueryCondition {
         newCond.params = newParams;
         newCond.condId = this.condId;
         newCond.op = this.op;
+        newCond.type = this.type;
 
         return newCond;
     }

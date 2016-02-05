@@ -58,8 +58,12 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         String getFilteredColumn();
         void setFilteredColumn(String filteredColumn);
 
-        public void registerForDataChange(IDataChangedListener provider);
-	}
+        void registerForDataChange(IDataChangedListener provider);
+
+        void setQuery(String queryId);
+        void where(String id, Object value);
+        void runQuery();
+    }
 	
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
@@ -128,6 +132,10 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 			throw new ArgumentException(String.format("Unable to find a valid constructor for the model of type \"%s\"", this.referencedType.getName()), ex);
 		}
 	}
+
+    public void setQuery(String queryId) { listCB.setQuery(queryId); }
+    public void where(String id, Object val) { listCB.where(id, val);}
+    public void runQuery() { listCB.runQuery(); }
 
     @Override
     public void setSortOrder(OrderBy... sortOrderTerms) {

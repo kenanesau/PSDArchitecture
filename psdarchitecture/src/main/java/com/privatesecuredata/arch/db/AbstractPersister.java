@@ -30,10 +30,10 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     private Hashtable<Field, SQLiteStatement> _foreignListCountUpdateStatements;
 
 
-	protected String getSelectAllStatement() { return getSelectAllStatement(null); }
-    protected String getSelectAllStatement(OrderByTerm... terms) { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
-    protected String getDelSqlString() { return String.format(DELSQLSTATEMENT, getTableName()); }
-    protected String getSelectSingleSqlString() { return String.format(SELECTSINGLESQLSTATEMENT, getTableName()); }
+	public String getSelectAllStatement() { return getSelectAllStatement(null); }
+    public String getSelectAllStatement(OrderByTerm... terms) { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
+    public String getDelSqlString() { return String.format(DELSQLSTATEMENT, getTableName()); }
+    public String getSelectSingleSqlString() { return String.format(SELECTSINGLESQLSTATEMENT, getTableName()); }
 
 	@Override
 	public void init(Object obj) {
@@ -173,7 +173,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
         return sb;
     }
 
-    public static StringBuilder createSelectAllStatement(String tableName, List<SqlDataField> fields, OrderByTerm... terms)
+    public static StringBuilder createSelectAllStatement(String tableName, Collection<SqlDataField> fields, OrderByTerm... terms)
     {
         StringBuilder sql = new StringBuilder("SELECT ").append(tableName).append("._id, ");
 
