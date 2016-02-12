@@ -10,6 +10,11 @@ public abstract class AbstractDbDescription implements IDbDescription {
 		return new Class[] {};
 	}
 
+    @Override
+    public Class<?>[] getQueryBuilderTypes() {
+        return new Class[] {};
+    }
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
