@@ -1,25 +1,32 @@
-package com.privatesecuredata.arch.db;
+package com.privatesecuredata.arch.db.query;
 
+import com.privatesecuredata.arch.db.DbNameHelper;
+import com.privatesecuredata.arch.db.SqlDataField;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.util.Map;
 
 /**
- * Created by kenan on 1/29/16.
+ * An ordinary Query-condition. All QueryConditions of a Query result in the where-clauses
+ * of the SQL-statement.
+ *
+ * A QueryCondition can either be a where-clause for an ordinary field/value or for an
+ * reference/type.
  */
-public class QueryCondition {
+public class QueryCondition implements IQueryCondition {
 
-    public enum Operations {
+    public enum Operation {
         EQUALS(1),
         NOTEQUAL(2),
         SMALLER(3),
         GREATER(4),
         SMALLEROREQUAL(5),
-        GREATEROREQUAL(6);
+        GREATEROREQUAL(6),
+        LIKE(7);
 
         private int value;
 
-        private Operations(int value) {
+        private Operation(int value) {
             this.value = value;
         }
 
@@ -37,9 +44,9 @@ public class QueryCondition {
     }
 
     private QueryParameter[] params = new QueryParameter[1];
-    private String condId;
-    private Operations op;
+    private Operation op;
     private ConditionType type = ConditionType.VALUE;
+    private String condId;
 
     protected QueryCondition() {}
 
@@ -72,7 +79,7 @@ public class QueryCondition {
     public QueryCondition(String condId, String paraId, String fieldName) {
         this.params[0] = new QueryParameter(paraId, fieldName);
         this.condId = condId;
-        op = Operations.EQUALS;
+        op = Operation.EQUALS;
     }
 
     public void setTypeCondition() { this.type = ConditionType.TYPE; }
@@ -85,6 +92,7 @@ public class QueryCondition {
      * @param sb Stringbuilder which contains the SQL-Query to append the condition to
      * @return SQL-Query with appended condition
      */
+    @Override
     public StringBuilder append(Map<String, SqlDataField> fields, StringBuilder sb) {
         String sqlFieldName = null;
         SqlDataField sqlField = null;
@@ -119,26 +127,46 @@ public class QueryCondition {
             case GREATEROREQUAL:
                 sb.append(" >= ");
                 break;
+            case LIKE:
+                sb.append(" LIKE ");
+                break;
         }
 
-        sb.append("?");
+        sb.append("? ");
 
         return sb;
     }
 
-    public String Id() {
-        return condId;
-    }
-
-    public Operations op() {
+    public Operation op() {
         return op;
     }
 
+    public void setOperation(Operation op)
+    {
+        this.op = op;
+        if (Operation.LIKE == this.op)
+            this.params[0].setValueFilter(
+                    new IQueryParamValueFilter() {
+                        @Override
+                        public Object filterValue(Object oldValue) {
+                            return String.format("%%%s%%", oldValue.toString());
+                        }
+                    }
+            );
+        else
+            this.params[0].setValueFilter(null);
+    }
+
+    @Override
+    public String id() { return condId; }
+
+    @Override
     public QueryParameter[] parameters() {
         return params;
     }
 
-    public QueryCondition clone() {
+    @Override
+    public IQueryCondition clone() {
         QueryCondition newCond = new QueryCondition();
 
         QueryParameter[] newParams = new QueryParameter[params.length];
@@ -152,5 +180,26 @@ public class QueryCondition {
         newCond.type = this.type;
 
         return newCond;
+    }
+
+    @Override
+    public void setDefaultValues(Map<String, SqlDataField> fields) {
+        if (!isTypeCondition()) {
+            if (op() == QueryCondition.Operation.LIKE)
+            {
+                for (QueryParameter para : parameters())
+                    para.setValue("");
+            }
+        }
+
+        for (QueryParameter para : parameters()) {
+            /**
+             * Set default if no value set yet
+             */
+            if (null == para.value()) {
+                SqlDataField sqlField= fields.get(DbNameHelper.getFieldName(para.fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME));
+                para.setValue(sqlField.getField().getType().getName());
+            }
+        }
     }
 }

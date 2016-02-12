@@ -1,8 +1,11 @@
-package com.privatesecuredata.arch.db;
+package com.privatesecuredata.arch.db.query;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.privatesecuredata.arch.db.AutomaticPersister;
+import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.db.SqlDataField;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 
 import java.util.LinkedHashMap;
@@ -15,7 +18,7 @@ public class Query<T> {
     private String queryId;
     private String sql;
     private SQLiteDatabase db;
-    private Map<String, QueryCondition> conditions = new LinkedHashMap<>();
+    private Map<String, IQueryCondition> conditions = new LinkedHashMap<>();
     private Map<String, QueryParameter> params = new LinkedHashMap<>();
 
     public Query(String id) {
@@ -26,14 +29,14 @@ public class Query<T> {
         return queryId;
     }
 
-    public QueryCondition getCondition(String condId) {
+    public IQueryCondition getCondition(String condId) {
         return conditions.get(condId);
     }
 
-    public void addCondition(QueryCondition condition)
+    public void addCondition(IQueryCondition condition)
     {
-        QueryCondition localCondition = condition.clone();
-        conditions.put(localCondition.Id(), localCondition);
+        IQueryCondition localCondition = condition.clone();
+        conditions.put(localCondition.id(), localCondition);
         for (QueryParameter param : localCondition.parameters())
         {
             params.put(param.id(), param);
@@ -54,27 +57,16 @@ public class Query<T> {
      * @param pm
      * @param sql
      */
-    public void prepare(PersistanceManager pm, AutomaticPersister persister,
-                        Map<String, SqlDataField> fields, String sql) {
+    public void prepare(PersistanceManager pm, AutomaticPersister persister, String sql) {
         this.db = pm.getDb();
         this.sql = sql;
 
+        Map<String, SqlDataField> fields = persister.getFieldMap();
         /**
          * Set default values
          */
-        for(QueryCondition cond : conditions.values()) {
-            if (!cond.isTypeCondition())
-                continue;
-
-            for (QueryParameter para : cond.parameters()) {
-                /**
-                 * Set default if no value set yet
-                 */
-                if (null == para.value()) {
-                    SqlDataField sqlField= fields.get(DbNameHelper.getFieldName(para.fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME));
-                    para.setValue(sqlField.getField().getType().getName());
-                }
-            }
+        for(IQueryCondition cond : conditions.values()) {
+            cond.setDefaultValues(fields);
         }
     }
 
