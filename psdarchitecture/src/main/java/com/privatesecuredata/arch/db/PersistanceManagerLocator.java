@@ -1,10 +1,14 @@
 package com.privatesecuredata.arch.db;
 
-import java.util.HashMap;
 import android.content.Context;
 
 import com.privatesecuredata.arch.db.annotations.DbExtends;
+import com.privatesecuredata.arch.db.query.QueryBuilder;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
+
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
 
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
@@ -46,6 +50,23 @@ public class PersistanceManagerLocator {
                     if (null == parentPersister)
                         throw new DBException(String.format("Could not find persister for parent of extends-relationship of type \"%s\"!", anno.extendedType().getName()));
                     persister.extendsPersister(parentPersister);
+                }
+            }
+
+            /**
+             * Register the query-Builders
+             */
+            for(Class<?> queryBuilderType : dbDesc.getQueryBuilderTypes()) {
+                try {
+                    Constructor constructor = queryBuilderType.getConstructor();
+                    QueryBuilder queryBuilder = (QueryBuilder)constructor.newInstance();
+
+                    pm.registerQuery(queryBuilder);
+
+                } catch (Exception e) {
+                    throw new ArgumentException(
+                            String.format("unable to create or register Querybuilder of type \"%s\"",
+                                    queryBuilderType.getName()));
                 }
             }
 		}
