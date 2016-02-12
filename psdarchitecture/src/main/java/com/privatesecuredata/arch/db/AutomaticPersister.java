@@ -9,6 +9,7 @@ import com.privatesecuredata.arch.db.annotations.DbForeignKeyField;
 import com.privatesecuredata.arch.db.annotations.DbMultipleForeignKeyFields;
 import com.privatesecuredata.arch.db.annotations.DbThisToMany;
 import com.privatesecuredata.arch.db.annotations.DbThisToOne;
+import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.lang.reflect.Constructor;

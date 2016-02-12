@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 
+import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.lang.reflect.Field;

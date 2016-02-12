@@ -8,6 +8,8 @@ import android.util.Pair;
 
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
 import com.privatesecuredata.arch.db.annotations.Persister;
+import com.privatesecuredata.arch.db.query.Query;
+import com.privatesecuredata.arch.db.query.QueryBuilder;
 import com.privatesecuredata.arch.db.vmGlue.DBViewModelCommitListener;
 import com.privatesecuredata.arch.db.vmGlue.DbListViewModelFactory;
 import com.privatesecuredata.arch.exceptions.ArgumentException;

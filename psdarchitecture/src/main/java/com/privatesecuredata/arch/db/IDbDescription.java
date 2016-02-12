@@ -1,5 +1,7 @@
 package com.privatesecuredata.arch.db;
 
+import com.privatesecuredata.arch.db.query.QueryBuilder;
+
 /**
  * 
  * @author Kenan Esau
@@ -55,7 +57,7 @@ public interface IDbDescription {
 
     /**
      * @return Returns an array of classes which can be used to issue queries
-     * @see com.privatesecuredata.arch.db.QueryBuilder
+     * @see QueryBuilder
      */
     Class<?>[] getQueryBuilderTypes();
 }
