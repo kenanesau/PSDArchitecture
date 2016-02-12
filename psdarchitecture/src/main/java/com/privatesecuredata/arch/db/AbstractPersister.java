@@ -195,18 +195,20 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
         if (null != terms) {
             tables = new Hashtable<String, OrderByTerm>();
             for (OrderByTerm term : terms) {
-                if (fieldCount > 0)
-                    sql.append(", ");
 
-                sql.append(term.getSqlFieldName());
-
-                fieldCount++;
                 String table = term.getSqlTableName();
                 /**
                  * If there is no tablename set, assume the field is in the current table
                  * -> no tablename needed an no INNER JOIN needed...
                  */
                 if (null != table) {
+                    if (fieldCount > 0)
+                        sql.append(", ");
+
+                    sql.append(term.getSqlFieldName());
+
+                    fieldCount++;
+
                     if (!tables.containsKey(term.getSqlTableName()))
                         tables.put(term.getSqlTableName(), term);
                 }
@@ -253,8 +255,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     }
 
     @Override
-    public Cursor getFilteredCursor(String fieldName, CharSequence constraint)
-    {
+    public Cursor getFilteredCursor(String fieldName, CharSequence constraint) {
         StringBuilder sb = new StringBuilder(getSelectAllStatement());
 
         return getDb().rawQuery(appendFilterString(sb, fieldName, constraint).toString(), null);
