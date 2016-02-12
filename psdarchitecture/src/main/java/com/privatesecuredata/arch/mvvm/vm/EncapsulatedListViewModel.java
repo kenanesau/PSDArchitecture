@@ -55,13 +55,14 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		
 		List<M> getList();
         Filter getFilter();
-        String getFilteredColumn();
-        void setFilteredColumn(String filteredColumn);
+        String getFilteredParamId();
+        void setFilterParamId(String filteredColumn);
 
         void registerForDataChange(IDataChangedListener provider);
 
         void setQuery(String queryId);
         void where(String id, Object value);
+        void where(String id, Class value);
         void runQuery();
     }
 	
@@ -135,6 +136,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
     public void setQuery(String queryId) { listCB.setQuery(queryId); }
     public void where(String id, Object val) { listCB.where(id, val);}
+    public void where(String id, Class val) { listCB.where(id, val);}
     public void runQuery() { listCB.runQuery(); }
 
     @Override
@@ -403,9 +405,9 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         return listCB.getFilter();
     }
 
-    public void setFilteredColumn(String filteredColumn)
+    public void setFilterParamId(String filterParamId)
     {
-        listCB.setFilteredColumn(filteredColumn);
+        listCB.setFilterParamId(filterParamId);
     }
 
     @Override
@@ -429,7 +431,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
     public String getFilteredColumn()
     {
-        return listCB.getFilteredColumn();
+        return listCB.getFilteredParamId();
     }
 
 }

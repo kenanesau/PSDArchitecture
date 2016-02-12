@@ -28,6 +28,6 @@ public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChan
     VM getViewModel(int pos);
     ComplexViewModel<?> getParentViewModel();
     void setSortOrder(OrderBy... sortOrderTerms);
-    void setFilteredColumn(String filteredColumn);
+    void setFilterParamId(String filterParamId);
     Filter getFilter();
 }

@@ -88,7 +88,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
         adapters.add(adapter);
         View view = mainView.findViewById(viewId);
         if (null == view)
-            throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
+            throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
         adapter.init(view, vm);
         if (this.ctx.isResumedActivity()) {
@@ -158,7 +158,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
         adapters.add(adapter);
         View view = mainView.findViewById(viewId);
         if (null == view)
-            throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
+            throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
         adapter.init(view, vm);
         adapter.updateView(vm);
@@ -177,7 +177,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
         adapters.add(adapter);
         View view = mainView.findViewById(viewId);
         if (null == view)
-            throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
+            throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
         adapter.init(view, vm);
         adapter.updateView(vm);
@@ -194,7 +194,7 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
 
         View view = mainView.findViewById(viewId);
         if (null == view)
-            throw new ArgumentException(String.format("Can not find View with Id %d", viewId));
+            throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
         adapters.add(adapter);
         adapter.init(view, vm);

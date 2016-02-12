@@ -3,6 +3,7 @@ package com.privatesecuredata.arch.db;
 import android.database.Cursor;
 import android.widget.Filter;
 
+import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel.IModelListCallback;
@@ -34,7 +35,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	private Class<M> childClazz;
 	private List<ICursorChangedListener> csrListeners = new ArrayList<ICursorChangedListener>();
     private CursorToListAdapterFilter filter;
-    private String filteredColumn;
+    private String filteredParamId;
     private OrderByTerm[] sortOrderTerms;
 
     public CursorToListAdapter(PersistanceManager _pm, ICursorChangedListener listener) {
@@ -90,10 +91,9 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         this.parentClazz = parentClazz;
         this.parent = (IPersistable) parent;
         this.childClazz = childClazz;
+        persister = pm.getPersister(childClazz);
 
         updateCursor();
-
-		persister = pm.getPersister(childClazz);
 	}
 
     @Override
@@ -189,11 +189,18 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
         Cursor csr;
-        if (this.sortOrderTerms != null)
-            csr = persister.getFilteredCursor(getFilteredColumn(), constraint, sortOrderTerms);
-        else
-            csr = persister.getFilteredCursor(getFilteredColumn(), constraint);
 
+        if (null == query) {
+            if (this.sortOrderTerms != null)
+                csr = persister.getFilteredCursor(getFilteredParamId(), constraint, sortOrderTerms);
+            else
+                csr = persister.getFilteredCursor(getFilteredParamId(), constraint);
+        }
+        else
+        {
+            query.setParameter(getFilteredParamId(), constraint);
+            csr = query.run();
+        }
         return csr;
     }
 
@@ -218,13 +225,13 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         }
     }
 
-    public String getFilteredColumn() {
-        return filteredColumn;
+    public String getFilteredParamId() {
+        return filteredParamId;
     }
 
-    public void setFilteredColumn(String filteredColumn)
+    public void setFilterParamId(String filteredColumn)
     {
-        this.filteredColumn = filteredColumn;
+        this.filteredParamId = filteredColumn;
     }
 
     @Override
@@ -234,9 +241,9 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
     public void setQuery(String queryId) {
-        query = persister.getQuery(queryId);
+        query = pm.getQuery(queryId);
         if (null == query)
-            throw new ArgumentException(String.format("No Query with Id \"%s\" found!", queryId));
+            throw new ArgumentException(String.format("No Query with id \"%s\" found!", queryId));
     }
 
     @Override

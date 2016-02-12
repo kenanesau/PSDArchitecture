@@ -2,9 +2,14 @@ package com.privatesecuredata.arch.mvvm.vm;
 
 import android.widget.Filter;
 
+import com.privatesecuredata.arch.db.DbId;
+import com.privatesecuredata.arch.db.IPersistable;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.exceptions.MVVMException;
+import com.privatesecuredata.arch.mvvm.MVVM;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,12 +17,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
-import com.privatesecuredata.arch.db.DbId;
-import com.privatesecuredata.arch.db.IPersistable;
-import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.exceptions.MVVMException;
-import com.privatesecuredata.arch.mvvm.MVVM;
 
 /**
  * A Viewmodel which is capable of encapsulating Lists of models.
@@ -387,8 +386,8 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
     }
 
     @Override
-    public void setFilteredColumn(String filteredColumn) {
-        // FIXME: Implement setFilteredColumn()
+    public void setFilterParamId(String filterParamId) {
+        // FIXME: Implement setFilterParamId()
     }
 
     @Override

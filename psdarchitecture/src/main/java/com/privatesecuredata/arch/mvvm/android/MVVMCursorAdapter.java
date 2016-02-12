@@ -31,7 +31,7 @@ public class MVVMCursorAdapter<M extends IPersistable> extends BaseAdapter
     PersistanceManager pm;
 	
 	/**
-	 * Id of the Row-layout
+	 * id of the Row-layout
 	 */
 	private int rowViewId = -1;
 	

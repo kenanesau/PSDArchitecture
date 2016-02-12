@@ -31,7 +31,7 @@ public class ViewModelListAdapter<COMPLEXVM extends ComplexViewModel> extends Ba
     private MVVMComplexVmAdapterTemplate adapterTemplate;
 
     /**
-     * Id of the Row-layout
+     * id of the Row-layout
      */
     private int rowViewId = -1;
 

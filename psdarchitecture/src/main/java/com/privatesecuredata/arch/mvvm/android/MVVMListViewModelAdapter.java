@@ -49,18 +49,18 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
     private OrderBy[] sortOrder;
 
 	/**
-	 * Id of the Row-layout
+	 * id of the Row-layout
 	 */
 	private int rowViewId = -1;
 
 	/**
-	 * Id of the Checkbox in the Row-Layout which is used for selection
+	 * id of the Checkbox in the Row-Layout which is used for selection
 	 */
 	private int selectionViewId = -1;
 
 	private Hashtable<Integer, TransientViewToVmBinder<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToVmBinder<?>>();
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
-    private String filteredColumn = null;
+    private String filteredParamId = null;
 
     public MVVMListViewModelAdapter(Class<COMPLEXVM> vmClass, Context ctx)
 	{
@@ -87,8 +87,8 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
             if (null != sortOrder)
                 this.data.setSortOrder(sortOrder);
         }
-        if (null != filteredColumn)
-            this.data.setFilteredColumn(filteredColumn);
+        if (null != filteredParamId)
+            this.data.setFilterParamId(filteredParamId);
 		this.notifyDataSetChanged();
 	}
 
@@ -236,7 +236,7 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
     }
 	
 	/**
-	 * Set the view-Id of the view (e.g. Checkbox) which is used for selection 
+	 * Set the view-id of the view (e.g. Checkbox) which is used for selection
 	 *  
 	 * @param id ID of the view
 	 */
@@ -273,12 +273,12 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
         return null == data ? null : data.getFilter();
     }
 
-    public void setFilteredColumn(String filteredColumn)
+    public void setFilterParamId(String filterParamId)
     {
         if (null == data)
-            this.filteredColumn = filteredColumn;
+            this.filteredParamId = filterParamId;
         else
-            data.setFilteredColumn(filteredColumn);
+            data.setFilterParamId(filterParamId);
     }
 
     public void setSortOrder(OrderBy... sortOrderTerms) {
