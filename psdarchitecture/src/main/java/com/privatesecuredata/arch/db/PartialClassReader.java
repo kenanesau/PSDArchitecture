@@ -39,9 +39,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
                 SqlDataField idField = new SqlDataField(field);
                 addSqlField(idField);
 
-                String fldName = String.format("fld_tpy_%s", field.getName());
-                SqlDataField fldTypeName = new SqlDataField(fldName, SqlDataField.SqlFieldType.OBJECT_NAME);
-                fldTypeName.setField(idField.getField());
+                SqlDataField fldTypeName = new SqlDataField(field, field.getType());
                 addSqlField(fldTypeName);
             }
 
