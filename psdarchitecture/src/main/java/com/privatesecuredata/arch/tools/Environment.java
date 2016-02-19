@@ -9,7 +9,6 @@ public class Environment {
     public static boolean isEmulator()
     {
         return (Build.PRODUCT.startsWith("sdk") &&
-                (Build.HARDWARE.equals("goldfish")) &&
                 (Build.MODEL.contains("Android SDK")));
     }
 }
