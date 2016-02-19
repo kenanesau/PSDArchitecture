@@ -2,7 +2,7 @@
 
     <string name="app_name">PSDArchitecture</string>
     <string name="psdarch_dialog_titlebar_title">Title</string>
-    <string name="psdarch_dialog_titlebar_txt_ok">Speicher</string>
+    <string name="psdarch_dialog_titlebar_txt_ok">OK</string>
     <string name="psdarch_fragment_action_move_number_of_items">zu Verschiebende Items</string>
     <string name="psdarch_action_move">Verschieben</string>
     <string name="psdarch_titlebar_title_sku_list">Laden</string>
