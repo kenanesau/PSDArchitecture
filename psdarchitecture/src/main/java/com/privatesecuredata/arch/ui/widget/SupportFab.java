@@ -43,7 +43,7 @@ public class SupportFab extends FrameLayout
         setBackgroundResource(android.R.color.transparent);
 
         LayoutInflater.from(context).inflate(R.layout.psdarch_support_fab, this, true);
-        _defaultImageView = (FloatingActionButton)findViewById(R.id.psdarch_fab_icon);
+        _defaultImageView = (FloatingActionButton)findViewById(R.id.psdarch_support_fab_icon);
 
         _color = ContextCompat.getColor(context, R.color.accent_light);
 
