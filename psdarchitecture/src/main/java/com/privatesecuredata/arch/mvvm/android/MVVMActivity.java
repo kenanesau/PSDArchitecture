@@ -50,7 +50,7 @@ public class MVVMActivity extends AppCompatActivity
 		PersistanceManager pm = DataHive.getInstance().get(uuid);
 		
 		if (null == pm)
-			throw new ArgumentException(String.format("Did not find any PersistanceManager wit UUID=%s", uuid));
+			throw new ArgumentException(String.format("Did not find any PersistanceManager with UUID=%s", uuid));
 		
 		if ( (null != pmUUID) && (!uuid.equals(pmUUID)) ) {
 			DataHive.getInstance().remove(pmUUID); 
