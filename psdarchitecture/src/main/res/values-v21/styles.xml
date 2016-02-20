@@ -18,6 +18,7 @@
         <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
         <item name="android:toolbarStyle">@style/ActionBar</item>
         <item name="android:titleTextAppearance">@style/ActionBar.TitleText</item>
+        <item name="windowActionModeOverlay">true</item>
 
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
