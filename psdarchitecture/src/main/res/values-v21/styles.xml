@@ -17,6 +17,7 @@
         <item name="android:actionModeBackground">@color/primary</item>
         <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
         <item name="android:toolbarStyle">@style/ActionBar</item>
+        <item name="android:textColorSecondary">#fff</item>
         <item name="android:titleTextAppearance">@style/ActionBar.TitleText</item>
         <item name="windowActionModeOverlay">true</item>
 
