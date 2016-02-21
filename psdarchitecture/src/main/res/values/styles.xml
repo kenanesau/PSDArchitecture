@@ -23,8 +23,12 @@
         <item name="android:textSize">26sp</item>
     </style>
 
+    <style name="AppBaseTheme.OverFlow" parent="@android:style/Widget.Holo.Light.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_overflow</item>
+    </style>
+
     <!-- The part just containing the menus -->
-    <style name="ActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar"> <!--ThemeOverlay.AppCompat.Dark.ActionBar"> <android:Widget.ActionBar"-->
+    <style name="ActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
         <!--item name="displayOptions">showHome</item-->
         <!--item name="android:logo">@drawable/psd_icon</item-->
         <item name="background">@drawable/actionbar_background</item>
@@ -36,7 +40,9 @@
         <item name="actionModeBackground">@drawable/actionbar_background</item>
         <item name="android:actionModeBackground">@drawable/actionbar_background</item>
         <item name="actionModeCloseDrawable">?android:attr/actionModeCloseDrawable</item>
-
+        <item name="android:actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
+        <item name="actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
+        <item name="height">@dimen/toolbar_height</item>
     </style>
 
     <style name="ActionBar.TitleText" >
@@ -50,10 +56,12 @@
     </style>
 
     <style name="AppBaseTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
         <item name="actionBarStyle">@style/ActionBar</item>
+        <item name="actionModeStyle">@style/ActionBar</item>
+        <item name="android:actionModeStyle">@style/ActionBar</item>
         <item name="actionModeBackground">@drawable/actionbar_background</item>
         <item name="actionModeSplitBackground">@drawable/actionbar_background</item>
-        <item name="actionModeStyle">@style/ActionBar</item>
         <item name="icon">@drawable/psd_icon</item>
         <item name="android:colorActivatedHighlight">@color/accent</item>
         <item name="colorControlHighlight">@color/accent</item>
@@ -61,7 +69,6 @@
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
-        <item name="android:actionModeStyle">@style/ActionBar</item>
         <item name="windowActionModeOverlay">true</item>
 
         <item name="windowActionBar">false</item>

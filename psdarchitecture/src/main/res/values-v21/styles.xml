@@ -6,7 +6,13 @@
         <item name="android:elevation">@dimen/raster1</item>
     </style>
 
+    <style name="AppBaseTheme.OverFlow" parent="@android:style/Widget.Material.ActionButton.Overflow">
+        <item name="android:tint">#fff</item>
+    </style>
+
     <style name="AppBaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
+        <!--@style/AppBaseTheme.OverFlow</item>--> <!--@android:style/Widget.Material.Light.ActionButton.Overflow</item-->
         <!-- Main theme colors -->
         <!--   your app's branding color (for the app bar) -->
         <item name="android:colorPrimary">@color/primary</item>
@@ -16,8 +22,6 @@
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:actionModeBackground">@color/primary</item>
         <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
-        <item name="android:toolbarStyle">@style/ActionBar</item>
-        <item name="android:textColorSecondary">#fff</item>
         <item name="android:titleTextAppearance">@style/ActionBar.TitleText</item>
         <item name="windowActionModeOverlay">true</item>
 
