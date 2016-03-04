@@ -245,12 +245,14 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	}
 
 	public boolean remove(M object) {
+        load();
 		boolean ret = deletedItems.add((M) object);
         notifyViewModelDirty();
 		return ret;
 	}
 
     public M remove(int location) {
+        load();
         M item = get(location);
         if (remove(item)) {
             notifyViewModelDirty();
@@ -262,15 +264,24 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         }
     }
 
+    public void clear() {
+        load();
+        for (int i=0; i<listCB.size(); i++)
+        {
+            deletedItems.add(listCB.get(i));
+        }
+        newItems.clear();
+        notifyViewModelDirty();
+    }
+
 	public boolean removeAll(Collection<?> arg0) {
+        load();
 		Iterator<?> it = arg0.iterator();
 		boolean ret = false;
 		
 		while(it.hasNext())
 		{
 			M obj = (M)it.next();
-			if (!ret)
-				ret = true;
 			remove(obj);
 		}
 		
