@@ -8,7 +8,6 @@ import com.privatesecuredata.arch.db.ICursorChangedListener;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
 import com.privatesecuredata.arch.db.PersistanceManager;
-import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
@@ -16,8 +15,6 @@ import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.FastListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModelFactory;
-import com.privatesecuredata.arch.mvvm.vm.ListViewModel;
-import com.privatesecuredata.arch.mvvm.vm.ListViewModelFactory;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
@@ -82,15 +79,16 @@ public class DbListViewModelFactory implements IListViewModelFactory {
                 cb.addCursorChangedListener(new ICursorChangedListener() {
                     @Override
                     public void notifyCursorChanged(Cursor csr) throws IllegalAccessException {
-                        Collection lstItems = CollectionProxyFactory.getCollectionProxy(DbListViewModelFactory.this.pm, (Class)parentModelType, model, csr.getCount(), csr);
-                        Collection oldItems = (Collection)modelField.get(model);
-                        if ( (null != oldItems) && (oldItems.size() != lstItems.size()) )
-                        {
-                            DbListViewModelFactory.this.pm.updateCollectionProxySize(model.getDbId(), modelField, lstItems);
-                        }
+                        if (null != csr) {
+                            Collection lstItems = CollectionProxyFactory.getCollectionProxy(DbListViewModelFactory.this.pm, (Class) parentModelType, model, csr.getCount(), csr);
+                            Collection oldItems = (Collection) modelField.get(model);
+                            if ((null != oldItems) && (oldItems.size() != lstItems.size())) {
+                                DbListViewModelFactory.this.pm.updateCollectionProxySize(model.getDbId(), modelField, lstItems);
+                            }
 
-                        modelField.setAccessible(true);
-                        modelField.set(model, lstItems);
+                            modelField.setAccessible(true);
+                            modelField.set(model, lstItems);
+                        }
                     }
                 });
             }
