@@ -3,7 +3,7 @@
     <string name="app_name">PSDArchitecture</string>
     <string name="psdarch_dialog_titlebar_title">Title</string>
     <string name="psdarch_dialog_titlebar_txt_ok">Save</string>
-    <string name="psdarch_fragment_action_move_number_of_items">items to move</string>
+    <string name="psdarch_fragment_action_move_number_of_items">items</string>
     <string name="psdarch_action_move">Move</string>
     <string name="psdarch_titlebar_title_sku_list">Shop</string>
     <string name="psdarch_content_buy_item">You can buy this item!</string>
@@ -11,4 +11,5 @@
     <string name="psdarch_already_bought_title">Already bought!</string>
     <string name="psdarch_already_bought_message">You already bought that item!</string>
     <string name="psdarch_ok">OK</string>
+    <string name="psdarch_moving">moving…</string>
 </resources>
