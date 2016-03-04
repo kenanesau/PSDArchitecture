@@ -500,6 +500,9 @@ public class PersistanceManager {
             __saveNoTransaction(persister, persistable);
             db.setTransactionSuccessful();
         }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
         finally
         {
             db.endTransaction();
