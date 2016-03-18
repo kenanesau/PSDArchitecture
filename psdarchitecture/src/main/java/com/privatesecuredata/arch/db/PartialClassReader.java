@@ -28,7 +28,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         {
             DbField dbAnno = field.getAnnotation(DbField.class);
             if (null != dbAnno)
-                addSqlField(field, dbAnno);
+                getDesc().addSqlField(field, dbAnno);
 
             DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
             if (null != thisToOneAnno) {
@@ -37,10 +37,10 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
                 // At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
                 // object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
                 SqlDataField idField = new SqlDataField(field);
-                addSqlField(idField);
+                getDesc().addSqlField(idField);
 
                 SqlDataField fldTypeName = new SqlDataField(field, field.getType());
-                addSqlField(fldTypeName);
+                getDesc().addSqlField(fldTypeName);
             }
 
             DbThisToMany oneToManyAnno = field.getAnnotation(DbThisToMany.class);
@@ -52,7 +52,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
                  * Add table-field for the collection-proxy-size
                  */
                 SqlDataField collectionProxySizeFld = new SqlDataField(field, referencedType);
-                addSqlField(collectionProxySizeFld);
+                getDesc().addSqlField(collectionProxySizeFld);
             }
         }
 
@@ -61,7 +61,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
             ICursorLoader loader = new IdCursorLoader(getPM(),
                     _fullPersister.getPersistentType(),
                     objRel.getReferencingType(),
-                    getTableFieldsInternal());
+                    getDesc().getTableFields());
 
             /**
              * Loader gets registered for the persistentType of the partial view-class
@@ -78,7 +78,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         StringBuilder sql = new StringBuilder("SELECT _id");
 
         int fieldCount = 0;
-        for(SqlDataField fld : getTableFieldsInternal() )
+        for(SqlDataField fld : getDesc().getTableFields() )
         {
             sql.append(", ")
               .append(fld.getSqlName());
@@ -96,7 +96,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         StringBuilder sql = new StringBuilder("SELECT _id");
 
         int fieldCount = 0;
-        for(SqlDataField fld : getTableFieldsInternal() )
+        for(SqlDataField fld : getDesc().getTableFields() )
         {
             sql.append(", ")
                     .append(fld.getSqlName());
