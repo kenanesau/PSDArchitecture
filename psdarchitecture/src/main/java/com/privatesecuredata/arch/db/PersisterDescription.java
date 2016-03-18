@@ -30,14 +30,14 @@ public class PersisterDescription<T> {
     /**
      * List of Fields to be filled in an persistable and the corresponding types
      */
-    private List<ObjectRelation> _lstThisToOneRelations;
-    private List<ObjectRelation> _lstOneToManyRelations;
+    private Map<String, ObjectRelation> _thisToOneRelations;
+    private Map<String, ObjectRelation> _oneToManyRelations;
     private Class<T> _persistentType;
 
     public PersisterDescription(Class<T> type) {
         _persistentType = type;
-        _lstThisToOneRelations = new ArrayList<ObjectRelation>();
-        _lstOneToManyRelations = new ArrayList<ObjectRelation>();
+        _thisToOneRelations = new Hashtable<>();
+        _oneToManyRelations = new Hashtable<>();
         _foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
     }
 
@@ -79,22 +79,36 @@ public class PersisterDescription<T> {
         addSqlField(sqlField);
     }
 
-    public void addOneToOneRelation(ObjectRelation rel)
-    {
-        _lstThisToOneRelations.add(rel);
+    public SqlDataField getTableField(String sqlName) {
+        return _tableFields.get(sqlName);
     }
 
-    public List<ObjectRelation> getOneToOneRelations() {
-        return _lstThisToOneRelations;
+    public void addOneToOneRelation(ObjectRelation rel)
+    {
+        _thisToOneRelations.put(rel.getField().getName(), rel);
+    }
+
+    public ObjectRelation getOneToOneRelation(String fieldName)
+    {
+        return _thisToOneRelations.get(fieldName);
+    }
+
+    public Collection<ObjectRelation> getOneToOneRelations() {
+        return _thisToOneRelations.values();
     }
 
     public void addOneToManyRelation(ObjectRelation rel)
     {
-        _lstOneToManyRelations.add(rel);
+        _oneToManyRelations.put(rel.getField().getName(), rel);
     }
 
-    public List<ObjectRelation> getOneToManyRelations() {
-        return _lstOneToManyRelations;
+    public Collection<ObjectRelation> getOneToManyRelations() {
+        return _oneToManyRelations.values();
+    }
+
+    public ObjectRelation getOneToManyRelation(String fieldName)
+    {
+        return _oneToManyRelations.get(fieldName);
     }
 
     public Map<String, SqlDataField> getFieldMap() {
@@ -144,11 +158,12 @@ public class PersisterDescription<T> {
 
         _foreignKeyFields.putAll(other._foreignKeyFields);
 
-        for (ObjectRelation rel : other._lstThisToOneRelations)
-            _lstThisToOneRelations.add(rel);
+        for (ObjectRelation rel : other._thisToOneRelations.values())
+            _thisToOneRelations.put(rel.getField().getName(), rel);
 
-        for (ObjectRelation rel : other._lstOneToManyRelations)
-            _lstOneToManyRelations.add(rel);
+        for (ObjectRelation rel : other._oneToManyRelations.values())
+            _oneToManyRelations.put(rel.getField().getName(), rel);
     }
 
+    public Class<T> getType() { return _persistentType;}
 }

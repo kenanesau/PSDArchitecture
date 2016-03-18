@@ -135,11 +135,11 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     /**
      * List of list-Fields to be filled in an persistable and the corresponding types
      */
-    public List<ObjectRelation> getOneToManyRelations() {
+    public Collection<ObjectRelation> getOneToManyRelations() {
         return _persisterDesc.getOneToManyRelations();
     }
 
-    public List<ObjectRelation> getOneToOneRelations() {
+    public Collection<ObjectRelation> getOneToOneRelations() {
         return _persisterDesc.getOneToOneRelations();
     }
 
@@ -230,7 +230,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 .append("=OLD._id; END").toString();
     }
 
-    protected List<String> createTriggerStatementLst(String prefix, List<ObjectRelation> relations) {
+    protected List<String> createTriggerStatementLst(String prefix, Collection<ObjectRelation> relations) {
         List<String> sqlStatements = new ArrayList<>();
         for (ObjectRelation rel : relations) {
             if (rel.deleteChildren()) {
