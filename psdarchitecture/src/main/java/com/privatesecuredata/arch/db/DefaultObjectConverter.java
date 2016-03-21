@@ -7,13 +7,12 @@ import com.privatesecuredata.arch.exceptions.DBException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * Class for converting objects of "old" type to "new" ones
  */
-public class DefaultObjectConverter<T extends IPersistable> {
+public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectConverter<T> {
 
     public interface IFieldConverter<T extends IPersistable> {
         void convertField (SqlDataField newSqlField, T newObject,
@@ -21,16 +20,13 @@ public class DefaultObjectConverter<T extends IPersistable> {
     }
 
     public interface IObjectRelationConverter<U extends IPersistable> {
-        IPersistable convertObjectRelation (ObjectRelation newRelation, IPersistable newObject,
-                                    PersisterDescription oldDesc, Object oldObject);
+        IPersistable convertObjectRelation (ObjectRelation newRelation,
+                                            PersisterDescription oldDesc,
+                                            Object oldObject);
     }
 
     private PersisterDescription _oldDesc;
     private PersisterDescription _newDesc;
-    private Map<String, IFieldConverter> _fieldConverterMap = new LinkedHashMap<>();
-    private Map<String, IObjectRelationConverter> _oneToOneConverterMap = new LinkedHashMap<>();
-    private Map<String, IObjectRelationConverter> _oneToManyConverterMap = new LinkedHashMap<>();
-
     private ConversionManager _convMan;
 
     public DefaultObjectConverter(ConversionManager convMan, PersisterDescription newDescription, PersisterDescription oldDescription)
@@ -40,19 +36,25 @@ public class DefaultObjectConverter<T extends IPersistable> {
         _convMan = convMan;
     }
 
-    public void registerFieldConverter(String key, IFieldConverter<T> converter)
-    {
-        _fieldConverterMap.put(key, converter);
-    }
+    public void registerObjectConverter(BaseObjectConverter other) {
 
-    public void registerOneToOneConverter(String key, IObjectRelationConverter<T> converter)
-    {
-        _oneToOneConverterMap.put(key, converter);
-    }
+        Set<String> keys = other._fieldConverterMap.keySet();
+        for (String key : keys)
+        {
+            _fieldConverterMap.put(key, (IFieldConverter)other._fieldConverterMap.get(key));
+        }
 
-    public void registerOneToManyConverter(String key, IObjectRelationConverter<T> converter)
-    {
-        _oneToManyConverterMap.put(key, converter);
+        keys = other._oneToOneConverterMap.keySet();
+        for (String key : keys)
+        {
+            _oneToOneConverterMap.put(key, (IObjectRelationConverter) other._oneToOneConverterMap.get(key));
+        }
+
+        keys = other._oneToManyConverterMap.keySet();
+        for (String key : keys)
+        {
+            _oneToManyConverterMap.put(key, (IObjectRelationConverter) other._oneToManyConverterMap.get(key));
+        }
     }
 
     public void convertField(SqlDataField newSqlField, IPersistable newObject, Object oldObject) throws IllegalAccessException {
@@ -69,52 +71,57 @@ public class DefaultObjectConverter<T extends IPersistable> {
     public void convertOneToOneRelation(ObjectRelation newRelation, IPersistable newObject, Object oldObject)
             throws IllegalAccessException {
 
-        ObjectRelation oldRel = _oldDesc.getOneToOneRelation(newRelation.getField().getName());
-        if (null != oldRel) {
-            IPersistable oldData = (IPersistable)oldRel.getField().get(oldObject);
-            IObjectRelationConverter<T> converter = _oneToOneConverterMap.get(newRelation.getField().getName());
-
-            Object newData;
-            if (null == converter) {
+        IObjectRelationConverter<T> converter = _oneToOneConverterMap.get(newRelation.getField().getName());
+        IPersistable newData = null;
+        if (null != converter)
+        {
+            newData = converter.convertObjectRelation(newRelation, _oldDesc, oldObject);
+        }
+        else {
+            ObjectRelation oldRel = _oldDesc.getOneToOneRelation(newRelation.getField().getName());
+            if (null != oldRel) {
+                IPersistable oldData = (IPersistable) oldRel.getField().get(oldObject);
                 newData = _convMan.__convertNoSave(newRelation.getField().getType(), oldData);
             }
             else {
-                newData = converter.convertObjectRelation(newRelation, newObject, _oldDesc, oldObject);
+                new DBException(String.format("Unable to convert object of type '%s', no converter found for field '%s'",
+                        newRelation.getReferencingType().getName(),
+                        newRelation.getField().getName()));
             }
-            newRelation.getField().set(newObject, newData);
-            newObject.getDbId().setDirty();
-            _convMan.save(newObject);
 
         }
+
+        if (null != newData)
+            _convMan.save(newData);
+        newRelation.getField().set(newObject, newData);
     }
 
     public void convertOneToManyRelation(ObjectRelation newRelation, IPersistable newObject, IPersistable oldObject)
             throws IllegalAccessException {
         ObjectRelation oldRel = _oldDesc.getOneToManyRelation(newRelation.getField().getName());
-        if (null != oldRel) {
-            IPersistable oldData;
-            IObjectRelationConverter<T> converter = _oneToManyConverterMap.get(newRelation.getField().getName());
+        IPersistable oldData;
+        IObjectRelationConverter<T> converter = _oneToManyConverterMap.get(newRelation.getField().getName());
 
-            Class typeOfData = oldRel.getReferencedListType();
-            Cursor csr = _convMan.getCursor((oldObject).getDbId(), oldRel.getReferencingType(), typeOfData);
-            IPersistable newData;
-            for (int i=0; i<csr.getCount(); i++)
-            {
-                oldData = _convMan.load(typeOfData, csr, i);
-                if (null == converter) {
-                    newData = _convMan.__convertNoSave(newRelation.getReferencedListType(), oldData);
-                    newData.getDbId().setDirty();
-                }
-                else {
-                    newData = converter.convertObjectRelation(newRelation, newObject, _oldDesc, oldObject);
-                }
-
-                DbId id = newObject.getDbId();
-                //id.setDirty();
-                _convMan.saveAndUpdateForeignKey(newData, id);
+        Class typeOfData = oldRel.getReferencedListType();
+        Cursor csr = _convMan.getCursor((oldObject).getDbId(), oldRel.getReferencingType(), typeOfData);
+        IPersistable newData;
+        for (int i=0; i<csr.getCount(); i++)
+        {
+            oldData = _convMan.load(typeOfData, csr, i);
+            if (null == converter) {
+                newData = _convMan.__convertNoSave(newRelation.getReferencedListType(), oldData);
+                newData.getDbId().setDirty();
+            }
+            else {
+                newData = converter.convertObjectRelation(newRelation, _oldDesc, oldObject);
             }
 
+            DbId id = newObject.getDbId();
+            //id.setDirty();
+            _convMan.saveAndUpdateForeignKey(newData, id);
         }
+
+        _convMan.updateCollectionProxySize(newObject.getDbId(), newRelation.getField(), csr.getCount());
     }
 
     public <T extends IPersistable> T convert(IPersistable oldObject) {
@@ -150,6 +157,9 @@ public class DefaultObjectConverter<T extends IPersistable> {
             {
                 convertOneToOneRelation(newOneToOneRel, newObject, oldObject);
             }
+
+            newObject.getDbId().setDirty();
+            _convMan.save(newObject);
 
             Collection<ObjectRelation> oneToManyRels = _newDesc.getOneToManyRelations();
             for (ObjectRelation newOneToManyRel : oneToManyRels)

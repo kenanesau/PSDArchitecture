@@ -2,11 +2,14 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 
+import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Created by kenan on 3/18/16.
+ * Helper-class to convert the db from an old version to a new one
+ *
+ * It reads from the old version and all write-operations go to the new version.
  */
 public class ConversionManager {
 
@@ -19,9 +22,16 @@ public class ConversionManager {
         _newPm = newPm;
     }
 
-    public void registerConverter(Class<?> type, DefaultObjectConverter conv)
+    public void registerDefaultConverter(Class<?> type, DefaultObjectConverter conv)
     {
         _converterMap.put(type, conv);
+    }
+
+    public void registerObjectConverter(Class<?> type, BaseObjectConverter conv)
+    {
+        DefaultObjectConverter defaultConverter = _converterMap.get(type);
+
+        defaultConverter.registerObjectConverter(conv);
     }
 
     protected IPersistable __convertNoSave(Class<?> newType, IPersistable oldData) {
@@ -30,11 +40,16 @@ public class ConversionManager {
         return converter.convert(oldData);
     }
 
-    public IPersistable convert(Class<?> newType, IPersistable oldData) {
+    public <T extends IPersistable> DbId<T> convert(Class<?> newType, IPersistable oldData) {
         IPersistable obj = __convertNoSave(newType, oldData);
         _newPm.save((IPersistable)obj);
 
-        return obj;
+        return obj.getDbId();
+    }
+
+    public <T extends IPersistable> T convertAndLoad(Class<?> newType, IPersistable oldData) {
+        DbId<T> dbId = convert(newType, oldData);
+        return _newPm.load(dbId);
     }
 
     public Cursor getCursor(DbId<?> foreignKey, Class referencingType, Class referencedType)
@@ -47,10 +62,14 @@ public class ConversionManager {
         _newPm.saveAndUpdateForeignKey(object, foreignKey);
     }
 
-    public IPersistable load(Class type, Cursor csr, int pos)
+    public <T extends IPersistable> T load(Class type, Cursor csr, int pos)
     {
         IPersister persister = _oldPm.getPersister(type);
-        return persister.rowToObject(pos, csr);
+        return (T)persister.rowToObject(pos, csr);
+    }
+
+    public void updateCollectionProxySize(DbId persistableId, Field field, long newCollSize) {
+        _newPm.updateCollectionProxySize(persistableId, field, newCollSize);
     }
 
     public <T extends IPersistable> void save(T newObject) {

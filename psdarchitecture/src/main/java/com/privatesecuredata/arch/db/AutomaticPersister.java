@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteStatement;
+import android.util.Pair;
 
 import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.annotations.DbField;
@@ -19,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,8 +220,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 .append("=OLD._id; END").toString();
     }
 
-    protected List<String> createTriggerStatementLst(String prefix, Collection<ObjectRelation> relations) {
-        List<String> sqlStatements = new ArrayList<>();
+    protected Collection<String> createTriggerStatementLst(String prefix, Collection<ObjectRelation> relations) {
+        Hashtable<Pair<String, Class>, String> sqlStatements = new Hashtable<>();
         for (ObjectRelation rel : relations) {
             if (rel.deleteChildren()) {
                 Class<?> childType = rel.getReferencedListType();
@@ -231,23 +233,28 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     continue;
 
                 if (persister.tableExists()) {
-                    String sqlTrigger = createTriggerStatement(prefix, childType);
-                    sqlStatements.add(sqlTrigger);
+                    Pair key = new Pair<String, Class>(prefix, childType);
+                    if (!sqlStatements.contains(key)) {
+                        String sqlTrigger = createTriggerStatement(prefix, childType);
+                        sqlStatements.put(key, sqlTrigger);
+                    }
                 }
 
                 List<AutomaticPersister> lst = persister.getExtendingPersisters();
                 for (AutomaticPersister autoPersister : lst) {
                     if (autoPersister.tableExists()) {
                         childType = autoPersister.getPersistentType();
-                        String sqlTrigger = createTriggerStatement(prefix, childType);
-
-                        sqlStatements.add(sqlTrigger);
+                        Pair key = new Pair<String, Class>(prefix, childType);
+                        if (!sqlStatements.contains(key)) {
+                            String sqlTrigger = createTriggerStatement(prefix, childType);
+                            sqlStatements.put(key, sqlTrigger);
+                        }
                     }
                 }
             }
         }
 
-        return sqlStatements;
+        return sqlStatements.values();
     }
 
     protected String[] getTriggerStatements() {
