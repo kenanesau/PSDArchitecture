@@ -48,8 +48,8 @@ public class PersistanceManager {
 	private Context ctx;
     private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
     private HashMap<String, QueryBuilder> queries = new HashMap<>();
-	
-	public PersistanceManager(IDbDescription dbDesc) 
+
+    public PersistanceManager(IDbDescription dbDesc)
 	{
 		this.dbDesc = dbDesc;
 	}
@@ -67,6 +67,7 @@ public class PersistanceManager {
 	 */
 	public void initialize(Context ctx, IDbDescription dbDesc) throws DBException
 	{
+        int version = -1;
 		try {
 			if (null == this.db)
 			{
@@ -84,7 +85,7 @@ public class PersistanceManager {
 				}
 	
 				db = SQLiteDatabase.openOrCreateDatabase(dbFile, null);
-	
+                version = getDb().getVersion();
 				if (createDB) {
                     try {
                         onCreate(getDb());
@@ -97,15 +98,13 @@ public class PersistanceManager {
                 }
 				else
 				{
-					int currentVersion = getDb().getVersion();
-	
-					if (currentVersion < dbDesc.getVersion())
-						onUpgrade(getDb(), currentVersion, dbDesc.getVersion());
-					else if (currentVersion > dbDesc.getVersion())
+					if (version < dbDesc.getVersion())
+						onUpgrade(getDb(), version, dbDesc.getVersion());
+					else if (version > dbDesc.getVersion())
 					{
 						throw new DBException(
-								String.format("Current DB version \"V %d\" is new than that of the App \"V %d\"", 
-										currentVersion, dbDesc.getVersion()));
+								String.format("Current DB version \"V %d\" is new than that of the App \"V %d\"",
+                                        version, dbDesc.getVersion()));
 					}
 				}
 	
@@ -169,8 +168,7 @@ public class PersistanceManager {
     private void addPersisterToMap(Class<?> persistentType, IPersister<?> persisterObj)
     {
         persisterMap.put(persistentType, persisterObj);
-        classNameMap.put(persistentType.getName(), persistentType);
-
+        classNameMap.put(persisterObj.getDbTypeName(), persistentType);
     }
 	
 	public void addPersister(Class<?> persisterClass) throws DBException 
@@ -265,6 +263,8 @@ public class PersistanceManager {
 
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		onCreate(db);
+
+        getDb().setVersion(newVersion);
 	}
 	
 	public <T extends IPersistable> void save(Collection<T> coll) throws DBException
@@ -944,5 +944,7 @@ public class PersistanceManager {
     public Query getQuery(String queryId) {
         return this.queries.get(queryId).createQuery(this);
     }
+
+    public int version() { return this.dbDesc.getVersion(); }
 }
  

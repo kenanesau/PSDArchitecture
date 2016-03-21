@@ -30,20 +30,19 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     public static final String DATE_FORMAT = "yyyy-MM-dd";
 
     private Constructor<T> _const;
-    private Class<T> _persistentType;
     private PersisterDescription<T> _persisterDesc;
 
     protected AutomaticPersister() {
     }
 
     public AutomaticPersister(PersistanceManager pm, Class<T> persistentType) throws Exception {
+        setPM(pm);
         setTableName(DbNameHelper.getTableName(persistentType));
         setPersistentType(persistentType);
         Field[] fields = persistentType.getDeclaredFields();
         setConstructor(persistentType.getConstructor((Class<?>[]) null));
-        _persisterDesc = new PersisterDescription(_persistentType);
+        _persisterDesc = new PersisterDescription(getPersistentType());
 
-        setPM(pm);
         DbForeignKeyField anno = persistentType.getAnnotation(DbForeignKeyField.class);
         if (anno != null)
             _persisterDesc.addForeignKeyField(anno);
@@ -111,17 +110,6 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
     protected void setConstructor(Constructor<T> _const) {
         this._const = _const;
-    }
-
-    /**
-     * Type of the Persistable which is persited with this persister
-     */
-    protected Class<T> getPersistentType() {
-        return _persistentType;
-    }
-
-    protected void setPersistentType(Class<T> _persistentType) {
-        this._persistentType = _persistentType;
     }
 
     public List<SqlDataField> getSqlFields() {
@@ -418,7 +406,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     break;
                 }
 
-                bind(sql, idx, referencedObj.getClass().getName());
+                IPersister referencedPersister = getPM().getPersister(referencedObj.getClass());
+                bind(sql, idx, referencedPersister.getDbTypeName());
                 break;
             case COLLECTION_REFERENCE:
                 Collection<?> referencedColl = (Collection<?>) fld.get(persistable);
