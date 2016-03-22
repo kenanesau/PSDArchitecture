@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 import android.util.Pair;
 
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * 
@@ -38,43 +40,47 @@ import java.util.Hashtable;
  *
  */
 public class PersistanceManager {
-	private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
+    private IDbDescription dbDesc;
+    private IDbHistoryDescription dbHistory;
+    private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
     private Hashtable<String, Class<?>> classNameMap = new Hashtable<String, Class<?>>();
-	private Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader>();
-	private SQLiteDatabase db;
-	private IDbDescription dbDesc;
+    private Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader>();
+    private SQLiteDatabase db;
 	private boolean initialized = false;
 	private MVVM mvvm = null;
 	private Context ctx;
     private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
     private HashMap<String, QueryBuilder> queries = new HashMap<>();
 
-    public PersistanceManager(IDbDescription dbDesc)
+    public PersistanceManager(IDbDescription dbDesc, IDbHistoryDescription dbHistory)
 	{
 		this.dbDesc = dbDesc;
+        this.dbHistory = dbHistory;
 	}
+
+    public IDbHistoryDescription getDbHistory() { return dbHistory; }
 	
 	/**
 	 * This method initializes the database. 
 	 * This means:
-	 * - update the database if needed
-	 * - 
-	 * 
-	 * 
+	 * - open the database
+	 * - create the database if it does not exist yet
+	 *
 	 * @param ctx
-	 * @param dbDesc
 	 * @throws DBException
 	 */
-	public void initialize(Context ctx, IDbDescription dbDesc) throws DBException
+	public void initialize(Context ctx) throws DBException
 	{
         int version = -1;
+
 		try {
 			if (null == this.db)
 			{
 				this.ctx = ctx;
 				ContextWrapper ctxWrapper = new ContextWrapper(ctx);
-				File dbFile = ctxWrapper.getDatabasePath(dbDesc.getName());
-				File dbDir = new File(dbFile.getParent());
+                File dbFile = ctxWrapper.getDatabasePath(dbDesc.getName());
+
+                File dbDir = new File(dbFile.getParent());
 				if (!dbDir.exists())
 					dbDir.mkdir();
 	
@@ -96,19 +102,8 @@ public class PersistanceManager {
                         throw ex;
                     }
                 }
-				else
-				{
-					if (version < dbDesc.getVersion())
-						onUpgrade(getDb(), version, dbDesc.getVersion());
-					else if (version > dbDesc.getVersion())
-					{
-						throw new DBException(
-								String.format("Current DB version \"V %d\" is new than that of the App \"V %d\"",
-                                        version, dbDesc.getVersion()));
-					}
-				}
-	
-				if (!this.initialized)
+
+                if (!this.initialized)
 				{
 					for(IPersister<? extends IPersistable> persister : persisterMap.values())
 					{
@@ -261,10 +256,35 @@ public class PersistanceManager {
 		}
 	}
 
-	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		onCreate(db);
+	public void onUpgrade(Context ctx, int oldVersion, int newVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) {
+        if (!isInitialized())
+            initialize(ctx);
 
-        getDb().setVersion(newVersion);
+        IDbHistoryDescription history = getDbHistory();
+        PersistanceManager oldPm = null;
+
+        if (dbNames.containsKey(oldVersion))
+        {
+            for(int instance : dbNames.get(oldVersion).keySet()) {
+                try {
+                    IDbDescription oldDescription = history.getDbDescription(oldVersion, instance);
+                    Map<Integer, IConversionDescription> conversionDescriptions = history.getDbConversions();
+                    IConversionDescription conv = conversionDescriptions.get(newVersion);
+
+                    oldPm = PersistanceManagerLocator.getInstance().getPersistanceManager(ctx, oldDescription, history);
+                    ConversionManager convMan = new ConversionManager(oldPm, this, conv);
+                    conv.convert(convMan);
+                }
+                catch (Exception ex) {
+                    Log.e(getClass().getName(), String.format("Error converting '%s' to new Version '%d' Instance '%d'",
+                            dbDesc.getName(), newVersion, instance));
+                }
+                finally {
+                    if (null != oldPm)
+                       oldPm.close();
+                }
+            }
+        }
 	}
 	
 	public <T extends IPersistable> void save(Collection<T> coll) throws DBException
@@ -844,7 +864,9 @@ public class PersistanceManager {
 	
 	public void close()
 	{
-		this.db.close();
+		this.initialized = false;
+        this.db.close();
+        this.db = null;
 	}
 
 	public <T extends IPersistable> ArrayList<T> loadCursor(Class<T> clazz, Cursor cursor) throws DBException {

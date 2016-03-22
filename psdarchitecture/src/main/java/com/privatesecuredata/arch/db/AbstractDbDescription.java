@@ -1,9 +1,20 @@
 package com.privatesecuredata.arch.db;
 
+import android.util.Log;
+
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
 public abstract class AbstractDbDescription implements IDbDescription {
+    public interface Provider<T> {
+        T create(Integer instance);
+    }
+
+    private Provider<IDbDescription> provider;
+
+    public AbstractDbDescription(Provider<IDbDescription> provider) {
+        this.provider = provider;
+    }
 
 	@Override
 	public Class<?>[] getPersistentTypes() {
@@ -33,6 +44,19 @@ public abstract class AbstractDbDescription implements IDbDescription {
 
     public String getName() {
         return String.format("%s_I%d_V%d.db", getBaseName(), getInstance(), getVersion());
+    }
+
+    @Override
+    public IDbDescription createInstance(int instance)
+    {
+        IDbDescription ret = null;
+        try {
+            ret = provider.create(instance);
+        } catch (Exception e) {
+            Log.e(getClass().getName(), String.format("Error creating instance of IDbDescription %s V%i I%i: %s",
+                    getBaseName(), getVersion(), getInstance(), e));
+        }
+        return ret;
     }
 	
 	@Override

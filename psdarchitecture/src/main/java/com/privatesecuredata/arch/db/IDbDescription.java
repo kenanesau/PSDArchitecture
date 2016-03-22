@@ -60,4 +60,6 @@ public interface IDbDescription {
      * @see QueryBuilder
      */
     Class<?>[] getQueryBuilderTypes();
+
+    IDbDescription createInstance(int instance);
 }

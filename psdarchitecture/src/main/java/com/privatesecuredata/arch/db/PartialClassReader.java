@@ -19,7 +19,7 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
     public PartialClassReader(PersistanceManager pm, Class<T> persistentType, AutomaticPersister<?> fullPersister) throws Exception {
         _fullPersister = fullPersister;
         setPM(pm);
-
+        setDesc(new PersisterDescription<T>(persistentType));
         setPersistentType(persistentType);
         setConstructor(persistentType.getConstructor(new Class<?>[]{}));
         Field[] fields = persistentType.getDeclaredFields();

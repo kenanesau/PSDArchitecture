@@ -2,7 +2,9 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -16,6 +18,42 @@ public class ConversionManager {
     private Map<Class<?>, DefaultObjectConverter> _converterMap = new LinkedHashMap<>();
     private PersistanceManager _oldPm;
     private PersistanceManager _newPm;
+
+    public ConversionManager(PersistanceManager oldPm, PersistanceManager newPm, IConversionDescription convDesc)
+    {
+        this(oldPm, newPm);
+
+        for (Class[] types : convDesc.getEntityMappings()) {
+            Class newType = types[0];
+            Class oldType = types[1];
+            PersisterDescription oldDesc = ((AutomaticPersister) oldPm.getIPersister(oldType)).getDesc();
+            PersisterDescription newDesc = ((AutomaticPersister) newPm.getIPersister(newType)).getDesc();
+
+            DefaultObjectConverter<?> converter = new DefaultObjectConverter<>(this, newDesc, oldDesc);
+            registerDefaultConverter(newType, converter);
+        }
+
+        for (Class[] objConverter : convDesc.getObjectConverters()) {
+            Class newType = objConverter[0];
+            Class objConverterType = objConverter[1];
+            try {
+                Constructor constructor = objConverterType.getConstructor((Class[]) null);
+                try {
+                    BaseObjectConverter converter = (BaseObjectConverter) constructor.newInstance((Class[]) null);
+                    converter.setConversionManager(this);
+                    registerObjectConverter(newType, converter);
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public ConversionManager(PersistanceManager oldPm, PersistanceManager newPm) {
         _oldPm = oldPm;
@@ -75,4 +113,6 @@ public class ConversionManager {
     public <T extends IPersistable> void save(T newObject) {
         _newPm.save(newObject);
     }
+
+    public PersistanceManager getOldPm() { return this._oldPm; }
 }

@@ -97,6 +97,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     }
 
     public PersisterDescription<T> getDesc() { return _persisterDesc; }
+    protected void setDesc(PersisterDescription<T> desc) { _persisterDesc = desc; }
 
     public void extendsPersister(AutomaticPersister<?> parentPersister) {
         _persisterDesc.extend(parentPersister._persisterDesc);
