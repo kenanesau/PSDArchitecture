@@ -414,8 +414,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     break;
                 }
 
-                IPersister referencedPersister = getPM().getPersister(referencedObj.getClass());
-                bind(sql, idx, referencedPersister.getDbTypeName());
+                bind(sql, idx, DbNameHelper.getDbTypeName(referencedObj.getClass()));
                 break;
             case COLLECTION_REFERENCE:
                 Collection<?> referencedColl = (Collection<?>) fld.get(persistable);

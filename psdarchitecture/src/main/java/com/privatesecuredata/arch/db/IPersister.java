@@ -47,17 +47,5 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
     void addExtendingPersister(AutomaticPersister childPersister);
     List<AutomaticPersister> getExtendingPersisters();
 
-    /**
-     * @return Returns the type-name without the version-subpackage
-     * e.g if class.getName() is "com.privatesecuredata.entity.v1.person"
-     * then "com.privatesecuredata.entity.person" is returned by this call.
-     */
-    String getDbTypeName();
-
-    /**
-     * @return The DB-version of the object as numerical value
-     */
-    int getVersion();
-
     Query getQuery(String queryId);
 }

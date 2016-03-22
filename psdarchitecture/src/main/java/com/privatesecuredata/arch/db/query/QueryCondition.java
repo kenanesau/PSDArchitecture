@@ -197,8 +197,11 @@ public class QueryCondition implements IQueryCondition {
              * Set default if no value set yet
              */
             if (null == para.value()) {
-                SqlDataField sqlField= fields.get(DbNameHelper.getFieldName(para.fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME));
-                para.setValue(sqlField.getField().getType().getName());
+                String dbFieldName = DbNameHelper.getFieldName(para.fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
+                if (fields.containsKey(dbFieldName)) {
+                    SqlDataField sqlField = fields.get(dbFieldName);
+                    para.setValue(sqlField.getField().getType().getName());
+                }
             }
         }
     }

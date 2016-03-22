@@ -62,4 +62,34 @@ public class DbNameHelper {
 
         return sbl.toString();
     }
+
+    public static <T extends IPersistable> String getDbTypeName(Class persistentType) {
+        String dbTypeName;
+        String typeName = persistentType.getName();
+        String[] tokens = typeName.split("[.]");
+        int version = 0;
+        if (tokens.length > 2)
+        {
+            StringBuilder strBuilder = new StringBuilder();
+            for (int i=0; i<tokens.length; i++)
+            {
+                if (i == tokens.length - 1) {
+                    if (tokens[i].matches("^[vV]\\d+"))
+                        continue;
+                }
+
+                strBuilder.append(tokens[i]);
+
+                if (i < tokens.length - 1)
+                    strBuilder.append(".");
+            }
+
+            dbTypeName = strBuilder.toString();
+        }
+        else {
+            dbTypeName = typeName;
+        }
+
+        return dbTypeName;
+    }
 }

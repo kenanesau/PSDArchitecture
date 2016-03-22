@@ -4,6 +4,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.privatesecuredata.arch.db.AutomaticPersister;
+import com.privatesecuredata.arch.db.DbNameHelper;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.SqlDataField;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -50,7 +51,7 @@ public class Query<T> {
 
     public void setParameter(String paraId, Class value)
     {
-        params.get(paraId).setValue(value.getName());
+        params.get(paraId).setValue(DbNameHelper.getDbTypeName(value));
     }
 
     /**

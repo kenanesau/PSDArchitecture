@@ -84,37 +84,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
     protected void setPersistentType(Class<T> _persistentType) {
         this._persistentType = _persistentType;
-
-        String typeName = _persistentType.getName();
-        String[] tokens = typeName.split("[.]");
-        if (tokens.length > 2)
-        {
-            String verStr = tokens[tokens.length - 2];
-            _version = 0;
-            if (verStr.startsWith("v")) {
-                _version = Integer.decode(verStr.substring(1));
-            } else {
-                _version = getPM().version();
-            }
-
-            StringBuilder strBuilder = new StringBuilder();
-            for (int i=0; i<tokens.length; i++)
-            {
-                if (i == tokens.length - 2)
-                    continue;
-
-                strBuilder.append(tokens[i]);
-
-                if (i < tokens.length - 1)
-                    strBuilder.append(".");
-            }
-
-            _dbTypeName = strBuilder.toString();
-        }
-        else {
-            _version = getPM().version();
-            _dbTypeName = typeName;
-        }
+        this._dbTypeName = DbNameHelper.getDbTypeName(_persistentType);
     }
 
     protected void addUpdateProxyStatement(Field field, SQLiteStatement update)
@@ -378,14 +348,4 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
     public List<AutomaticPersister> getExtendingPersisters() { return childPersisters; }
 
-
-    @Override
-    public String getDbTypeName() {
-        return _dbTypeName;
-    }
-
-    @Override
-    public int getVersion() {
-        return _version;
-    }
 }
