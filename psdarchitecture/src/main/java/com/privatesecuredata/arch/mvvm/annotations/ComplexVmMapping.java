@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ComplexVmMapping {
-	Class<?> viewModelClass();
+	Class<?> vmType();
+    Class<?> vmProviderType() default Object.class;
 	boolean loadLazy() default true;
 }
