@@ -9,10 +9,8 @@ import com.google.common.base.Objects;
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
-import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
-import com.privatesecuredata.arch.mvvm.vm.IViewModel;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 
-import java.lang.reflect.Constructor;
 import java.util.List;
 
 /**
@@ -25,7 +23,7 @@ public class ModelState implements Parcelable {
     private String key;
     private Boolean containsNewObject = false;
     private IPersistable model;
-    private String typeName;
+    private Class type;
     private Long dbId = -1L;
     private List<ModelState> childStates;
 
@@ -47,8 +45,9 @@ public class ModelState implements Parcelable {
      * @param model The model
      * @see MVVMInstanceStateHandler
      */
-    public ModelState(IPersistable model) {
-        key = this.model.getClass().getCanonicalName();
+    public ModelState(Class type, IPersistable model) {
+        key = type.getCanonicalName();
+        this.type = type;
         this.model = model;
     }
 
@@ -59,9 +58,10 @@ public class ModelState implements Parcelable {
      * @param model The Model
      * @see MVVMInstanceStateHandler
      */
-    public ModelState(String key, IPersistable model) {
+    public ModelState(Class type, String key, IPersistable model) {
         this.key = key;
         this.model = model;
+        this.type = type;
     }
 
     public String getKey() { return key; }
@@ -82,7 +82,7 @@ public class ModelState implements Parcelable {
     }
 
     public String getTypeName() {
-        return (model != null) ? model.getClass().getCanonicalName() : typeName;
+        return type.getCanonicalName();
     }
 
     @Override
@@ -92,16 +92,21 @@ public class ModelState implements Parcelable {
 
 
     protected void readStateFromParcel(Parcel parcel, ModelState state) {
-        String str = getClass().getName();
-        Log.d(str, "read key (String)");
-        state.key = parcel.readString();
-        Log.d(str, "read typeName (String)");
-        state.typeName = parcel.readString();
-        Log.d(str, "read containsNewObject (byte)");
-        state.containsNewObject = (parcel.readByte() != 0);
-        if (!state.containsNewObject) {
-            Log.d(str, "read dbId (long)");
-            state.dbId = parcel.readLong();
+        try {
+            String str = getClass().getName();
+            Log.d(str, "read key (String)");
+            state.key = parcel.readString();
+            Log.d(str, "read typeName (String)");
+            state.type = Class.forName(parcel.readString());
+            Log.d(str, "read containsNewObject (byte)");
+            state.containsNewObject = (parcel.readByte() != 0);
+            if (!state.containsNewObject) {
+                Log.d(str, "read dbId (long)");
+                state.dbId = parcel.readLong();
+            }
+
+        } catch (ClassNotFoundException e) {
+            throw new ArgumentException("Unable to read parcel", e);
         }
     }
 
@@ -145,7 +150,7 @@ public class ModelState implements Parcelable {
      *
      * @param pm The Persistance manager
      * @param <T>
-     * @return Returns the ViewModel containing an IPersistable model
+     * @return Returns the IPersistable model
      */
     public <T extends IPersistable> T getModel(PersistanceManager pm)
     {
@@ -154,13 +159,11 @@ public class ModelState implements Parcelable {
             return ret;
 
         try {
-            Class type = Class.forName(getTypeName());
             if (!containsNewObject) {
                 ret = (T)pm.load(type, getDbId());
             }
             else {
-                Constructor constructor = type.getConstructor();
-                ret = (T)constructor.newInstance();
+                ret = (T)pm.getPersister(type).createPersistable();
             }
         }
         catch (Exception ex)
