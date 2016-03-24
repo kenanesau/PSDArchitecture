@@ -15,7 +15,9 @@ import com.privatesecuredata.arch.db.vmGlue.DBViewModelCommitListener;
 import com.privatesecuredata.arch.db.vmGlue.DbListViewModelFactory;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
+import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.MVVM;
+import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModelFactory;
 
 import java.io.File;
@@ -40,6 +42,7 @@ import java.util.Map;
  *
  */
 public class PersistanceManager {
+
     private IDbDescription dbDesc;
     private IDbHistoryDescription dbHistory;
     private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
@@ -920,6 +923,23 @@ public class PersistanceManager {
 			IListViewModelFactory factory = new DbListViewModelFactory(this);
 			this.mvvm.setListViewModelFactory(factory);
 			this.mvvm.addGlobalCommitListener(new DBViewModelCommitListener());
+
+            Class providerType = null;
+            Class<?> modelType = null;
+            try {
+                for (Class<?> mType : persisterMap.keySet()) {
+                    modelType = mType;
+                    ComplexVmMapping anno = (ComplexVmMapping) modelType.getAnnotation(ComplexVmMapping.class);
+                    if (null != anno) {
+                        providerType = anno.vmFactoryType();
+                        this.mvvm.registerVmProvider(modelType, providerType);
+                    }
+                }
+            }
+            catch (Exception e) {
+                throw new MVVMException(String.format("Error creating provider of type '%s' for type '%s'",
+                        providerType.getName(), modelType.getName()), e);
+            }
 		}
 
         return mvvm;

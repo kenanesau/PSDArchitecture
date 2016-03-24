@@ -21,9 +21,11 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
         setPM(pm);
         setDesc(new PersisterDescription<T>(persistentType));
         setPersistentType(persistentType);
-        setConstructor(persistentType.getConstructor(new Class<?>[]{}));
         Field[] fields = persistentType.getDeclaredFields();
         HashMap<String, SqlDataField> fieldMap = new HashMap<String, SqlDataField>();
+
+        createDbFactory(getPersistentType());
+
         for(Field field : fields)
         {
             DbField dbAnno = field.getAnnotation(DbField.class);

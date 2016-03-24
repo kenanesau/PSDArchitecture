@@ -115,4 +115,9 @@ public class ConversionManager {
     }
 
     public PersistanceManager getOldPm() { return this._oldPm; }
+
+    public <T> T createNew(Class type) {
+        IPersister persister = _newPm.getPersister(type);
+        return (T)persister.createPersistable();
+    }
 }

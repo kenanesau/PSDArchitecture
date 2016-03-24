@@ -4,7 +4,6 @@ import android.database.Cursor;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Set;
@@ -129,8 +128,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         String currentFieldName = "";
         try {
             Class<T> type = _newDesc.getType();
-            Constructor<T> _const = type.getConstructor((Class<?>[]) null);
-            newObject = _const.newInstance();
+            newObject = getConversionManager().createNew(type);
 
             Collection<SqlDataField> fields = _newDesc.getTableFields();
             for (SqlDataField newSqlField : fields) {

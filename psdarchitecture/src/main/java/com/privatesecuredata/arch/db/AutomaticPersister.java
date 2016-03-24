@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.Pair;
 
 import com.google.common.base.MoreObjects;
+import com.privatesecuredata.arch.db.annotations.DbFactory;
 import com.privatesecuredata.arch.db.annotations.DbField;
 import com.privatesecuredata.arch.db.annotations.DbForeignKeyField;
 import com.privatesecuredata.arch.db.annotations.DbMultipleForeignKeyFields;
@@ -31,8 +32,12 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
     public static final String DATE_FORMAT = "yyyy-MM-dd";
 
+    /**
+     * Only used if no factory is declared via @DbFactory-annotation
+     */
     private Constructor<T> _const;
     private PersisterDescription<T> _persisterDesc;
+    private IPersistableFactory<T> _factory;
 
     protected AutomaticPersister() {
     }
@@ -42,8 +47,9 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         setTableName(DbNameHelper.getTableName(persistentType));
         setPersistentType(persistentType);
         Field[] fields = persistentType.getDeclaredFields();
-        setConstructor(persistentType.getConstructor((Class<?>[]) null));
         _persisterDesc = new PersisterDescription(getPersistentType());
+
+        createDbFactory(persistentType);
 
         DbForeignKeyField anno = persistentType.getAnnotation(DbForeignKeyField.class);
         if (anno != null)
@@ -93,6 +99,30 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 SqlDataField collectionProxySizeFld = new SqlDataField(field, referencedType);
                 _persisterDesc.addProxyCntField(collectionProxySizeFld);
             }
+        }
+    }
+
+    protected void createDbFactory(Class type) throws IllegalAccessException, InstantiationException, NoSuchMethodException {
+        DbFactory factoryAnno = (DbFactory) type.getAnnotation(DbFactory.class);
+        if (factoryAnno != null) {
+            _factory = (IPersistableFactory<T>)factoryAnno.factoryType().newInstance();
+        }
+        else {
+            setConstructor(type.getConstructor((Class<?>[]) null));
+            _factory = new IPersistableFactory<T>() {
+                @Override
+                public T create() {
+                    T ret = null;
+                    try {
+                        ret = (T)getConstructor().newInstance();
+                    } catch (Exception e) {
+                        new DBException(String.format("Error creating new Instance of type '%s'",
+                                getPersistentType().getName()), e);
+                    }
+
+                    return ret;
+                }
+            };
         }
     }
 
@@ -561,7 +591,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         Field referencedObjectField = null;
 
 		try {
-			obj = getConstructor().newInstance();
+			obj = createPersistable();
 			csr.moveToPosition(pos);
             getPM().assignDbId(obj, csr.getLong(0));
 
@@ -659,6 +689,11 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
 		return obj;
 	}
+
+    @Override
+    public T createPersistable() {
+        return _factory.create();
+    }
 
     @Override
     public String toString() {
