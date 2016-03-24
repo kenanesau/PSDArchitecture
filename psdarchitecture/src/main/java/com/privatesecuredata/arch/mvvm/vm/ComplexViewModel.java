@@ -12,7 +12,6 @@ import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -30,7 +29,11 @@ import java.util.List;
  * child-ViewModels.  
  */
 public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
-	private HashMap<Integer, IViewModel<?>> children = new HashMap<Integer, IViewModel<?>>(); 
+    public interface VmFactory<T, MODEL> {
+        T create(MVVM mvvm, MODEL m);
+    }
+
+	private HashMap<Integer, IViewModel<?>> children = new HashMap<Integer, IViewModel<?>>();
 	private ArrayList<IViewModel<?>> childrenOrdered = new ArrayList<IViewModel<?>>();
 	private SimpleValueVM<Boolean> selected = new SimpleValueVM<Boolean>(false);
     private ListViewModelFactory vmFactory = null;
@@ -64,8 +67,15 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         this(mvvm);
 
         //setModelAndRegisterChildren needs this.mvvm set...
+        //if (null != model)
+        //    model = mvvm.createModel(); //first provide factory for creating models...
         if (null != model)
             this.nameViewModelMapping = setModelAndRegisterChildren(model);
+    }
+
+    public ComplexViewModel(MVVM mvvm, MODEL model, Class<MODEL> type, VmFactory<ComplexViewModel, MODEL> provider) {
+        this(mvvm, model);
+
     }
 
     /**
@@ -408,7 +418,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             /**
              * If the Childmodel is != null -> it is in memory -> create the VM
              */
-            if (!complexAnno.loadLazy() || childModel != null) {
+            if (!complexAnno.loadLazy() ) // || childModel != null) {
+            {
                 isLazy = false;
                 Class<?> viewModelType;
                 if (childModel != null) {
@@ -417,16 +428,15 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                     if (null == anno)
                         throw new ArgumentException(
                                 String.format("Type \"%s\" does not have a ComplexVmMapping-Annotation. Please provide one!", modelType.getName()));
-                    viewModelType = anno.viewModelClass();
+                    viewModelType = anno.vmType();
                 } else {
                     /** Cannot determin type of an null-reference -> Use the type of the annotation
                      * -> This is not correct in all cases
                      **/
-                    viewModelType = complexAnno.viewModelClass();
+                    viewModelType = complexAnno.vmType();
                 }
 
-                Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
-                ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), childModel);
+                ComplexViewModel<?> vm = mvvm.createVM(modelType, childModel);
 
                 //We might need this in case the model is replaced later by a new model
                 vm.setModelGetter(this, field);
@@ -436,24 +446,15 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             } else {
                 // Do we need to register a VM here?? create a VM when it is needed!!!
 
-                Class<?> viewModelType = complexAnno.viewModelClass();
+                Class<?> viewModelType = complexAnno.vmType();
 
-                Constructor<?> complexVMConstructor = viewModelType.getConstructor(MVVM.class, modelType);
-                ComplexViewModel<?> vm = (ComplexViewModel<?>) complexVMConstructor.newInstance(getMVVM(), null);
+                ComplexViewModel<?> vm = mvvm.createVM(modelType, null);
                 vm.setLazy();
                 vm.setModelGetter(this, field);
 
                 childModels.put(field.getName(), vm);
                 registerChildVM(vm); //This was missing!?!?!
             }
-        }
-        catch (InvocationTargetException ex)
-        {
-            throw new MVVMException("Could not find default-constructor.", ex);
-        }
-        catch (NoSuchMethodException ex)
-        {
-            throw new MVVMException("Could not find default-constructor.", ex);
         }
         catch (Exception ex)
         {
