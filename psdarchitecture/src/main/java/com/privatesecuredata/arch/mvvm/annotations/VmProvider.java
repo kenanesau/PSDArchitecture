@@ -5,10 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.FIELD, ElementType.TYPE})
+@Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ComplexVmMapping {
-	Class<?> vmType();
-    Class<?> vmFactoryType() default Object.class;
-	boolean loadLazy() default true;
+public @interface VmProvider {
+	Class<?> type();
 }
