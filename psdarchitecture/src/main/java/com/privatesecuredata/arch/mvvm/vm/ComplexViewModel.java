@@ -421,21 +421,13 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             if (!complexAnno.loadLazy() ) // || childModel != null) {
             {
                 isLazy = false;
-                Class<?> viewModelType;
                 if (childModel != null) {
                     modelType = childModel.getClass();
                     ComplexVmMapping anno = modelType.getAnnotation(ComplexVmMapping.class);
                     if (null == anno)
                         throw new ArgumentException(
                                 String.format("Type \"%s\" does not have a ComplexVmMapping-Annotation. Please provide one!", modelType.getName()));
-                    viewModelType = anno.vmType();
-                } else {
-                    /** Cannot determin type of an null-reference -> Use the type of the annotation
-                     * -> This is not correct in all cases
-                     **/
-                    viewModelType = complexAnno.vmType();
                 }
-
                 ComplexViewModel<?> vm = mvvm.createVM(modelType, childModel);
 
                 //We might need this in case the model is replaced later by a new model
@@ -445,9 +437,6 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                 childModels.put(field.getName(), vm);
             } else {
                 // Do we need to register a VM here?? create a VM when it is needed!!!
-
-                Class<?> viewModelType = complexAnno.vmType();
-
                 ComplexViewModel<?> vm = mvvm.createVM(modelType, null);
                 vm.setLazy();
                 vm.setModelGetter(this, field);

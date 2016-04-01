@@ -15,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 /**
  * Created by kenan on 12/21/14.
@@ -22,6 +23,8 @@ import java.util.Collection;
 public class MVVM {
     private static SparseArray<Object> cfgObjs = new SparseArray<>();
     private static SparseArray<MVVM> mvvmInsts = new SparseArray<MVVM>();
+    private HashMap<Class, ComplexViewModel.VmFactory> vmProviders = new HashMap<>();
+
     private Resources res;
     private Context ctx;
 
@@ -95,34 +98,47 @@ public class MVVM {
     {
         V vm = null;
 
-        try {
-            Class<?> modelType = model.getClass();
-            ComplexVmMapping anno = modelType.getAnnotation(ComplexVmMapping.class);
-            if (null == anno)
-                throw new ArgumentException(
-                    String.format("Type \"%s\" does not have a ComplexVmMapping-Annotation. Please provide one!", modelType.getName()));
-            Class<V> vmType = (Class<V>)anno.viewModelClass();
-            Constructor<V> constructor = vmType.getConstructor(MVVM.class, modelType);
-            vm = constructor.newInstance(this, model);
-            vm.setHandle(this.getHandle());
-        }
-        catch (IllegalArgumentException ex) {
-            throw new ArgumentException("Wrong argument!", ex);
-        }
-        catch (IllegalAccessException ex) {
-            throw new ArgumentException("Error accessing method!", ex);
-        }
-        catch (InvocationTargetException ex) {
-            throw new ArgumentException("Error invoking constructor!", ex);
-        }
-        catch (NoSuchMethodException ex) {
-            throw new ArgumentException("Could not find constructor", ex);
-        }
-        catch (InstantiationException ex) {
-            throw new ArgumentException("Error instantiating complex viewmodel", ex);
-        }
+        Class<?> modelType = model.getClass();
+        vm = createVM(modelType, model);
 
         return vm;
+    }
+
+    public <T extends ComplexViewModel, M> T createVM(Class modelType, M model)
+    {
+        T ret = null;
+        ComplexViewModel.VmFactory provider = vmProviders.get(modelType);
+        if (null != provider) {
+            ret = (T) provider.create(this, model);
+        } else {
+            try {
+                ComplexVmMapping anno = (ComplexVmMapping) modelType.getAnnotation(ComplexVmMapping.class);
+                if (null == anno)
+                    throw new ArgumentException(
+                            String.format("Type \"%s\" does not have a ComplexVmMapping-Annotation. Please provide one!", modelType.getName()));
+                Class<?> vmType = anno.vmType();
+                Constructor constructor = vmType.getConstructor(MVVM.class, modelType);
+                ret = (T) constructor.newInstance(this, model);
+            }
+            catch (IllegalArgumentException ex) {
+                throw new ArgumentException("Wrong argument!", ex);
+            }
+            catch (IllegalAccessException ex) {
+                throw new ArgumentException("Error accessing method!", ex);
+            }
+            catch (InvocationTargetException ex) {
+                throw new ArgumentException("Error invoking constructor!", ex);
+            }
+            catch (NoSuchMethodException ex) {
+                throw new ArgumentException("Could not find constructor", ex);
+            }
+            catch (InstantiationException ex) {
+                throw new ArgumentException("Error instantiating complex viewmodel", ex);
+            }
+        }
+        ret.setHandle(this.getHandle());
+
+        return ret;
     }
 
     public void setListViewModelFactory(IListViewModelFactory lstFactory) { this.listVmFactory = lstFactory; }
@@ -147,5 +163,12 @@ public class MVVM {
     public Resources getResources() { return res; }
     public void setContext(Context ctx) { this.ctx = ctx; }
     public Context getContext() { return ctx; }
+
+    public void registerVmProvider(Class modelType, Class providerType) throws IllegalAccessException, InstantiationException {
+        if (!Object.class.equals(providerType)) {
+            ComplexViewModel.VmFactory provider = (ComplexViewModel.VmFactory)providerType.newInstance();
+            vmProviders.put(modelType, provider);
+        }
+    }
 
 }
