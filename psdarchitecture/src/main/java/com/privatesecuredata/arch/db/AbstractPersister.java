@@ -26,6 +26,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     private Class<T> _persistentType;
     private int _version = -1;
     private String _dbTypeName;
+    private PersisterDescription<T> _persisterDesc;
 
     /**
      * Update-Statements for the item counts for the foreign key relations
@@ -84,19 +85,19 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
     protected void setPersistentType(Class<T> _persistentType) {
         this._persistentType = _persistentType;
-        this._dbTypeName = DbNameHelper.getDbTypeName(_persistentType);
+        this._persisterDesc = new PersisterDescription<T>(_persistentType);
     }
 
     protected void addUpdateProxyStatement(Field field, SQLiteStatement update)
     {
         _foreignListCountUpdateStatements.put(field, update);
     }
+
     protected SQLiteStatement getUpdateProxyStatement(Field field)
     {
         return _foreignListCountUpdateStatements.get(field);
     }
 
-	
 	protected SQLiteDatabase getDb() {
 		return pm.getDb();
 	}
@@ -348,4 +349,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
     public List<AutomaticPersister> getExtendingPersisters() { return childPersisters; }
 
+    public PersisterDescription<T> getDescription() {
+        return _persisterDesc;
+    }
 }

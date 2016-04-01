@@ -49,4 +49,5 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
     T createPersistable();
 
     Query getQuery(String queryId);
+    PersisterDescription<T> getDescription();
 }

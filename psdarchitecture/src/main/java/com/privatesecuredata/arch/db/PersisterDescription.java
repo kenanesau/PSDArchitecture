@@ -18,6 +18,7 @@ import java.util.Map;
  */
 public class PersisterDescription<T> {
 
+    private final String _dbTypeName;
     private Map<String, SqlDataField> _tableFields = new LinkedHashMap<>();
     private List<SqlDataField> _proxyCntFields;
 
@@ -36,6 +37,7 @@ public class PersisterDescription<T> {
 
     public PersisterDescription(Class<T> type) {
         _persistentType = type;
+        _dbTypeName = DbNameHelper.getDbTypeName(_persistentType);
         _thisToOneRelations = new Hashtable<>();
         _oneToManyRelations = new Hashtable<>();
         _foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
@@ -166,4 +168,6 @@ public class PersisterDescription<T> {
     }
 
     public Class<T> getType() { return _persistentType;}
+
+    public String getDbTypeName() { return _dbTypeName; }
 }

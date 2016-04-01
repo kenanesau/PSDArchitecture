@@ -166,7 +166,7 @@ public class PersistanceManager {
     private void addPersisterToMap(Class<?> persistentType, IPersister<?> persisterObj)
     {
         persisterMap.put(persistentType, persisterObj);
-        classNameMap.put(DbNameHelper.getDbTypeName(persistentType), persistentType);
+        classNameMap.put(persisterObj.getDescription().getDbTypeName(), persistentType);
     }
 	
 	public void addPersister(Class<?> persisterClass) throws DBException 

@@ -36,7 +36,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
      * Only used if no factory is declared via @DbFactory-annotation
      */
     private Constructor<T> _const;
-    private PersisterDescription<T> _persisterDesc;
+    
     private IPersistableFactory<T> _factory;
 
     protected AutomaticPersister() {
@@ -47,38 +47,37 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         setTableName(DbNameHelper.getTableName(persistentType));
         setPersistentType(persistentType);
         Field[] fields = persistentType.getDeclaredFields();
-        _persisterDesc = new PersisterDescription(getPersistentType());
 
         createDbFactory(persistentType);
 
         DbForeignKeyField anno = persistentType.getAnnotation(DbForeignKeyField.class);
         if (anno != null)
-            _persisterDesc.addForeignKeyField(anno);
+            getDescription().addForeignKeyField(anno);
 
         DbMultipleForeignKeyFields multipleAnnos = persistentType.getAnnotation(DbMultipleForeignKeyFields.class);
         if (null != multipleAnnos) {
             for (DbForeignKeyField dbAnno : multipleAnnos.value())
-                _persisterDesc.addForeignKeyField(dbAnno);
+                getDescription().addForeignKeyField(dbAnno);
         }
 
         for (Field field : fields) {
             DbField fieldAnno = field.getAnnotation(DbField.class);
             if (null != fieldAnno)
-                _persisterDesc.addSqlField(field, fieldAnno);
+                getDescription().addSqlField(field, fieldAnno);
 
             DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
             if (null != thisToOneAnno) {
                 field.setAccessible(true);
                 ObjectRelation objRel = new ObjectRelation(field, getPersistentType(), thisToOneAnno.deleteChildren());
-                _persisterDesc.addOneToOneRelation(objRel);
+                getDescription().addOneToOneRelation(objRel);
 
                 // At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
                 // object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
                 SqlDataField idField = new SqlDataField(field);
-                _persisterDesc.addSqlField(idField);
+                getDescription().addSqlField(idField);
 
                 SqlDataField fldTypeName = new SqlDataField(field, field.getType());
-                _persisterDesc.addSqlField(fldTypeName);
+                getDescription().addSqlField(fldTypeName);
             }
 
             // At the moment DbThisToMany-Annotations are always saved as a foreign-key in the table of the referenced object
@@ -87,7 +86,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             if (null != oneToManyAnno) {
                 field.setAccessible(true);
                 ObjectRelation objRel = new ObjectRelation(field, oneToManyAnno.referencedType(), getPersistentType(), oneToManyAnno.deleteChildren());
-                _persisterDesc.addOneToManyRelation(objRel);
+                getDescription().addOneToManyRelation(objRel);
 
                 Class referencedType = oneToManyAnno.referencedType();
                 ICursorLoaderFactory fac = new IdCursorLoaderFactory(getPM(), persistentType, referencedType);
@@ -97,7 +96,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                  * Add table-field for the collection-proxy-size
                  */
                 SqlDataField collectionProxySizeFld = new SqlDataField(field, referencedType);
-                _persisterDesc.addProxyCntField(collectionProxySizeFld);
+                getDescription().addProxyCntField(collectionProxySizeFld);
             }
         }
     }
@@ -126,11 +125,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         }
     }
 
-    public PersisterDescription<T> getDesc() { return _persisterDesc; }
-    protected void setDesc(PersisterDescription<T> desc) { _persisterDesc = desc; }
-
     public void extendsPersister(AutomaticPersister<?> parentPersister) {
-        _persisterDesc.extend(parentPersister._persisterDesc);
+        getDescription().extend(parentPersister.getDescription());
         parentPersister.addExtendingPersister(this);
     }
 
@@ -146,27 +142,27 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     }
 
     public List<SqlDataField> getSqlFields() {
-        return new ArrayList<>(_persisterDesc.getTableFields());
+        return new ArrayList<>(getDescription().getTableFields());
     }
 
     public Map<String, SqlDataField> getFieldMap() {
-        return new LinkedHashMap<>(_persisterDesc.getFieldMap());
+        return new LinkedHashMap<>(getDescription().getFieldMap());
     }
 
     /**
      * List of list-Fields to be filled in an persistable and the corresponding types
      */
     public Collection<ObjectRelation> getOneToManyRelations() {
-        return _persisterDesc.getOneToManyRelations();
+        return getDescription().getOneToManyRelations();
     }
 
     public Collection<ObjectRelation> getOneToOneRelations() {
-        return _persisterDesc.getOneToOneRelations();
+        return getDescription().getOneToOneRelations();
     }
 
     @Override
     public String getSelectAllStatement(OrderByTerm... terms) {
-        if (_persisterDesc.getTableFields().isEmpty())
+        if (getDescription().getTableFields().isEmpty())
             return null;
 
         StringBuilder sql = AbstractPersister.createSelectAllStatement(getTableName(), getSqlFields(), terms);
@@ -181,7 +177,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
      * @return SQL-Statement (insert)
      */
     protected String getInsertStatement() {
-        if (_persisterDesc.getTableFields().isEmpty())
+        if (getDescription().getTableFields().isEmpty())
             return null;
 
         StringBuilder sql = new StringBuilder("INSERT INTO ")
@@ -189,7 +185,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 .append(" ( ");
 
         int fieldCount = 0;
-        for (SqlDataField fld : _persisterDesc.getTableFields()) {
+        for (SqlDataField fld : getDescription().getTableFields()) {
             if (fieldCount > 0)
                 sql.append(", ");
 
@@ -218,7 +214,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
      * @return SQL-Statement (update)
      */
     protected String getUpdateStatement() {
-        if (_persisterDesc.getTableFields().isEmpty())
+        if (getDescription().getTableFields().isEmpty())
             return null;
 
         StringBuilder sql = new StringBuilder("UPDATE ")
@@ -226,7 +222,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 .append(" SET ");
 
         int i = 1;
-        for (SqlDataField field : _persisterDesc.getTableFields()) {
+        for (SqlDataField field : getDescription().getTableFields()) {
             sql.append(field.getSqlName());
             sql.append("=? ");
             if (i < getSqlFields().size())
@@ -294,8 +290,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         /**
          * Create delete Triggers
          */
-        sqlStatements.addAll(createTriggerStatementLst("one_", _persisterDesc.getOneToOneRelations()));
-        sqlStatements.addAll(createTriggerStatementLst("lst_", _persisterDesc.getOneToManyRelations()));
+        sqlStatements.addAll(createTriggerStatementLst("one_", getDescription().getOneToOneRelations()));
+        sqlStatements.addAll(createTriggerStatementLst("lst_", getDescription().getOneToManyRelations()));
 
         String[] sql = new String[sqlStatements.size()];
         return sqlStatements.toArray(sql);
@@ -307,7 +303,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
      * @return SQL-Statement (create)
      */
     protected String getCreateStatement() {
-        if (_persisterDesc.getTableFields().isEmpty())
+        if (getDescription().getTableFields().isEmpty())
             return null;
 
         /**
@@ -319,7 +315,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 .append("_id INTEGER PRIMARY KEY AUTOINCREMENT");
 
         //Handle normal DB-Fields
-        for (SqlDataField field : _persisterDesc.getTableFields()) {
+        for (SqlDataField field : getDescription().getTableFields()) {
             sql.append(", ")
                     .append(field.getSqlName()).append(" ")
                     .append(field.getSqlTypeString());
@@ -329,7 +325,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         }
 
         //Add the foreign key-fields and constraints
-        for (SqlDataField field : _persisterDesc.getForeignKeyFields()) {
+        for (SqlDataField field : getDescription().getForeignKeyFields()) {
             sql.append(", ")
                     .append(field.getSqlName()).append(" ")
                     .append(field.getSqlTypeString());
@@ -337,7 +333,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             // Foreign-Key Fields do never have a NOT NULL constraint
             // since they are deferred
         }
-        for (SqlForeignKeyField field : _persisterDesc.getForeignKeyFields()) {
+        for (SqlForeignKeyField field : getDescription().getForeignKeyFields()) {
             Class<?> cls = field.getForeignKeyType();
             if ((field.isMandatory()) && (null != cls)) {
                 sql.append(",\nFOREIGN KEY(")
@@ -361,8 +357,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         String updateStatement = getUpdateStatement();
         if (null != updateStatement)
             update = getDb().compileStatement(getUpdateStatement());
-        if (_persisterDesc.hasForeignKeyFields()) {
-            for (SqlForeignKeyField fld : _persisterDesc.getForeignKeyFields()) {
+        if (getDescription().hasForeignKeyFields()) {
+            for (SqlForeignKeyField fld : getDescription().getForeignKeyFields()) {
                 fld.compileUpdateStatement(getDb());
             }
         }
@@ -375,7 +371,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             }
         }
 
-        List<SqlDataField> proxyCntFields = _persisterDesc.getAndResetProxyCntFields();
+        List<SqlDataField> proxyCntFields = getDescription().getAndResetProxyCntFields();
         if (null != proxyCntFields) {
             for (SqlDataField collectionProxySizeFld : proxyCntFields) {
                 // Create an update-Statement for the collection-proxy-size
@@ -444,7 +440,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     break;
                 }
 
-                bind(sql, idx, DbNameHelper.getDbTypeName(referencedObj.getClass()));
+                PersisterDescription desc = getPM().getPersister(referencedObj.getClass()).getDescription();
+                bind(sql, idx, desc.getDbTypeName());
                 break;
             case COLLECTION_REFERENCE:
                 Collection<?> referencedColl = (Collection<?>) fld.get(persistable);
@@ -463,7 +460,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
         int i = 1;
         try {
-            for (SqlDataField field : _persisterDesc.getTableFields()) {
+            for (SqlDataField field : getDescription().getTableFields()) {
                 bind(sql, i++, field, persistable);
             }
         } catch (Exception e) {
@@ -477,7 +474,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         // First save the referenced objects
         try {
 
-            for (ObjectRelation rel : _persisterDesc.getOneToOneRelations()) {
+            for (ObjectRelation rel : getDescription().getOneToOneRelations()) {
                 IPersistable other = (IPersistable) rel.getField().get(persistable);
                 if (null == other)
                     continue;
@@ -532,7 +529,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     @Override
     public long update(T persistable) throws DBException {
         bind(update, persistable);
-        bind(update, _persisterDesc.getTableFields().size() + 1, persistable.getDbId().getId());
+        bind(update, getDescription().getTableFields().size() + 1, persistable.getDbId().getId());
 
         int rowsAffected = update.executeUpdateDelete();
 
@@ -548,7 +545,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         IPersistable foreignObj = foreignId.getObj();
         if (null != foreignObj) {
             Class<?> foreignType = foreignObj.getClass();
-            SqlForeignKeyField fld = _persisterDesc.getForeignKeyField(foreignType);
+            SqlForeignKeyField fld = getDescription().getForeignKeyField(foreignType);
 
             if (fld != null) {
                 SQLiteStatement updateForeignKey = fld.getUpdateForeingKey();
@@ -597,7 +594,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
             //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fields
             int colIndex = 1;
-            Collection<SqlDataField> coll = _persisterDesc.getTableFields();
+            Collection<SqlDataField> coll = getDescription().getTableFields();
             for (SqlDataField field : coll) {
                 currentField = field;
 
@@ -668,7 +665,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
                 colIndex++;
 
-                if (colIndex ==  _persisterDesc.getTableFields().size() + 1)
+                if (colIndex ==  getDescription().getTableFields().size() + 1)
                     break;
 
 			}
@@ -699,7 +696,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("persisted type", getPersistentType().getSimpleName())
-                .add("persisted fields", _persisterDesc.getTableFields())
+                .add("persisted fields", getDescription().getTableFields())
                 .toString();
     }
 

@@ -26,8 +26,8 @@ public class ConversionManager {
         for (Class[] types : convDesc.getEntityMappings()) {
             Class newType = types[0];
             Class oldType = types[1];
-            PersisterDescription oldDesc = ((AutomaticPersister) oldPm.getIPersister(oldType)).getDesc();
-            PersisterDescription newDesc = ((AutomaticPersister) newPm.getIPersister(newType)).getDesc();
+            PersisterDescription oldDesc = oldPm.getIPersister(oldType).getDescription();
+            PersisterDescription newDesc = newPm.getIPersister(newType).getDescription();
 
             DefaultObjectConverter<?> converter = new DefaultObjectConverter<>(this, newDesc, oldDesc);
             registerDefaultConverter(newType, converter);
