@@ -118,15 +118,21 @@ public class PlayStoreVM extends ComplexViewModel {
         _billingHelper = null;
     }
 
+    public boolean isSkuLicensed(String sku)
+    {
+        SkuDetailsVM skuVm = _lstSkuDetails.get(sku);
+        if (null != skuVm) {
+            return skuVm.isAvailable().get();
+
+        }
+
+        return false;
+    }
+
     public void buy(Activity activity, SkuDetailsVM sku, int requestCode) {
         _skuInPurchase=sku;
         _billingHelper.launchPurchaseFlow(activity, sku.getSku().get(), requestCode,
                 _purchaseFinishedListener, "");
-    }
-
-    public boolean isSkuLicensed(String sku)
-    {
-        return _lstSkuDetails.get(sku).isAvailable().get();
     }
 
     public void checkShoppingResult(int requestCode, int resultCode, Intent intent) {
