@@ -14,7 +14,7 @@
 	<dimen name="keyline2">72dp</dimen>
 	<dimen name="small_fab">40dp</dimen>
 	<dimen name="large_fab">56dp</dimen>
-	<dimen name="elevation">2dp</dimen>
+	<dimen name="elevation">4dp</dimen>
 	<dimen name="small_fab_margin_top">108dp</dimen>
 	<dimen name="large_fab_margin_top">100dp</dimen>
 </resources>

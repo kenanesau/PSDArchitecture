@@ -11,7 +11,7 @@
 		        android:scaleType="center"
 		        android:contentDescription="@null"
 		        android:layout_gravity="center"
-				android:stateListAnimator="@anim/fab_animate_elevation" />
+				android:stateListAnimator="@animator/animate_elevation" />
 	
 	<ImageView android:id="@+id/psdarch_checked_fab_icon"
 		        android:layout_width="match_parent"
@@ -20,6 +20,6 @@
 		        android:visibility="invisible"
 		        android:contentDescription="@null"
 		        android:layout_gravity="center"
-		        android:stateListAnimator="@anim/fab_animate_elevation" />
+		        android:stateListAnimator="@animator/animate_elevation" />
     
 </merge>

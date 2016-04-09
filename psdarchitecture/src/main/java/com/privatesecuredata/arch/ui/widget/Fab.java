@@ -20,13 +20,13 @@ import android.widget.ImageView;
 import com.privatesecuredata.arch.R;
 
 
-public class Fab extends FrameLayout 
+public class Fab extends FrameLayout
 {
-	private Drawable _defaultDrawable;
-	private ImageView _defaultImageView;
-	private Animator _defaultAnimator;
-	private int _color;
-    private boolean _disableOutline;
+	protected Drawable _defaultDrawable;
+    protected ImageView _defaultImageView;
+    protected Animator _defaultAnimator;
+    protected int _color;
+    protected boolean _disableOutline;
 	
 	public Fab(Context context) {
 		this(context, null, 0);
@@ -39,9 +39,11 @@ public class Fab extends FrameLayout
 	public Fab(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 
+        if (isInEditMode()) {
+            return;
+        }
         setClickable(true);
         setFocusable(true);
-        //setBackgroundResource(android.R.color.transparent);
 
         LayoutInflater.from(context).inflate(R.layout.psdarch_fab, this, true);
         _defaultImageView = (ImageView)findViewById(R.id.psdarch_fab_icon);
@@ -53,19 +55,25 @@ public class Fab extends FrameLayout
 
             int defaultDrawableId = a.getResourceId(R.styleable.psdarch_fab_icon_default, R.drawable.ic_action_add_small);
             _defaultDrawable = ContextCompat.getDrawable(context, defaultDrawableId);
-            getDefaultImageView().setImageDrawable(_defaultDrawable);
-            getDefaultImageView().setColorFilter(_color, PorterDuff.Mode.DST);
+
 
             int defaultAnimationId = a.getResourceId(R.styleable.psdarch_fab_default_animation, R.animator.fab_animation_default);
             _defaultAnimator = (Animator) AnimatorInflater.loadAnimator(context, defaultAnimationId);
-
             _disableOutline = a.getBoolean(R.styleable.psdarch_fab_disable_outline, false);
 
             a.recycle();
-
-            getDefaultAnimator().setTarget(getDefaultImageView());
+            setDefaultDrawable(getDefaultImageView(), _defaultDrawable);
         }
+
+        setAlpha(1.0f);
 	}
+
+    protected void setDefaultDrawable(View v, Drawable drawable) {
+        ImageView imgView = (ImageView)v;
+        imgView.setImageDrawable(drawable);
+        imgView.setColorFilter(_color, PorterDuff.Mode.DST);
+        getDefaultAnimator().setTarget(imgView);
+    }
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public Fab(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
@@ -73,7 +81,7 @@ public class Fab extends FrameLayout
 	}
 	
 	protected Drawable getDefaultDrawable() { return _defaultDrawable; }
-	public ImageView getDefaultImageView() { return _defaultImageView; }
+    public ImageView getDefaultImageView() { return _defaultImageView; }
 	public Animator getDefaultAnimator() { return _defaultAnimator; }
 	protected int getBgColor() { return _color; }
 	
