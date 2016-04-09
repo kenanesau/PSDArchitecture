@@ -10,10 +10,12 @@ import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.mvvm.IGetListVMCommand;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 import com.privatesecuredata.arch.mvvm.vm.StringFormatVM;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -24,6 +26,9 @@ import java.util.List;
  * ComplexViewModel
  */
 public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
+
+    @Override
+    protected void doMappings(HashMap<String, IViewModel<?>> childVMs) {}
 
     /**
      * As a user of the ItemMoverVM-class you have to implement this abstract
