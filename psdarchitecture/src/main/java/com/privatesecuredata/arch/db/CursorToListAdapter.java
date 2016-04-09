@@ -112,6 +112,21 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	public M get(int pos) {
 		return  pm.load(persister, csr, pos);
 	}
+    public long getPosition(M model) {
+        long pos = -1;
+        long id = model.getDbId().getId();
+        csr.moveToFirst();
+        long i = 0;
+        do {
+            if (id==csr.getLong(0)) {
+                pos = i;
+                break;
+            }
+            i++;
+        } while (csr.moveToNext());
+
+        return pos;
+    }
 
     @Override
     public DbId getDbId(int pos) {
