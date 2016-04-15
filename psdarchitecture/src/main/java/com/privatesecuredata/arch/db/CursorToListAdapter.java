@@ -58,6 +58,8 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	}
 
     private void updateCursor() {
+        Cursor oldCursor = csr;
+
         if (null == query) {
             if (null == parent) {
                 this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
@@ -81,6 +83,19 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
             if (null == csr)
                 throw new DBException("Unable to run query using query");
+        }
+
+        try {
+            for (ICursorChangedListener listener : this.csrListeners) {
+                listener.notifyCursorChanged(csr);
+            }
+        }
+        catch(Exception e) {
+            throw new DBException("Error notifying cursor changes to listeners", e);
+        }
+        finally {
+            if (null != oldCursor)
+                oldCursor.close();
         }
     }
 
@@ -112,9 +127,9 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	public M get(int pos) {
 		return  pm.load(persister, csr, pos);
 	}
-    public long getPosition(M model) {
+    public long getPosition(DbId dbId) {
         long pos = -1;
-        long id = model.getDbId().getId();
+        long id = dbId.getId();
         csr.moveToFirst();
         long i = 0;
         do {
@@ -142,25 +157,10 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
 	@Override
 	public void commitFinished() {
-        Cursor oldCursor = this.csr;
-
         /**
          * init() changes the cursor -> send the new cursor to all listeners
          */
 		init(this.parentClazz, this.parent, this.childClazz);
-
-        try {
-            for (ICursorChangedListener listener : this.csrListeners) {
-                listener.notifyCursorChanged(csr);
-            }
-        }
-        catch(Exception e) {
-            throw new DBException("Error notifying cursor changes to listeners", e);
-        }
-        finally {
-            if (null != oldCursor)
-                oldCursor.close();
-        }
     }
 
 	@Override
@@ -224,6 +224,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         Cursor oldCursor = this.csr;
 
         this.csr = newCursor;
+
         try {
             for (ICursorChangedListener listener : this.csrListeners) {
                 listener.notifyCursorChanged(csr);

@@ -394,7 +394,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                 if (pos < this.size()) {
                     M model = get(pos);
                     if (null != model) {
-                        vm = vmConstructor.newInstance(getMVVM(), model);
+                        vm = (VM)getMVVM().createVM(model);
                         registerChildVM(vm);
                         vm.addModelListener(this);
                         positionToViewModel.put(pos, vm);
@@ -435,6 +435,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                  * childVM-was comitted -> reload the cursor...
                  */
                 listCB.init(referencingType, getParentModel(), referencedType);
+
+                /**
+                 * Clear the list since the postition might have changed
+                 */
+                positionToViewModel.clear();
             }
         }
         super.notifyModelChanged(changedVM, originator);
