@@ -8,7 +8,6 @@ import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Filter;
@@ -51,18 +50,15 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     };
 
     public static abstract class ViewHolder<V> extends RecyclerView.ViewHolder
-            implements  View.OnClickListener, View.OnLongClickListener, View.OnTouchListener {
+            implements  View.OnClickListener, View.OnLongClickListener {
         private View rowView;
         private ViewGroup parentView;
         private MVVMRecyclerViewModelAdapter adapter;
 
-        private int defaultBackgroundResource = R.drawable.activated_selector;
-        private int actionModeBgResource = R.drawable.activated_selector_no_press;
-
         protected ViewHolder(View view) {
             super(view);
             this.rowView = view;
-            this.rowView.setOnTouchListener(this);
+            //this.rowView.setOnTouchListener(this);
             this.rowView.setOnClickListener(this);
             this.rowView.setOnLongClickListener(this);
         }
@@ -76,25 +72,13 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             View v = getRowView();
 
             if (adapter.hasActionMode()) {
-                v.setActivated(adapter.isItemChecked(getAdapterPosition()));
+                boolean activated = adapter.isItemChecked(getAdapterPosition());
+                v.setActivated(activated);
             }
         };
 
         public View getRowView() { return rowView; }
         public ViewGroup getParentView() { return parentView; }
-
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            if (adapter.isInActionMode())
-            {
-                v.setBackgroundResource(actionModeBgResource);
-            }
-            else {
-                v.setBackgroundResource(defaultBackgroundResource);
-            }
-
-            return false;
-        }
 
         @Override
         public void onClick(View v) {
@@ -109,15 +93,10 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         public void setAdapter(MVVMRecyclerViewModelAdapter adapter) {
             this.adapter = adapter;
         }
-
-        public void setDefaultBackgroundResource(int defaultBackgroundResource) {
-            this.defaultBackgroundResource = defaultBackgroundResource;
-        }
-
-        public void setActionModeBgResource(int actionModeBgResource) {
-            this.actionModeBgResource = actionModeBgResource;
-        }
     }
+
+    private int defaultBackgroundResource = R.drawable.activated_selector;
+    private int actionModeBgResource = R.drawable.activated_selector_no_press;
 
     private SparseBooleanArray selectedPos = new SparseBooleanArray();
     private int selectedCnt = 0;
@@ -156,30 +135,52 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 		setData(lstVMs);
 	}
 
+    public void setDefaultBackgroundResource(int defaultBackgroundResource) {
+        this.defaultBackgroundResource = defaultBackgroundResource;
+    }
+
+    public void setActionModeBgResource(int actionModeBgResource) {
+        this.actionModeBgResource = actionModeBgResource;
+    }
+
     public void onClick(View v, int pos) {
         if (actionMode != null) {
+            v.setBackgroundResource(R.drawable.activated_selector_no_press);
             setItemChecked(pos, !isItemChecked(pos));
-            if (null != onLongClickCb)
+
+            if (null != onLongClickCb) {
+
                 onLongClickCb.onLongClick(v, pos);
+                notifyItemChanged(pos);
+            }
         }
-        else
-            if (null != onClickCb)
+        else {
+            v.setBackgroundResource(R.drawable.activated_selector);
+            if (null != onClickCb) {
                 onClickCb.onClick(v, pos);
+                notifyItemChanged(pos);
+            }
+        }
     }
 
     public boolean onLongClick(View v, int pos) {
         boolean ret = false;
         if ( (actionModeCb != null) && (actionMode == null) ) {
+            v.setBackgroundResource(R.drawable.activated_selector_no_press);
             setItemChecked(pos, !isItemChecked(pos));
 
             if (ctx instanceof Activity) {
                 ((Activity)ctx).startActionMode(getActionModeCb());
             }
         }
+        else {
+            v.setBackgroundResource(R.drawable.activated_selector);
+        }
 
         if (null != onLongClickCb)
             ret = onLongClickCb.onLongClick(v, pos);
 
+        notifyItemChanged(pos);
         return ret;
     }
 	
