@@ -1,9 +1,15 @@
 package com.privatesecuredata.arch.db.query;
 
+import com.privatesecuredata.arch.db.DbNameHelper;
+import com.privatesecuredata.arch.db.SqlDataField;
+
+import java.util.Date;
+
 /**
  * The QueryParameter holds the actual value which will be put into the SQL-query.
  */
 public class QueryParameter {
+    private SqlDataField.SqlFieldType fieldType;
     private String id;
     private String fieldName;
     private Object value;
@@ -26,12 +32,23 @@ public class QueryParameter {
      */
     public void setValue(Object obj) {
         this.value = filter == null ? obj : filter.filterValue(obj);
+
+        if (value instanceof Date)
+            fieldType = SqlDataField.SqlFieldType.DATE;
+        else
+            fieldType = SqlDataField.SqlFieldType.STRING;
     }
 
     /**
      * @return The value of the parameter
      */
     public Object value() { return value; }
+    public String getDbString() {
+        if (fieldType == SqlDataField.SqlFieldType.DATE)
+            return DbNameHelper.getDbDateString((Date)value);
+        else
+            return this.value.toString();
+    }
 
     /**
      * Creates a clone of the QueryParameter

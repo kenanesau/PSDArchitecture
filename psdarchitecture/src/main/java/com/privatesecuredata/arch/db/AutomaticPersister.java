@@ -397,12 +397,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 bind(sql, idx, valStr);
                 break;
             case DATE:
-                java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
                 val = fld.get(persistable);
-                valStr = null;
-                if (null != val)
-                    valStr = df.format((Date) val);
-                bind(sql, idx, valStr);
+                bind(sql, idx, DbNameHelper.getDbDateString((Date)val));
                 break;
             case BOOLEAN:
                 bind(sql, idx, fld.getBoolean(persistable) == true ? 1L : 0L);

@@ -79,7 +79,7 @@ public class Query<T> {
             if (null == para.value())
                 throw new ArgumentException(String.format("Parameter with ID \"%s\" has no value", para.id()));
 
-            args[i++] = para.value().toString();
+            args[i++] = para.getDbString();
         }
         return this.db.rawQuery(this.sql, args);
     }

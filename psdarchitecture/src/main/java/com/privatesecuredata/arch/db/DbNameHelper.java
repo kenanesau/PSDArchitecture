@@ -3,9 +3,13 @@ package com.privatesecuredata.arch.db;
 import com.privatesecuredata.arch.db.SqlDataField.SqlFieldType;
 
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 public class DbNameHelper {
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
+
 	public static String getTableName(Class<?> persistable)
 	{
         return null == persistable ? null : String.format("tbl_%s", persistable.getSimpleName().toLowerCase(Locale.US));
@@ -91,5 +95,15 @@ public class DbNameHelper {
         }
 
         return dbTypeName;
+    }
+
+    public static String getDbDateString(Date val)
+    {
+        java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
+        String valStr = null;
+        if (null != val)
+            valStr = df.format((Date) val);
+
+        return valStr;
     }
 }
