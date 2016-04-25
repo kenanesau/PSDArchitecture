@@ -671,6 +671,15 @@ public class PersistanceManager {
 //		}
 //	}
 
+    public void delete(Class type) {
+        try {
+            db.execSQL(String.format("DELETE FROM %s", DbNameHelper.getTableName(type)));
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
 	public <T extends IPersistable> void delete(T persistable) throws DBException
 	{
 		DbId<T> dbId = persistable.getDbId();
@@ -819,12 +828,12 @@ public class PersistanceManager {
      * Loads the object from the DB which references referencedObj (resolve a the DB-backwards-reference
      * which is usually not visible in the POJO-object-tree).
      *
-     * @param classObj Type of object to load
+     * @param referencingType Type of object to load
      * @param referencedObj Object wich is referenced by a type of object
      * @param <T>
      * @return Returns the object which references referencedObj
      */
-    public <T extends IPersistable> T loadReferencingObject(final Class<T> classObj, final IPersistable referencedObj) {
+    public <T extends IPersistable> T loadReferencingObject(final Class<T> referencingType, final IPersistable referencedObj) {
         if (null == referencedObj)
             throw new ArgumentException("Parameter referencedObj must not be null!");
 
@@ -832,7 +841,7 @@ public class PersistanceManager {
             @Override
             public PersisterDescription getDescription(PersistanceManager pm) {
                 PersisterDescription desc = new PersisterDescription(referencedObj.getClass());
-                desc.addSqlField(new SqlDataField(DbNameHelper.getForeignKeyFieldName(classObj), SqlDataField.SqlFieldType.LONG));
+                desc.addSqlField(new SqlDataField(DbNameHelper.getForeignKeyFieldName(referencingType), SqlDataField.SqlFieldType.LONG));
                 return desc;
             }
         }, "PSDARCH_GETPARENT");
@@ -845,12 +854,12 @@ public class PersistanceManager {
         if (csr.getCount() == 0)
             throw new DBException(String.format(
                     "Unable to find referencing Object of type '%s' for referenced Object of type '%s' id '%d'",
-                    classObj.getName(), referencedObj.getClass().getName(), referencedObj.getDbId().getId()));
+                    referencingType.getName(), referencedObj.getClass().getName(), referencedObj.getDbId().getId()));
 
         csr.moveToNext();
         long id = csr.getLong(1);
 
-        return load(classObj, id);
+        return load(referencingType, id);
     }
 
     private <T extends IPersistable> void __updateForeignKeyNoTransaction(IPersister<T> persister, T persistable, DbId<?> foreignKey) throws DBException

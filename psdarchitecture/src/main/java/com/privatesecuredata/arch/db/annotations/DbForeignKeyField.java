@@ -11,7 +11,6 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-
 public @interface DbForeignKeyField {
 	/**
 	 * If this is true, then a foreign key constraint is added 
