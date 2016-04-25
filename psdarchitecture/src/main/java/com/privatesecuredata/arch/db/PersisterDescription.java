@@ -43,7 +43,7 @@ public class PersisterDescription<T> {
         _foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
     }
 
-    protected String getTableName() {
+    public String getTableName() {
         return DbNameHelper.getTableName(_persistentType);
     }
 
@@ -54,7 +54,11 @@ public class PersisterDescription<T> {
         if (dbAnno.isMandatory())
             sqlForeignKeyField.setMandatory();
         Class<?> key = foreignKeyType;
-        _foreignKeyFields.put(key, sqlForeignKeyField);
+        addForeignKeyField(key, sqlForeignKeyField);
+    }
+
+    public void addForeignKeyField(Class foreignType, SqlForeignKeyField fld) {
+        _foreignKeyFields.put(foreignType, fld);
     }
 
     public Collection<SqlForeignKeyField> getForeignKeyFields() {

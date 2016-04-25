@@ -4,10 +4,9 @@ import com.privatesecuredata.arch.db.AbstractPersister;
 import com.privatesecuredata.arch.db.AutomaticPersister;
 import com.privatesecuredata.arch.db.OrderByTerm;
 import com.privatesecuredata.arch.db.PersistanceManager;
-import com.privatesecuredata.arch.db.SqlDataField;
+import com.privatesecuredata.arch.db.PersisterDescription;
 
 import java.util.LinkedList;
-import java.util.Map;
 
 /**
  * A QueryBuilder can be used to build queries. The Querybuilder is for setting up the
@@ -20,6 +19,26 @@ import java.util.Map;
  */
 public class QueryBuilder<T> {
 
+    public interface IDescriptionGetter {
+        PersisterDescription getDescription(PersistanceManager pm);
+    }
+
+    public static class DefaultDescriptionGetter implements IDescriptionGetter {
+        private Class type;
+
+        public DefaultDescriptionGetter(Class type) {
+            this.type = type;
+        }
+
+        @Override
+        public PersisterDescription getDescription(PersistanceManager pm) {
+            AutomaticPersister persister = (AutomaticPersister)pm.getIPersister(type);
+            PersisterDescription desc = persister.getDescription();
+
+            return desc;
+        }
+    }
+
     private Class type;
     private String queryId;
     /**
@@ -27,9 +46,14 @@ public class QueryBuilder<T> {
      */
     private QueryConditionContainer rootCondition = new QueryConditionContainer("root");
     private LinkedList<OrderByTerm> orderByTerms = new LinkedList<>();
+    private IDescriptionGetter descriptionGetter;
 
     public QueryBuilder(Class type, String queryId) {
-        this.type = type;
+        this(new DefaultDescriptionGetter(type), queryId);
+    }
+
+    public QueryBuilder(IDescriptionGetter getter, String queryId) {
+        this.descriptionGetter = getter;
         this.queryId = queryId;
     }
 
@@ -90,26 +114,32 @@ public class QueryBuilder<T> {
 
     public Query createQuery(PersistanceManager pm) {
         Query query = new Query(id());
-        AutomaticPersister persister = (AutomaticPersister)pm.getIPersister(type);
-        Map<String, SqlDataField> fields = persister.getFieldMap();
+        PersisterDescription desc = this.descriptionGetter.getDescription(pm);
 
         StringBuilder sb;
         OrderByTerm[] termAr = null;
         if (orderByTerms.size() > 0) {
             termAr = new OrderByTerm[orderByTerms.size()];
             orderByTerms.toArray(termAr);
-            sb = new StringBuilder(persister.getSelectAllStatement(termAr));
+            sb = new StringBuilder(
+                    AbstractPersister.createSelectAllStatement(
+                            desc.getTableName(),
+                            desc.getTableFields(),
+                            termAr));
         }
         else
-            sb = new StringBuilder(persister.getSelectAllStatement());
+            sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
+                    desc.getTableName(),
+                    desc.getTableFields(),
+                    null));
 
         sb.append(" WHERE ");
-        sb = rootCondition.append(fields, sb);
+        sb = rootCondition.append(desc.getFieldMap(), sb);
         query.addCondition(rootCondition);
 
         AbstractPersister.appendOrderByString(sb, termAr);
 
-        query.prepare(pm, persister, sb.toString());
+        query.prepare(pm, desc, sb.toString());
         /** maybe prohibit future changes...
         query.seal() **/
 

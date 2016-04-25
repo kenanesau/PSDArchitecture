@@ -34,7 +34,8 @@ public class QueryCondition implements IQueryCondition {
 
     public enum ConditionType {
         VALUE(1),
-        TYPE(1);
+        TYPE(2),
+        DBID(3);
 
         private int value;
 
@@ -80,8 +81,14 @@ public class QueryCondition implements IQueryCondition {
         this.params[0] = new QueryParameter(paraId, fieldName);
         this.condId = condId;
         op = Operation.EQUALS;
+        if (fieldName.equals("_id"))
+        {
+            setDbIdCondition();
+        }
     }
 
+    public void setDbIdCondition() { this.type = ConditionType.DBID; }
+    public boolean isDbIdCondition() { return this.type == ConditionType.DBID; }
     public void setTypeCondition() { this.type = ConditionType.TYPE; }
     public boolean isTypeCondition() { return this.type == ConditionType.TYPE; }
 
@@ -98,6 +105,10 @@ public class QueryCondition implements IQueryCondition {
         SqlDataField sqlField = null;
         if (isTypeCondition())
             sqlFieldName = DbNameHelper.getFieldName(params[0].fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
+        else if (isDbIdCondition()) {
+            sqlFieldName = params[0].fieldName();
+            fields.put("_id", new SqlDataField("_id", SqlDataField.SqlFieldType.LONG));
+        }
         else
             sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
 

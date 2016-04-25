@@ -3,9 +3,9 @@ package com.privatesecuredata.arch.db.query;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.privatesecuredata.arch.db.AutomaticPersister;
 import com.privatesecuredata.arch.db.DbNameHelper;
 import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 
@@ -58,11 +58,11 @@ public class Query<T> {
      * @param pm
      * @param sql
      */
-    public void prepare(PersistanceManager pm, AutomaticPersister persister, String sql) {
+    public void prepare(PersistanceManager pm, PersisterDescription description, String sql) {
         this.db = pm.getDb();
         this.sql = sql;
 
-        Map<String, SqlDataField> fields = persister.getFieldMap();
+        Map<String, SqlDataField> fields = description.getFieldMap();
         /**
          * Set default values
          */
