@@ -11,6 +11,7 @@ import com.privatesecuredata.arch.db.annotations.DbPartialClass;
 import com.privatesecuredata.arch.db.annotations.Persister;
 import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.db.query.QueryBuilder;
+import com.privatesecuredata.arch.db.query.QueryCondition;
 import com.privatesecuredata.arch.db.vmGlue.DBViewModelCommitListener;
 import com.privatesecuredata.arch.db.vmGlue.DbListViewModelFactory;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -813,6 +814,44 @@ public class PersistanceManager {
 
 		return persistable;
 	}
+
+    /**
+     * Loads the object from the DB which references referencedObj (resolve a the DB-backwards-reference
+     * which is usually not visible in the POJO-object-tree).
+     *
+     * @param classObj Type of object to load
+     * @param referencedObj Object wich is referenced by a type of object
+     * @param <T>
+     * @return Returns the object which references referencedObj
+     */
+    public <T extends IPersistable> T loadReferencingObject(final Class<T> classObj, final IPersistable referencedObj) {
+        if (null == referencedObj)
+            throw new ArgumentException("Parameter referencedObj must not be null!");
+
+        QueryBuilder qb = new QueryBuilder(new QueryBuilder.IDescriptionGetter() {
+            @Override
+            public PersisterDescription getDescription(PersistanceManager pm) {
+                PersisterDescription desc = new PersisterDescription(referencedObj.getClass());
+                desc.addSqlField(new SqlDataField(DbNameHelper.getForeignKeyFieldName(classObj), SqlDataField.SqlFieldType.LONG));
+                return desc;
+            }
+        }, "PSDARCH_GETPARENT");
+
+        qb.addCondition(new QueryCondition("_id"));
+        Query q = qb.createQuery(this);
+
+        q.setParameter("_id", referencedObj.getDbId().getId());
+        Cursor csr = q.run();
+        if (csr.getCount() == 0)
+            throw new DBException(String.format(
+                    "Unable to find referencing Object of type '%s' for referenced Object of type '%s' id '%d'",
+                    classObj.getName(), referencedObj.getClass().getName(), referencedObj.getDbId().getId()));
+
+        csr.moveToNext();
+        long id = csr.getLong(1);
+
+        return load(classObj, id);
+    }
 
     private <T extends IPersistable> void __updateForeignKeyNoTransaction(IPersister<T> persister, T persistable, DbId<?> foreignKey) throws DBException
     {
