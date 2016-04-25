@@ -191,10 +191,13 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
     public static StringBuilder createSelectAllStatement(String tableName, Collection<SqlDataField> fields, OrderByTerm... terms)
     {
-        StringBuilder sql = new StringBuilder("SELECT ").append(tableName).append("._id, ");
+        StringBuilder sql = new StringBuilder("SELECT ").append(tableName).append("._id ");
 
         int fieldCount = 0;
         Hashtable<Class, SqlDataField> references = new Hashtable<>();
+
+        if (fields.size() > 0)
+            sql.append(", ");
         for(SqlDataField fld : fields)
         {
             if (fieldCount > 0)
