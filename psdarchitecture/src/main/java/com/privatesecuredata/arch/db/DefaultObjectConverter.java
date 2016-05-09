@@ -26,13 +26,12 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
 
     private PersisterDescription _oldDesc;
     private PersisterDescription _newDesc;
-    private ConversionManager _convMan;
 
     public DefaultObjectConverter(ConversionManager convMan, PersisterDescription newDescription, PersisterDescription oldDescription)
     {
         _oldDesc = oldDescription;
         _newDesc = newDescription;
-        _convMan = convMan;
+        setConversionManager(convMan);
     }
 
     public void registerObjectConverter(BaseObjectConverter other) {
@@ -80,7 +79,10 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
             ObjectRelation oldRel = _oldDesc.getOneToOneRelation(newRelation.getField().getName());
             if (null != oldRel) {
                 IPersistable oldData = (IPersistable) oldRel.getField().get(oldObject);
-                newData = _convMan.__convertNoSave(newRelation.getField().getType(), oldData);
+                if (null != oldData) {
+                    Class newType = getConversionManager().getMappedNewType(oldData.getClass());
+                    newData = getConversionManager().__convertNoSave(newType, oldData);
+                }
             }
             else {
                 new DBException(String.format("Unable to convert object of type '%s', no converter found for field '%s'",
@@ -91,7 +93,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         }
 
         if (null != newData)
-            _convMan.save(newData);
+            getConversionManager().save(newData);
         newRelation.getField().set(newObject, newData);
     }
 
@@ -100,15 +102,16 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         ObjectRelation oldRel = _oldDesc.getOneToManyRelation(newRelation.getField().getName());
         IPersistable oldData;
         IObjectRelationConverter<T> converter = _oneToManyConverterMap.get(newRelation.getField().getName());
+        ConversionManager convMan = getConversionManager();
 
         Class typeOfData = oldRel.getReferencedListType();
-        Cursor csr = _convMan.getCursor((oldObject).getDbId(), oldRel.getReferencingType(), typeOfData);
+        Cursor csr = convMan.getCursor((oldObject).getDbId(), oldRel.getReferencingType(), typeOfData);
         IPersistable newData;
         for (int i=0; i<csr.getCount(); i++)
         {
-            oldData = _convMan.load(typeOfData, csr, i);
+            oldData = convMan.load(typeOfData, csr, i);
             if (null == converter) {
-                newData = _convMan.__convertNoSave(newRelation.getReferencedListType(), oldData);
+                newData = convMan.__convertNoSave(newRelation.getReferencedListType(), oldData);
                 newData.getDbId().setDirty();
             }
             else {
@@ -117,10 +120,10 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
 
             DbId id = newObject.getDbId();
             //id.setDirty();
-            _convMan.saveAndUpdateForeignKey(newData, id);
+            convMan.saveAndUpdateForeignKey(newData, id);
         }
 
-        _convMan.updateCollectionProxySize(newObject.getDbId(), newRelation.getField(), csr.getCount());
+        convMan.updateCollectionProxySize(newObject.getDbId(), newRelation.getField(), csr.getCount());
     }
 
     public <T extends IPersistable> T convert(IPersistable oldObject) {
@@ -129,6 +132,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         try {
             Class<T> type = _newDesc.getType();
             newObject = getConversionManager().createNew(type);
+            ConversionManager convMan = getConversionManager();
 
             Collection<SqlDataField> fields = _newDesc.getTableFields();
             for (SqlDataField newSqlField : fields) {
@@ -148,7 +152,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
                 else
                     fldConverter.convertField(newSqlField, newObject, _oldDesc, oldObject);
             }
-            _convMan.save(newObject);
+            convMan.save(newObject);
 
             Collection<ObjectRelation> oneToOneRels = _newDesc.getOneToOneRelations();
             for (ObjectRelation newOneToOneRel : oneToOneRels)
@@ -157,7 +161,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
             }
 
             newObject.getDbId().setDirty();
-            _convMan.save(newObject);
+            convMan.save(newObject);
 
             Collection<ObjectRelation> oneToManyRels = _newDesc.getOneToManyRelations();
             for (ObjectRelation newOneToManyRel : oneToManyRels)
