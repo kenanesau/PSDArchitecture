@@ -21,14 +21,14 @@ public class ObjectRelation {
      *
      * @param fld
      * @param referencedListType
-     * @param refereningType
+     * @param referencingType
      * @param deleteChildren
      */
-    public ObjectRelation(Field fld, Class<?> referencedListType,  Class<?> refereningType, boolean deleteChildren)
+    public ObjectRelation(Field fld, Class<?> referencedListType,  Class<?> referencingType, boolean deleteChildren)
     {
         _fld = fld;
         _referencedListType = referencedListType;
-        _referencingType = refereningType;
+        _referencingType = referencingType;
         _deleteChildren = deleteChildren;
     }
 
