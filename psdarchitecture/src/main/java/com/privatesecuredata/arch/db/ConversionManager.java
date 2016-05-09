@@ -2,6 +2,9 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.exceptions.DBException;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -16,6 +19,11 @@ import java.util.Map;
 public class ConversionManager {
 
     private Map<Class<?>, DefaultObjectConverter> _converterMap = new LinkedHashMap<>();
+    /**
+     * Map: old Type -> new Type
+     */
+    private Map<Class<?>, Class<?>> _oldToNewType = new LinkedHashMap<>();
+
     private PersistanceManager _oldPm;
     private PersistanceManager _newPm;
 
@@ -26,6 +34,12 @@ public class ConversionManager {
         for (Class[] types : convDesc.getEntityMappings()) {
             Class newType = types[0];
             Class oldType = types[1];
+            _oldToNewType.put(oldType, newType);
+            if (newType.equals(oldType)) {
+                throw new DBException(String.format("Error in '%s' type '%s' is defined as old and new!!",
+                        convDesc.getClass().getName(), oldType.getName()));
+            }
+
             PersisterDescription oldDesc = oldPm.getIPersister(oldType).getDescription();
             PersisterDescription newDesc = newPm.getIPersister(newType).getDescription();
 
@@ -53,6 +67,20 @@ public class ConversionManager {
                 e.printStackTrace();
             }
         }
+
+        Class[] peristentTypes = newPm.getDbDescription().getPersistentTypes();
+        for( Class type : peristentTypes) {
+            if (!hasConverter(type)) {
+                IPersister persister = oldPm.getIPersister(type);
+                if (null == persister)
+                    continue;
+
+                _oldToNewType.put(type, type);
+                PersisterDescription oldDesc = persister.getDescription();
+                PersisterDescription newDesc = newPm.getIPersister(type).getDescription();
+                registerDefaultConverter(type, new DefaultObjectConverter(this, newDesc, oldDesc));
+            }
+        }
     }
 
     public ConversionManager(PersistanceManager oldPm, PersistanceManager newPm) {
@@ -65,6 +93,10 @@ public class ConversionManager {
         _converterMap.put(type, conv);
     }
 
+    public boolean hasConverter(Class<?> type) {
+        return _converterMap.containsKey(type);
+    }
+
     public void registerObjectConverter(Class<?> type, BaseObjectConverter conv)
     {
         DefaultObjectConverter defaultConverter = _converterMap.get(type);
@@ -73,12 +105,18 @@ public class ConversionManager {
     }
 
     protected IPersistable __convertNoSave(Class<?> newType, IPersistable oldData) {
+        if (null == oldData)
+            throw new ArgumentException("Parameter oldData must not be null");
+
         DefaultObjectConverter converter = _converterMap.get(newType);
 
         return converter.convert(oldData);
     }
 
     public <T extends IPersistable> DbId<T> convert(Class<?> newType, IPersistable oldData) {
+        if (null == oldData)
+            throw new ArgumentException("Parameter oldData must not be null");
+
         IPersistable obj = __convertNoSave(newType, oldData);
         _newPm.save((IPersistable)obj);
 
@@ -119,5 +157,9 @@ public class ConversionManager {
     public <T> T createNew(Class type) {
         IPersister persister = _newPm.getPersister(type);
         return (T)persister.createPersistable();
+    }
+
+    public Class getMappedNewType(Class<? extends IPersistable> oldType) {
+        return _oldToNewType.get(oldType);
     }
 }
