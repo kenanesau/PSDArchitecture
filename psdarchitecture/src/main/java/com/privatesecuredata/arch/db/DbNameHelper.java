@@ -77,7 +77,7 @@ public class DbNameHelper {
             StringBuilder strBuilder = new StringBuilder();
             for (int i=0; i<tokens.length; i++)
             {
-                if (i == tokens.length - 1) {
+                if (i == tokens.length - 2) {
                     if (tokens[i].matches("^[vV]\\d+"))
                         continue;
                 }
