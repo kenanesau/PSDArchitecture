@@ -27,6 +27,10 @@ public class PersisterDescription<T> {
      * (Counter-part of an OneToMany- or an OneToOne-Relation of another Persister
      */
     private Hashtable<Class<?>, SqlForeignKeyField> _foreignKeyFields;
+    /**
+     * DBType-String -> foreign-Key-field
+     */
+    private Hashtable<String, SqlForeignKeyField> _foreignKeyFieldsDbType;
 
     /**
      * List of Fields to be filled in an persistable and the corresponding types
@@ -41,6 +45,7 @@ public class PersisterDescription<T> {
         _thisToOneRelations = new Hashtable<>();
         _oneToManyRelations = new Hashtable<>();
         _foreignKeyFields = new Hashtable<Class<?>, SqlForeignKeyField>();
+        _foreignKeyFieldsDbType = new Hashtable<String, SqlForeignKeyField>();
     }
 
     public String getTableName() {
@@ -59,6 +64,7 @@ public class PersisterDescription<T> {
 
     public void addForeignKeyField(Class foreignType, SqlForeignKeyField fld) {
         _foreignKeyFields.put(foreignType, fld);
+        _foreignKeyFieldsDbType.put(DbNameHelper.getForeignKeyFieldName(foreignType), fld);
     }
 
     public Collection<SqlForeignKeyField> getForeignKeyFields() {
@@ -149,7 +155,11 @@ public class PersisterDescription<T> {
 
     SqlForeignKeyField getForeignKeyField(Class foreignType)
     {
-        return _foreignKeyFields.get(foreignType);
+        SqlForeignKeyField fld = _foreignKeyFields.get(foreignType);
+        if (null == fld)
+            fld = _foreignKeyFieldsDbType.get(DbNameHelper.getForeignKeyFieldName(foreignType));
+
+        return fld;
     }
 
     void extend(PersisterDescription<?> other)
@@ -163,6 +173,7 @@ public class PersisterDescription<T> {
         }
 
         _foreignKeyFields.putAll(other._foreignKeyFields);
+        _foreignKeyFieldsDbType.putAll(other._foreignKeyFieldsDbType);
 
         for (ObjectRelation rel : other._thisToOneRelations.values())
             _thisToOneRelations.put(rel.getField().getName(), rel);
