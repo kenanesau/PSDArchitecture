@@ -32,7 +32,7 @@ public class MVVMActivity extends AppCompatActivity
 	
 	public PersistanceManager createPM(IDbDescription desc)
 	{
-		PersistanceManagerLocator.initializeDB(desc);
+		PersistanceManagerLocator.initializePM(desc);
 		PersistanceManagerLocator pmLoc = PersistanceManagerLocator.getInstance();
 		return pmLoc.getPersistanceManager(this, desc);
 	}

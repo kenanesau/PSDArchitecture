@@ -27,12 +27,12 @@ public class PersistanceManagerLocator {
 		return instance;
 	}
 
-    public static void initializeDB(IDbDescription dbDesc)
+    public static void initializePM(IDbDescription dbDesc)
     {
-        initializeDB(dbDesc, null);
+        initializePM(dbDesc, null);
     }
 	
-	public static void initializeDB(IDbDescription dbDesc, IDbHistoryDescription dbHistory) throws DBException {
+	public static void initializePM(IDbDescription dbDesc, IDbHistoryDescription dbHistory) throws DBException {
 		if (!pmMap.containsKey(dbDesc))
 		{
 			PersistanceManager pm = new PersistanceManager(dbDesc, dbHistory);
@@ -164,7 +164,7 @@ public class PersistanceManagerLocator {
 
     public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc, IDbHistoryDescription dbHistory) throws DBException {
         if (!pmMap.containsKey(dbDesc))
-            initializeDB(dbDesc, dbHistory);
+            initializePM(dbDesc, dbHistory);
 
         PersistanceManager pm = pmMap.get(dbDesc);
         if (!pm.isInitialized()) {
@@ -179,7 +179,7 @@ public class PersistanceManagerLocator {
 
 	public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc) throws DBException {
         if (!pmMap.containsKey(dbDesc))
-            initializeDB(dbDesc);
+            initializePM(dbDesc);
 
 		PersistanceManager pm = pmMap.get(dbDesc);
 		if (!pm.isInitialized()) {
