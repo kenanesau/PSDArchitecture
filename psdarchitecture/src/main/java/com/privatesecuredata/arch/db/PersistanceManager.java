@@ -63,6 +63,7 @@ public class PersistanceManager {
 	}
 
     public IDbHistoryDescription getDbHistory() { return dbHistory; }
+    public IDbDescription getDbDescription() { return dbDesc; }
 	
 	/**
 	 * This method initializes the database. 
@@ -216,12 +217,26 @@ public class PersistanceManager {
 
     public IPersister getIPersister(Class classObj)
     {
-        return (IPersister)persisterMap.get(classObj);
+        IPersister persister = persisterMap.get(classObj);
+        if(null == persister) {
+            Class newType = getPersistentType(DbNameHelper.getDbTypeName(classObj));
+            if (null != newType)
+                persister = persisterMap.get(newType);
+        }
+
+        return persister;
     }
 
 	public <T extends IPersistable> IPersister<T> getPersister(Class<T> classObj)
 	{
-		return (IPersister<T>)persisterMap.get(classObj);
+		IPersister<T> persister = (IPersister<T>)persisterMap.get(classObj);
+        if(null == persister) {
+            Class newType = getPersistentType(DbNameHelper.getDbTypeName(classObj));
+            if (null != newType)
+                persister = (IPersister<T>)persisterMap.get(newType);
+        }
+
+        return persister;
 	}
 
     public <T extends IPersistable> IPersister<T> getPersister(IPersistable persistable)
@@ -280,8 +295,10 @@ public class PersistanceManager {
                     conv.convert(convMan);
                 }
                 catch (Exception ex) {
-                    Log.e(getClass().getName(), String.format("Error converting '%s' to new Version '%d' Instance '%d'",
-                            dbDesc.getName(), newVersion, instance));
+                    String errMsg = String.format("Error converting '%s' to new Version '%d' Instance '%d'",
+                            dbDesc.getName(), newVersion, instance);
+                    Log.e(getClass().getName(), errMsg);
+                    throw new DBException(errMsg, ex);
                 }
                 finally {
                     if (null != oldPm)
@@ -521,11 +538,17 @@ public class PersistanceManager {
             Class classObj = (Class) persistable.getClass();
             IPersister persister = getPersister(classObj);
 
+            if (null == persister)
+                throw new DBException(String.format("Error could not find persister for type=%s",
+                        classObj.getName()));
+
             __saveNoTransaction(persister, persistable);
             db.setTransactionSuccessful();
         }
         catch (Exception ex) {
-            ex.printStackTrace();
+            throw new DBException(
+                    String.format("Error saving an object of type=%s",
+                            persistable.getClass().getName()), ex);
         }
         finally
         {
@@ -831,7 +854,7 @@ public class PersistanceManager {
      * @param referencingType Type of object to load
      * @param referencedObj Object wich is referenced by a type of object
      * @param <T>
-     * @return Returns the object which references referencedObj
+     * @return Returns the object which references referencedObj or null if none is found
      */
     public <T extends IPersistable> T loadReferencingObject(final Class<T> referencingType, final IPersistable referencedObj) {
         if (null == referencedObj)
@@ -852,9 +875,7 @@ public class PersistanceManager {
         q.setParameter("_id", referencedObj.getDbId().getId());
         Cursor csr = q.run();
         if (csr.getCount() == 0)
-            throw new DBException(String.format(
-                    "Unable to find referencing Object of type '%s' for referenced Object of type '%s' id '%d'",
-                    referencingType.getName(), referencedObj.getClass().getName(), referencedObj.getDbId().getId()));
+            return null;
 
         csr.moveToNext();
         long id = csr.getLong(1);
