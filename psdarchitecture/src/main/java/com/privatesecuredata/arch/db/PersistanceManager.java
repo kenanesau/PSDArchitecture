@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.util.Pair;
 
+import com.jakewharton.rxrelay.PublishRelay;
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
 import com.privatesecuredata.arch.db.annotations.Persister;
 import com.privatesecuredata.arch.db.query.Query;
@@ -30,6 +31,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+import rx.Observer;
+
 /**
  * 
  * @author Kenan Esau
@@ -44,6 +47,23 @@ import java.util.Map;
  */
 public class PersistanceManager {
 
+    public enum Status {
+        UNINITIALIZED(1),
+        INITIALIZINGPM(2),
+        INITIALIZEDPM(3),
+        CREATINGDB(4),
+        CREATEDDB(5),
+        UPGRADINGDB(6),
+        OPERATIONAL(7),
+        ERROR(255);
+
+        private int value;
+
+        private Status(int value) {
+            this.value = value;
+        }
+    }
+
     private IDbDescription dbDesc;
     private IDbHistoryDescription dbHistory;
     private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
@@ -56,16 +76,47 @@ public class PersistanceManager {
     private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
     private HashMap<String, QueryBuilder> queries = new HashMap<>();
 
+    private PublishRelay<StatusMessage> statusRelay = PublishRelay.create();
+
+    public PersistanceManager(IDbDescription dbDesc, IDbHistoryDescription dbHistory,
+                              Observer<StatusMessage> statusObserver) {
+        statusRelay.subscribe(statusObserver);
+        statusRelay.call(new StatusMessage(PersistanceManager.Status.INITIALIZINGPM));
+        init(dbDesc, dbHistory);
+    }
+
     public PersistanceManager(IDbDescription dbDesc, IDbHistoryDescription dbHistory)
 	{
-		this.dbDesc = dbDesc;
-        this.dbHistory = dbHistory;
+		init(dbDesc, dbHistory);
 	}
+
+    private void init(IDbDescription dbDesc, IDbHistoryDescription dbHistory)
+    {
+        this.dbDesc = dbDesc;
+        this.dbHistory = dbHistory;
+        statusRelay.call(new StatusMessage(Status.UNINITIALIZED, "PersistanceManager created"));
+    }
 
     public IDbHistoryDescription getDbHistory() { return dbHistory; }
     public IDbDescription getDbDescription() { return dbDesc; }
-	
-	/**
+
+    public PublishRelay<StatusMessage> getStatusRelay() {
+        return statusRelay;
+    }
+
+    public void publishStatus(StatusMessage msg) {
+        statusRelay.call(msg);
+    }
+
+    public void publishStatus(String msg, Exception ex) {
+        if (statusRelay.hasObservers()) {
+            statusRelay.call(new StatusMessage(Status.ERROR, msg, ex));
+        }
+        else
+            throw new DBException(msg, ex);
+    }
+
+    /**
 	 * This method initializes the database. 
 	 * This means:
 	 * - open the database
@@ -74,8 +125,9 @@ public class PersistanceManager {
 	 * @param ctx
 	 * @throws DBException
 	 */
-	public void initialize(Context ctx) throws DBException
+	public void initializeDB(Context ctx) throws DBException
 	{
+        publishStatus(new StatusMessage(Status.CREATINGDB));
         int version = -1;
 
 		try {
@@ -134,10 +186,12 @@ public class PersistanceManager {
                 cursorLoaderFactories.clear();
 				this.initialized = true;
 			}
+
+            publishStatus(new StatusMessage(Status.CREATEDDB));
 		}
 		catch (Exception ex)
 		{
-			throw new DBException("Error initializing Persistance-Manager", ex);
+            publishStatus("Error initializing Persistance-Manager", ex);
 		}
 	}
 	
@@ -277,8 +331,9 @@ public class PersistanceManager {
 
 	public void onUpgrade(Context ctx, int oldVersion, int newVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) {
         if (!isInitialized())
-            initialize(ctx);
+            initializeDB(ctx);
 
+        publishStatus(new StatusMessage(Status.UPGRADINGDB));
         IDbHistoryDescription history = getDbHistory();
         PersistanceManager oldPm = null;
 
@@ -290,6 +345,11 @@ public class PersistanceManager {
                     Map<Integer, IConversionDescription> conversionDescriptions = history.getDbConversions();
                     IConversionDescription conv = conversionDescriptions.get(newVersion);
 
+                    String msg = String.format("Upgrading DB '%s' Version %d Instance %d",
+                            oldDescription.getName(),
+                            oldDescription.getVersion(),
+                            oldDescription.getInstance());
+                    publishStatus(new StatusMessage(Status.UPGRADINGDB, msg));
                     oldPm = PersistanceManagerLocator.getInstance().getPersistanceManager(ctx, oldDescription, history);
                     ConversionManager convMan = new ConversionManager(oldPm, this, conv);
                     conv.convert(convMan);
@@ -298,7 +358,7 @@ public class PersistanceManager {
                     String errMsg = String.format("Error converting '%s' to new Version '%d' Instance '%d'",
                             dbDesc.getName(), newVersion, instance);
                     Log.e(getClass().getName(), errMsg);
-                    throw new DBException(errMsg, ex);
+                    publishStatus(errMsg, ex);
                 }
                 finally {
                     if (null != oldPm)

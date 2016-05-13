@@ -13,12 +13,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import rx.Observer;
+
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
 	private static HashMap<IDbDescription, PersistanceManager> pmMap = new HashMap<IDbDescription, PersistanceManager>();
-	
+
 	private PersistanceManagerLocator() {}
-	
+
 	public static PersistanceManagerLocator getInstance()
 	{
 		if (null == instance) 
@@ -29,13 +31,19 @@ public class PersistanceManagerLocator {
 
     public static void initializePM(IDbDescription dbDesc)
     {
-        initializePM(dbDesc, null);
+        initializePM(dbDesc, null, null);
     }
-	
-	public static void initializePM(IDbDescription dbDesc, IDbHistoryDescription dbHistory) throws DBException {
+
+    public static void initializePM(IDbDescription dbDesc, IDbHistoryDescription dbHistory)
+    {
+        initializePM(dbDesc, dbHistory, null);
+    }
+
+	public static void initializePM(IDbDescription dbDesc, IDbHistoryDescription dbHistory,
+                                    Observer<StatusMessage> statusObserver) throws DBException {
 		if (!pmMap.containsKey(dbDesc))
 		{
-			PersistanceManager pm = new PersistanceManager(dbDesc, dbHistory);
+            PersistanceManager pm = new PersistanceManager(dbDesc, dbHistory, statusObserver);
 			pmMap.put(dbDesc, pm);
 
 			for(Class<?> classObj : dbDesc.getPersisterTypes())
@@ -72,16 +80,26 @@ public class PersistanceManagerLocator {
                     pm.registerQuery(queryBuilder);
 
                 } catch (Exception e) {
-                    throw new ArgumentException(
-                            String.format("unable to create or register Querybuilder of type \"%s\"",
-                                    queryBuilderType.getName()));
+                    String msg = String.format("unable to create or register Querybuilder of type \"%s\"",
+                            queryBuilderType.getName());
+                    if (statusObserver == null)
+                        throw new ArgumentException(msg, e);
+                    else {
+                        Exception ex = new ArgumentException(msg, e);
+
+                        if (statusObserver != null)
+                            pm.publishStatus(new StatusMessage(PersistanceManager.Status.ERROR, msg, ex));
+                    }
                 }
             }
+
+            pm.publishStatus(new StatusMessage(PersistanceManager.Status.INITIALIZEDPM));
 		}
 	}
 
     protected void checkAndDoUpgrade(PersistanceManager pm, Context ctx, IDbDescription dbDesc)
     {
+        pm.publishStatus(new StatusMessage(PersistanceManager.Status.UPGRADINGDB));
         /** Version -> HashMap (Instance -> dbName) **/
         HashMap<Integer, HashMap<Integer, String>> dbNames = new LinkedHashMap<>();
         int highestDbVersion = 0;
@@ -159,38 +177,42 @@ public class PersistanceManagerLocator {
                     String.format("Current DB version 'V%d' is newer than that of the App 'V%d'",
                             highestDbVersion, dbDesc.getVersion()));*/
         }
-
     }
 
+    public PersistanceManager getPersistanceManager(Context ctx,
+                                                    IDbDescription dbDesc,
+                                                    IDbHistoryDescription dbHistory,
+                                                    Observer<StatusMessage> statusObserver) throws DBException {
+
+        return init(ctx, dbDesc, dbHistory, statusObserver);
+    }
+
+
     public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc, IDbHistoryDescription dbHistory) throws DBException {
+        return init(ctx, dbDesc, dbHistory, null);
+    }
+
+	public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc) throws DBException {
+        return init(ctx, dbDesc, null, null);
+	}
+
+    private PersistanceManager init(Context ctx, IDbDescription dbDesc,
+                                    IDbHistoryDescription dbHistory, Observer<StatusMessage> statusObserver) throws DBException {
         if (!pmMap.containsKey(dbDesc))
-            initializePM(dbDesc, dbHistory);
+            initializePM(dbDesc, dbHistory, statusObserver);
 
         PersistanceManager pm = pmMap.get(dbDesc);
         if (!pm.isInitialized()) {
             checkAndDoUpgrade(pm, ctx, dbDesc);
+            pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
         }
         if (!pm.isInitialized()) {
-            pm.initialize(ctx);
+            pm.initializeDB(ctx);
+            pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
         }
 
         return pm;
     }
-
-	public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc) throws DBException {
-        if (!pmMap.containsKey(dbDesc))
-            initializePM(dbDesc);
-
-		PersistanceManager pm = pmMap.get(dbDesc);
-		if (!pm.isInitialized()) {
-            checkAndDoUpgrade(pm, ctx, dbDesc);
-        }
-        if (!pm.isInitialized()) {
-            pm.initialize(ctx);
-        }
-
-		return pm;
-	}
 
     public void clear() {
         for(PersistanceManager pm : pmMap.values())
