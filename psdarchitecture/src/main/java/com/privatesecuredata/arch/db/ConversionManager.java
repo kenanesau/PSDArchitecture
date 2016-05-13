@@ -138,6 +138,14 @@ public class ConversionManager {
         _newPm.saveAndUpdateForeignKey(object, foreignKey);
     }
 
+    /**
+     * Load object from cursor from the old DB
+     * @param type type to load
+     * @param csr Cursor
+     * @param pos Position in cursor
+     * @param <T> generic parameter
+     * @return new object
+     */
     public <T extends IPersistable> T load(Class type, Cursor csr, int pos)
     {
         IPersister persister = _oldPm.getPersister(type);
@@ -148,17 +156,34 @@ public class ConversionManager {
         _newPm.updateCollectionProxySize(persistableId, field, newCollSize);
     }
 
+    /**
+     * Save object in the new DB
+     *
+     * @param newObject
+     * @param <T>
+     */
     public <T extends IPersistable> void save(T newObject) {
         _newPm.save(newObject);
     }
 
     public PersistanceManager getOldPm() { return this._oldPm; }
 
+    /**
+     * Create a new object of type
+     * @param type type to create object from
+     * @param <T> generic parameter
+     * @return new object
+     */
     public <T> T createNew(Class type) {
         IPersister persister = _newPm.getPersister(type);
         return (T)persister.createPersistable();
     }
 
+    /**
+     * Return the corresponding new type of an old type
+     * @param oldType the old type
+     * @return the new type
+     */
     public Class getMappedNewType(Class<? extends IPersistable> oldType) {
         return _oldToNewType.get(oldType);
     }

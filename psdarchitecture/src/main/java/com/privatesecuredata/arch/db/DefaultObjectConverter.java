@@ -9,15 +9,30 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * Class for converting objects of "old" type to "new" ones
+ * Class for converting whole objects of "old" type to "new" ones.
+ *
+ * For each type in the new DB one DefaultObjectConverter is registered at the ConversionManager.
+ * For each change of a type a BaseObjectConverter containing the special rules (IFieldConverter
+ * or IObjectRelationConverter) is registered with the DefaultObjectConverter of that type.
+ *
+ * To register these special rules create a new class deriving from BaseObjectConverter and register
+ * all special rules in its constructor. Add this new class to your IConversionDescription
  */
 public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectConverter<T> {
 
+    /**
+     * Interface for converting single fields of an object
+     * @param <T>
+     */
     public interface IFieldConverter<T extends IPersistable> {
         void convertField (SqlDataField newSqlField, T newObject,
                            PersisterDescription oldDesc, Object oldObject);
     }
 
+    /**
+     * Interface for converting all kinds of references to other objects
+     * @param <U>
+     */
     public interface IObjectRelationConverter<U extends IPersistable> {
         IPersistable convertObjectRelation (ObjectRelation newRelation,
                                             PersisterDescription oldDesc,
