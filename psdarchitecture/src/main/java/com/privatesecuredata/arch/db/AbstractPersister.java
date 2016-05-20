@@ -135,7 +135,9 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 	public T load(long id) throws DBException {
 		Cursor csr = getDb().rawQuery(getSelectSingleSqlString(),
                                       new String[] { Long.toString(id) } );
-		return rowToObject(0, csr);
+		T res = rowToObject(0, csr);
+        csr.close();
+        return  res;
 	}
 
     public static StringBuilder appendOrderByString(StringBuilder sb, OrderByTerm[] orderByTerms)
