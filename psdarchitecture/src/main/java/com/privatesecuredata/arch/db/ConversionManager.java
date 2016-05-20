@@ -18,11 +18,16 @@ import java.util.Map;
  */
 public class ConversionManager {
 
+    /**
+     * New type -> DefaultObjectConverter
+     */
     private Map<Class<?>, DefaultObjectConverter> _converterMap = new LinkedHashMap<>();
     /**
      * Map: old Type -> new Type
      */
     private Map<Class<?>, Class<?>> _oldToNewType = new LinkedHashMap<>();
+
+    private Map<DbId, DbId> _oldIdToNewId = new LinkedHashMap();
 
     private PersistanceManager _oldPm;
     private PersistanceManager _newPm;
@@ -104,7 +109,7 @@ public class ConversionManager {
         defaultConverter.registerObjectConverter(conv);
     }
 
-    protected IPersistable __convertNoSave(Class<?> newType, IPersistable oldData) {
+    protected IPersistable __convert(Class<?> newType, IPersistable oldData) {
         if (null == oldData)
             throw new ArgumentException("Parameter oldData must not be null");
 
@@ -117,10 +122,22 @@ public class ConversionManager {
         if (null == oldData)
             throw new ArgumentException("Parameter oldData must not be null");
 
-        IPersistable obj = __convertNoSave(newType, oldData);
-        _newPm.save((IPersistable)obj);
+        IPersistable obj = __convert(newType, oldData);
+        //_newPm.save((IPersistable)obj);
 
         return obj.getDbId();
+    }
+
+    public void convert(Class<?> newType, Cursor csr) {
+        if (null == csr)
+            throw new ArgumentException("Parameter csr must not be null");
+
+        for (int i=0; i<csr.getCount(); i++) {
+            DefaultObjectConverter converter = _converterMap.get(newType);
+
+            IPersistable oldObj = load(converter.getOldDesc().getType(), csr, i);
+            convert(newType, oldObj);
+        }
     }
 
     public <T extends IPersistable> T convertAndLoad(Class<?> newType, IPersistable oldData) {
@@ -133,23 +150,25 @@ public class ConversionManager {
         return _oldPm.getCursor(foreignKey, referencingType, referencedType);
     }
 
-    public void saveAndUpdateForeignKey(IPersistable object, DbId<?> foreignKey)
+    public void updateForeignKey(IPersistable object, DbId<?> foreignKey)
     {
-        _newPm.saveAndUpdateForeignKey(object, foreignKey);
+        _newPm.updateForeignKey(object, foreignKey);
     }
 
     /**
      * Load object from cursor from the old DB
-     * @param type type to load
+     * @param oldType oldType to load
      * @param csr Cursor
      * @param pos Position in cursor
      * @param <T> generic parameter
      * @return new object
      */
-    public <T extends IPersistable> T load(Class type, Cursor csr, int pos)
+    public <T extends IPersistable> T load(Class oldType, Cursor csr, int pos)
     {
-        IPersister persister = _oldPm.getPersister(type);
-        return (T)persister.rowToObject(pos, csr);
+        IPersister persister = _oldPm.getPersister(oldType);
+        T res = (T)persister.rowToObject(pos, csr);
+
+        return res;
     }
 
     public void updateCollectionProxySize(DbId persistableId, Field field, long newCollSize) {
@@ -166,6 +185,25 @@ public class ConversionManager {
         _newPm.save(newObject);
     }
 
+    /**
+     * Save object to the new DB and track its old an new DB-Id
+     *
+     * @param oldObj reference to the old object
+     * @param newObject reference to the new object
+     * @param <T>
+     */
+    public <T extends IPersistable> void saveAndTrack(IPersistable oldObj, T newObject) {
+        _newPm.save(newObject);
+
+        if (!_oldIdToNewId.containsKey(oldObj.getDbId())) {
+            _oldIdToNewId.put(oldObj.getDbId(), newObject.getDbId());
+        }
+    }
+
+    /**
+     * Retrun the Persistancemanager of the old DB
+     * @return PM of old DB
+     */
     public PersistanceManager getOldPm() { return this._oldPm; }
 
     /**
@@ -186,5 +224,38 @@ public class ConversionManager {
      */
     public Class getMappedNewType(Class<? extends IPersistable> oldType) {
         return _oldToNewType.get(oldType);
+    }
+
+    /**
+     * Check if the object wich is passed as parameter was already
+     * converted to the new db
+     *
+     * @param oldObject
+     * @return true if it was already converted, false otherwise
+     */
+    public boolean isConverted(IPersistable oldObject) {
+        return _oldIdToNewId.containsKey(oldObject.getDbId());
+    }
+
+    /**
+     * Load an object from the new DB
+     *
+     * @param newDbId
+     * @param <T>
+     * @return The new object
+     */
+    public <T extends IPersistable> T loadNewObject(DbId<T> newDbId) {
+        return _newPm.load(newDbId);
+    }
+
+    /**
+     * Load a new object from the new DB by providing its old object
+     *
+     * @param oldObject Reference to the old object
+     * @param <T>
+     * @return the new object
+     */
+    public <T extends IPersistable> T loadCorrespondingNewObject(IPersistable oldObject) {
+        return _newPm.load(_oldIdToNewId.get(oldObject.getDbId()));
     }
 }

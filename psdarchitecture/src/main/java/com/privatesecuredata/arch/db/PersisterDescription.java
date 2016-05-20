@@ -21,6 +21,7 @@ public class PersisterDescription<T> {
     private final String _dbTypeName;
     private Map<String, SqlDataField> _tableFields = new LinkedHashMap<>();
     private List<SqlDataField> _proxyCntFields;
+    private int _referenceCount = 0;
 
     /**
      * ID-Fields in the table of the current persister which point to rows in other tables
@@ -93,6 +94,14 @@ public class PersisterDescription<T> {
 
     public SqlDataField getTableField(String sqlName) {
         return _tableFields.get(sqlName);
+    }
+
+    public void increaseRefCount() {
+        _referenceCount++;
+    }
+
+    public int getReferenceCount() {
+        return _referenceCount;
     }
 
     public void addOneToOneRelation(ObjectRelation rel)

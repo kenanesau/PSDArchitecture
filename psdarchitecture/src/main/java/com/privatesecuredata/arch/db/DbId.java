@@ -92,7 +92,12 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
                 .toString();
     }
 
-    @Override
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(id, type);
+	}
+
+	@Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

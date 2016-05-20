@@ -80,7 +80,8 @@ public class PersistanceManager {
 
     public PersistanceManager(IDbDescription dbDesc, IDbHistoryDescription dbHistory,
                               Observer<StatusMessage> statusObserver) {
-        statusRelay.subscribe(statusObserver);
+        if (null != statusObserver)
+            statusRelay.subscribe(statusObserver);
         statusRelay.call(new StatusMessage(PersistanceManager.Status.INITIALIZINGPM));
         init(dbDesc, dbHistory);
     }

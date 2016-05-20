@@ -49,6 +49,15 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         setConversionManager(convMan);
     }
 
+    public PersisterDescription getOldDesc() {
+        return _oldDesc;
+    }
+
+    public PersisterDescription getNewDesc() {
+        return _newDesc;
+    }
+
+
     public void registerObjectConverter(BaseObjectConverter other) {
 
         Set<String> keys = other._fieldConverterMap.keySet();
@@ -86,6 +95,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
 
         IObjectRelationConverter<T> converter = _oneToOneConverterMap.get(newRelation.getField().getName());
         IPersistable newData = null;
+        IPersistable oldData = null;
         if (null != converter)
         {
             newData = converter.convertObjectRelation(newRelation, _oldDesc, oldObject);
@@ -93,10 +103,10 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         else {
             ObjectRelation oldRel = _oldDesc.getOneToOneRelation(newRelation.getField().getName());
             if (null != oldRel) {
-                IPersistable oldData = (IPersistable) oldRel.getField().get(oldObject);
+                oldData = (IPersistable) oldRel.getField().get(oldObject);
                 if (null != oldData) {
                     Class newType = getConversionManager().getMappedNewType(oldData.getClass());
-                    newData = getConversionManager().__convertNoSave(newType, oldData);
+                    newData = getConversionManager().__convert(newType, oldData);
                 }
             }
             else {
@@ -108,11 +118,19 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         }
 
         if (null != newData)
-            getConversionManager().save(newData);
+            this.save(oldData, newData);
         newRelation.getField().set(newObject, newData);
     }
 
-    public void convertOneToManyRelation(ObjectRelation newRelation, IPersistable newObject, IPersistable oldObject)
+    /**
+     * Convert one to many relation
+     * @param newRelation
+     * @param newObject
+     * @param oldObject
+     * @return Count of objects in the collection
+     * @throws IllegalAccessException
+     */
+    public int convertOneToManyRelation(ObjectRelation newRelation, IPersistable newObject, IPersistable oldObject)
             throws IllegalAccessException {
         ObjectRelation oldRel = _oldDesc.getOneToManyRelation(newRelation.getField().getName());
         IPersistable oldData;
@@ -122,32 +140,56 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
         Class typeOfData = oldRel.getReferencedListType();
         Cursor csr = convMan.getCursor((oldObject).getDbId(), oldRel.getReferencingType(), typeOfData);
         IPersistable newData;
-        for (int i=0; i<csr.getCount(); i++)
+        int cnt=0;
+        DbId id = newObject.getDbId();
+        for (cnt=0; cnt<csr.getCount(); cnt++)
         {
-            oldData = convMan.load(typeOfData, csr, i);
+            oldData = convMan.load(typeOfData, csr, cnt);
             if (null == converter) {
-                newData = convMan.__convertNoSave(newRelation.getReferencedListType(), oldData);
-                newData.getDbId().setDirty();
+                newData = convMan.__convert(newRelation.getReferencedListType(), oldData);
             }
             else {
                 newData = converter.convertObjectRelation(newRelation, _oldDesc, oldObject);
             }
 
-            DbId id = newObject.getDbId();
-            //id.setDirty();
-            convMan.saveAndUpdateForeignKey(newData, id);
+            convMan.updateForeignKey(newData, id);
         }
 
-        convMan.updateCollectionProxySize(newObject.getDbId(), newRelation.getField(), csr.getCount());
+        return cnt;
+    }
+
+    public void save(IPersistable oldObject, IPersistable newObject) {
+        if (_oldDesc.getReferenceCount() > 1)
+            getConversionManager().saveAndTrack(oldObject, newObject);
+        else
+            getConversionManager().save(newObject);
+    }
+
+    /**
+     * Unconditionally rewrite the whole object (needed for updating the Proxy-Count-fields
+     * @param newObject
+     */
+    public void rewrite(IPersistable newObject)
+    {
+        newObject.getDbId().setDirty();
+        getConversionManager().save(newObject);
     }
 
     public <T extends IPersistable> T convert(IPersistable oldObject) {
         T newObject;
         String currentFieldName = "";
         try {
+            if (_oldDesc.getReferenceCount() > 1) {
+                if (getConversionManager().isConverted(oldObject))
+                {
+                    newObject = getConversionManager().loadCorrespondingNewObject(oldObject);
+                    return newObject;
+                }
+            }
+
             Class<T> type = _newDesc.getType();
-            newObject = getConversionManager().createNew(type);
             ConversionManager convMan = getConversionManager();
+            newObject = convMan.createNew(type);
 
             Collection<SqlDataField> fields = _newDesc.getTableFields();
             for (SqlDataField newSqlField : fields) {
@@ -167,7 +209,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
                 else
                     fldConverter.convertField(newSqlField, newObject, _oldDesc, oldObject);
             }
-            convMan.save(newObject);
+            this.save(oldObject, newObject);
 
             Collection<ObjectRelation> oneToOneRels = _newDesc.getOneToOneRelations();
             for (ObjectRelation newOneToOneRel : oneToOneRels)
@@ -176,12 +218,13 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
             }
 
             newObject.getDbId().setDirty();
-            convMan.save(newObject);
+            this.save(oldObject, newObject);
 
             Collection<ObjectRelation> oneToManyRels = _newDesc.getOneToManyRelations();
             for (ObjectRelation newOneToManyRel : oneToManyRels)
             {
-                convertOneToManyRelation(newOneToManyRel, newObject, oldObject);
+                int cnt = convertOneToManyRelation(newOneToManyRel, newObject, oldObject);
+                convMan.updateCollectionProxySize(newObject.getDbId(), newOneToManyRel.getField(), cnt);
             }
         }
         catch (Exception ex) {

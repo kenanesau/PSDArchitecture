@@ -10,6 +10,7 @@ import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -51,6 +52,23 @@ public class PersistanceManagerLocator {
 			
 			for(Class<?> classObj : dbDesc.getPersistentTypes())
 				pm.addPersistentType(classObj);
+
+            /** Count the number of references to types (needed for updates) **/
+            for(Class<?> classObj : dbDesc.getPersistentTypes()) {
+                IPersister persister = pm.getIPersister(classObj);
+
+                Collection<ObjectRelation> rels = persister.getDescription().getOneToOneRelations();
+                for (ObjectRelation rel : rels) {
+                    IPersister referencedPersister = pm.getIPersister(rel.getField().getType());
+                    referencedPersister.getDescription().increaseRefCount();
+                }
+
+                rels = persister.getDescription().getOneToManyRelations();
+                for (ObjectRelation rel : rels) {
+                    IPersister referencedPersister = pm.getIPersister(rel.getReferencedListType());
+                    referencedPersister.getDescription().increaseRefCount();
+                }
+            }
 
             /**
              * Work on the extends-relationships
