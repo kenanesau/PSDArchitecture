@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.privatesecuredata.arch.db.IDbDescription;
-import com.privatesecuredata.arch.db.IDbHistoryDescription;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
@@ -34,16 +33,15 @@ public class MVVMActivity extends AppCompatActivity
     private boolean isResumed = false;
     private List<MVVMComplexVmAdapter> adapters = new ArrayList<>();
 
-	public PersistanceManager createPM(IDbDescription desc, IDbHistoryDescription dbHistory,
-									   Observer<StatusMessage> statusObserver)
+	public PersistanceManager createPM(IDbDescription desc, Observer<StatusMessage> statusObserver)
 	{
 		PersistanceManagerLocator pmLoc = PersistanceManagerLocator.getInstance();
-		return pmLoc.getPersistanceManager(this, desc, dbHistory, statusObserver);
+		return pmLoc.getPersistanceManager(this, desc, statusObserver);
 	}
 
-	public PersistanceManager createPM(IDbDescription desc, IDbHistoryDescription dbHistory)
+	public PersistanceManager createPM(IDbDescription desc)
 	{
-		return createPM(desc, dbHistory, null);
+		return createPM(desc, null);
 	}
 	
 	public void setDefaultPM(PersistanceManager pm)
