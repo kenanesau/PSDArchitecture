@@ -32,19 +32,13 @@ public class PersistanceManagerLocator {
 
     public static void initializePM(IDbDescription dbDesc)
     {
-        initializePM(dbDesc, null, null);
+        initializePM(dbDesc, null);
     }
 
-    public static void initializePM(IDbDescription dbDesc, IDbHistoryDescription dbHistory)
-    {
-        initializePM(dbDesc, dbHistory, null);
-    }
-
-	public static void initializePM(IDbDescription dbDesc, IDbHistoryDescription dbHistory,
-                                    Observer<StatusMessage> statusObserver) throws DBException {
+	public static void initializePM(IDbDescription dbDesc, Observer<StatusMessage> statusObserver) throws DBException {
 		if (!pmMap.containsKey(dbDesc))
 		{
-            PersistanceManager pm = new PersistanceManager(dbDesc, dbHistory, statusObserver);
+            PersistanceManager pm = new PersistanceManager(dbDesc, statusObserver);
 			pmMap.put(dbDesc, pm);
 
 			for(Class<?> classObj : dbDesc.getPersisterTypes())
@@ -115,7 +109,7 @@ public class PersistanceManagerLocator {
 		}
 	}
 
-    protected void checkAndDoUpgrade(PersistanceManager pm, Context ctx, IDbDescription dbDesc)
+    protected void checkAndDoUpgrade(PersistanceManager pm, Context ctx, IDbDescription dbDesc) throws DBException
     {
         pm.publishStatus(new StatusMessage(PersistanceManager.Status.UPGRADINGDB));
         /** Version -> HashMap (Instance -> dbName) **/
@@ -199,34 +193,42 @@ public class PersistanceManagerLocator {
 
     public PersistanceManager getPersistanceManager(Context ctx,
                                                     IDbDescription dbDesc,
-                                                    IDbHistoryDescription dbHistory,
                                                     Observer<StatusMessage> statusObserver) throws DBException {
 
-        return init(ctx, dbDesc, dbHistory, statusObserver);
+        return init(ctx, dbDesc, statusObserver);
     }
 
 
-    public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc, IDbHistoryDescription dbHistory) throws DBException {
-        return init(ctx, dbDesc, dbHistory, null);
+    public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc) throws DBException {
+        return init(ctx, dbDesc);
     }
 
-	public PersistanceManager getPersistanceManager(Context ctx, IDbDescription dbDesc) throws DBException {
-        return init(ctx, dbDesc, null, null);
-	}
+    private PersistanceManager init(Context ctx, IDbDescription dbDesc) {
+        return init(ctx, dbDesc, null);
+    }
 
     private PersistanceManager init(Context ctx, IDbDescription dbDesc,
-                                    IDbHistoryDescription dbHistory, Observer<StatusMessage> statusObserver) throws DBException {
-        if (!pmMap.containsKey(dbDesc))
-            initializePM(dbDesc, dbHistory, statusObserver);
+                                    Observer<StatusMessage> statusObserver) throws DBException {
+        PersistanceManager pm = null;
+        try {
+            if (!pmMap.containsKey(dbDesc))
+                initializePM(dbDesc, statusObserver);
 
-        PersistanceManager pm = pmMap.get(dbDesc);
-        if (!pm.isInitialized()) {
-            checkAndDoUpgrade(pm, ctx, dbDesc);
-            pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
+            pm = pmMap.get(dbDesc);
+            if (!pm.isInitialized()) {
+                checkAndDoUpgrade(pm, ctx, dbDesc);
+                pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
+            }
+            if (!pm.isInitialized()) {
+                pm.initializeDB(ctx);
+                pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
+            }
         }
-        if (!pm.isInitialized()) {
-            pm.initializeDB(ctx);
-            pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
+        catch (Exception e) {
+            if (null != pm)
+                pm.publishStatus("Error initializing PM", e);
+            else
+                throw e;
         }
 
         return pm;

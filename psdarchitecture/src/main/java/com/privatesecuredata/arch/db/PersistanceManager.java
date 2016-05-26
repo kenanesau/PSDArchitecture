@@ -32,6 +32,7 @@ import java.util.Hashtable;
 import java.util.Map;
 
 import rx.Observer;
+import rx.android.schedulers.AndroidSchedulers;
 
 /**
  * 
@@ -65,7 +66,6 @@ public class PersistanceManager {
     }
 
     private IDbDescription dbDesc;
-    private IDbHistoryDescription dbHistory;
     private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
     private Hashtable<String, Class<?>> classNameMap = new Hashtable<String, Class<?>>();
     private Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader>();
@@ -76,29 +76,24 @@ public class PersistanceManager {
     private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
     private HashMap<String, QueryBuilder> queries = new HashMap<>();
 
-    private PublishRelay<StatusMessage> statusRelay = PublishRelay.create();
+    private PublishRelay<StatusMessage> statusRelay = PublishRelay
+            .create();
 
-    public PersistanceManager(IDbDescription dbDesc, IDbHistoryDescription dbHistory,
-                              Observer<StatusMessage> statusObserver) {
-        if (null != statusObserver)
-            statusRelay.subscribe(statusObserver);
+    public PersistanceManager(IDbDescription dbDesc, Observer<StatusMessage> statusObserver) {
+        if (null != statusObserver) {
+            statusRelay.observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(statusObserver);
+        }
         statusRelay.call(new StatusMessage(PersistanceManager.Status.INITIALIZINGPM));
-        init(dbDesc, dbHistory);
+        init(dbDesc);
     }
 
-    public PersistanceManager(IDbDescription dbDesc, IDbHistoryDescription dbHistory)
-	{
-		init(dbDesc, dbHistory);
-	}
-
-    private void init(IDbDescription dbDesc, IDbHistoryDescription dbHistory)
+    private void init(IDbDescription dbDesc)
     {
         this.dbDesc = dbDesc;
-        this.dbHistory = dbHistory;
         statusRelay.call(new StatusMessage(Status.UNINITIALIZED, "PersistanceManager created"));
     }
 
-    public IDbHistoryDescription getDbHistory() { return dbHistory; }
     public IDbDescription getDbDescription() { return dbDesc; }
 
     public PublishRelay<StatusMessage> getStatusRelay() {
@@ -330,12 +325,12 @@ public class PersistanceManager {
 		}
 	}
 
-	public void onUpgrade(Context ctx, int oldVersion, int newVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) {
+	public void onUpgrade(Context ctx, int oldVersion, int newVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) throws DBException {
         if (!isInitialized())
             initializeDB(ctx);
 
         publishStatus(new StatusMessage(Status.UPGRADINGDB));
-        IDbHistoryDescription history = getDbHistory();
+        IDbHistoryDescription history = getDbDescription().getDbHistory();
         PersistanceManager oldPm = null;
 
         if (dbNames.containsKey(oldVersion))
@@ -351,15 +346,16 @@ public class PersistanceManager {
                             oldDescription.getVersion(),
                             oldDescription.getInstance());
                     publishStatus(new StatusMessage(Status.UPGRADINGDB, msg));
-                    oldPm = PersistanceManagerLocator.getInstance().getPersistanceManager(ctx, oldDescription, history);
+                    oldPm = PersistanceManagerLocator.getInstance().getPersistanceManager(ctx, oldDescription);
                     ConversionManager convMan = new ConversionManager(oldPm, this, conv);
                     conv.convert(convMan);
                 }
                 catch (Exception ex) {
                     String errMsg = String.format("Error converting '%s' to new Version '%d' Instance '%d'",
-                            dbDesc.getName(), newVersion, instance);
+                            dbDesc.getBaseName(), newVersion, instance);
                     Log.e(getClass().getName(), errMsg);
                     publishStatus(errMsg, ex);
+                    throw ex;
                 }
                 finally {
                     if (null != oldPm)

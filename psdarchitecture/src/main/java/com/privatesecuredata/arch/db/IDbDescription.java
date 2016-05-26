@@ -61,5 +61,16 @@ public interface IDbDescription {
      */
     Class<?>[] getQueryBuilderTypes();
 
+    /**
+     * @return Returns the DBHistory (old Descriptions and a mapping of version to
+     * com.privatesecuredata.arch.db.IConversionDescription.
+     */
+    IDbHistoryDescription getDbHistory();
+
+    /**
+     * Create a new instance of a DB
+     * @param instance positive number of the instance
+     * @return DBDescription for the instance
+     */
     IDbDescription createInstance(int instance);
 }
