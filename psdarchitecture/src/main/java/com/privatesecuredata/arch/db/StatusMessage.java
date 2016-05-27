@@ -5,7 +5,7 @@ package com.privatesecuredata.arch.db;
  */
 public class StatusMessage {
     private PersistanceManager.Status status;
-    private String errorText;
+    private String text;
     private Throwable ex;
 
     public StatusMessage(PersistanceManager.Status status) {
@@ -14,12 +14,12 @@ public class StatusMessage {
 
     public StatusMessage(PersistanceManager.Status status, String txt) {
         this.status = status;
-        this.errorText = txt;
+        this.text = txt;
     }
 
     public StatusMessage(PersistanceManager.Status status, String txt, Throwable ex) {
         this.status = status;
-        this.errorText = txt;
+        this.text = txt;
         this.ex = ex;
     }
 
@@ -32,8 +32,8 @@ public class StatusMessage {
         return status;
     }
 
-    public String getErrorText() {
-        return errorText;
+    public String getText() {
+        return text;
     }
 
     public Throwable getException() {

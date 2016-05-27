@@ -31,6 +31,7 @@ public class ConversionManager {
 
     private PersistanceManager _oldPm;
     private PersistanceManager _newPm;
+    private long convertedObjects = 0;
 
     public ConversionManager(PersistanceManager oldPm, PersistanceManager newPm, IConversionDescription convDesc)
     {
@@ -115,7 +116,11 @@ public class ConversionManager {
 
         DefaultObjectConverter converter = _converterMap.get(newType);
 
-        return converter.convert(oldData);
+        IPersistable obj = converter.convert(oldData);
+        convertedObjects++;
+        _newPm.publishStatus(new StatusMessage(PersistanceManager.Status.INFO, new Long(convertedObjects).toString()));
+
+        return obj;
     }
 
     public <T extends IPersistable> DbId<T> convert(Class<?> newType, IPersistable oldData) {
@@ -123,7 +128,6 @@ public class ConversionManager {
             throw new ArgumentException("Parameter oldData must not be null");
 
         IPersistable obj = __convert(newType, oldData);
-        //_newPm.save((IPersistable)obj);
 
         return obj.getDbId();
     }

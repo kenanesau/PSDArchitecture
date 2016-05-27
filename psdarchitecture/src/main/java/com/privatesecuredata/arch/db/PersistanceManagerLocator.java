@@ -3,18 +3,13 @@ package com.privatesecuredata.arch.db;
 import android.content.Context;
 import android.util.Log;
 
-import com.privatesecuredata.arch.db.annotations.DbExtends;
-import com.privatesecuredata.arch.db.query.QueryBuilder;
-import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import rx.Observer;
+import rx.subjects.ReplaySubject;
 
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
@@ -35,81 +30,16 @@ public class PersistanceManagerLocator {
         initializePM(dbDesc, null);
     }
 
-	public static void initializePM(IDbDescription dbDesc, Observer<StatusMessage> statusObserver) throws DBException {
-		if (!pmMap.containsKey(dbDesc))
+	public static void initializePM(IDbDescription dbDesc, ReplaySubject<StatusMessage> statusRelay) throws DBException {
+        if (!pmMap.containsKey(dbDesc))
 		{
-            PersistanceManager pm = new PersistanceManager(dbDesc, statusObserver);
+            PersistanceManager pm = new PersistanceManager(dbDesc, statusRelay);
 			pmMap.put(dbDesc, pm);
-
-			for(Class<?> classObj : dbDesc.getPersisterTypes())
-				pm.addPersister(classObj);
-			
-			for(Class<?> classObj : dbDesc.getPersistentTypes())
-				pm.addPersistentType(classObj);
-
-            /** Count the number of references to types (needed for updates) **/
-            for(Class<?> classObj : dbDesc.getPersistentTypes()) {
-                IPersister persister = pm.getIPersister(classObj);
-
-                Collection<ObjectRelation> rels = persister.getDescription().getOneToOneRelations();
-                for (ObjectRelation rel : rels) {
-                    IPersister referencedPersister = pm.getIPersister(rel.getField().getType());
-                    referencedPersister.getDescription().increaseRefCount();
-                }
-
-                rels = persister.getDescription().getOneToManyRelations();
-                for (ObjectRelation rel : rels) {
-                    IPersister referencedPersister = pm.getIPersister(rel.getReferencedListType());
-                    referencedPersister.getDescription().increaseRefCount();
-                }
-            }
-
-            /**
-             * Work on the extends-relationships
-             */
-            for(Class<?> persistentType : dbDesc.getPersistentTypes()) {
-                DbExtends anno = persistentType.getAnnotation(DbExtends.class);
-
-                if (null != anno) {
-                    AutomaticPersister persister = (AutomaticPersister)pm.getIPersister(persistentType);
-                    if (null == persister)
-                        throw new DBException(String.format("Could not find persister for type \"%s\"", persistentType.getName()));
-                    AutomaticPersister parentPersister = (AutomaticPersister)pm.getIPersister(anno.extendedType());
-                    if (null == parentPersister)
-                        throw new DBException(String.format("Could not find persister for parent of extends-relationship of type \"%s\"!", anno.extendedType().getName()));
-                    persister.extendsPersister(parentPersister);
-                }
-            }
-
-            /**
-             * Register the query-Builders
-             */
-            for(Class<?> queryBuilderType : dbDesc.getQueryBuilderTypes()) {
-                try {
-                    Constructor constructor = queryBuilderType.getConstructor();
-                    QueryBuilder queryBuilder = (QueryBuilder)constructor.newInstance();
-
-                    pm.registerQuery(queryBuilder);
-
-                } catch (Exception e) {
-                    String msg = String.format("unable to create or register Querybuilder of type \"%s\"",
-                            queryBuilderType.getName());
-                    if (statusObserver == null)
-                        throw new ArgumentException(msg, e);
-                    else {
-                        Exception ex = new ArgumentException(msg, e);
-
-                        if (statusObserver != null)
-                            pm.publishStatus(new StatusMessage(PersistanceManager.Status.ERROR, msg, ex));
-                    }
-                }
-            }
-
             pm.publishStatus(new StatusMessage(PersistanceManager.Status.INITIALIZEDPM));
 		}
 	}
 
-    protected void checkAndDoUpgrade(PersistanceManager pm, Context ctx, IDbDescription dbDesc) throws DBException
+    protected boolean checkAndDoUpgrade(PersistanceManager pm, Context ctx, IDbDescription dbDesc) throws DBException
     {
         pm.publishStatus(new StatusMessage(PersistanceManager.Status.UPGRADINGDB));
         /** Version -> HashMap (Instance -> dbName) **/
@@ -126,12 +56,20 @@ public class PersistanceManagerLocator {
             if (dbName.startsWith(dbDesc.getBaseName()))
                 if(dbName.endsWith(".db"))
                     currentDbs.add(dbName);
+
+            if (dbName.startsWith("upgrading_"))
+            {
+                ctx.deleteDatabase(dbName);
+                Log.w(this.getClass().getName(), String.format("deleting files for db '%s'", dbName));
+            }
         }
 
         for(String dbName : currentDbs) {
             String[] tokens = dbName.split("_");
             int foundVersion = 0;
             int instance = 0;
+
+
             for(int i = tokens.length-1; i>=0; i--) {
                 String tok = tokens[i];
                 if (i == tokens.length - 1) {
@@ -176,10 +114,12 @@ public class PersistanceManagerLocator {
             }
         }
 
-        if (highestDbVersion < dbDesc.getVersion()) {
+        boolean ret = false;
+        if ( (currentDbs.size() > 0) && (highestDbVersion < dbDesc.getVersion()) ) {
             Log.i(getClass().getName(), String.format("Upgrading DB '%s' V%d I%d to V%d",
                     dbDesc.getBaseName(), dbDesc.getVersion(), dbDesc.getInstance(), highestDbVersion));
             pm.onUpgrade(ctx, highestDbVersion, dbDesc.getVersion(), dbNames);
+            ret = true;
         }
         else if (highestDbVersion > dbDesc.getVersion())
         {
@@ -189,11 +129,13 @@ public class PersistanceManagerLocator {
                     String.format("Current DB version 'V%d' is newer than that of the App 'V%d'",
                             highestDbVersion, dbDesc.getVersion()));*/
         }
+
+        return ret;
     }
 
     public PersistanceManager getPersistanceManager(Context ctx,
                                                     IDbDescription dbDesc,
-                                                    Observer<StatusMessage> statusObserver) throws DBException {
+                                                    ReplaySubject<StatusMessage> statusObserver) throws DBException {
 
         return init(ctx, dbDesc, statusObserver);
     }
@@ -208,20 +150,21 @@ public class PersistanceManagerLocator {
     }
 
     private PersistanceManager init(Context ctx, IDbDescription dbDesc,
-                                    Observer<StatusMessage> statusObserver) throws DBException {
+                                    ReplaySubject<StatusMessage> statusObserver) throws DBException {
         PersistanceManager pm = null;
         try {
             if (!pmMap.containsKey(dbDesc))
                 initializePM(dbDesc, statusObserver);
 
             pm = pmMap.get(dbDesc);
-            if (!pm.isInitialized()) {
-                checkAndDoUpgrade(pm, ctx, dbDesc);
-                pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
-            }
-            if (!pm.isInitialized()) {
-                pm.initializeDB(ctx);
-                pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
+            if (!pm.hasInitializedDb()) {
+                if (checkAndDoUpgrade(pm, ctx, dbDesc)) {
+                    pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
+                }
+                else {
+                    pm.initializeDb(ctx);
+                    pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
+                }
             }
         }
         catch (Exception e) {

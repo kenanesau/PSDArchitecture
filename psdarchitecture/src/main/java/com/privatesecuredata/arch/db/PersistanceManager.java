@@ -7,7 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.util.Pair;
 
-import com.jakewharton.rxrelay.PublishRelay;
+import com.google.common.io.Files;
+import com.privatesecuredata.arch.db.annotations.DbExtends;
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
 import com.privatesecuredata.arch.db.annotations.Persister;
 import com.privatesecuredata.arch.db.query.Query;
@@ -23,6 +24,7 @@ import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModelFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -31,8 +33,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
-import rx.Observer;
-import rx.android.schedulers.AndroidSchedulers;
+import rx.subjects.ReplaySubject;
 
 /**
  * 
@@ -56,6 +57,7 @@ public class PersistanceManager {
         CREATEDDB(5),
         UPGRADINGDB(6),
         OPERATIONAL(7),
+        INFO(254),
         ERROR(255);
 
         private int value;
@@ -70,46 +72,135 @@ public class PersistanceManager {
     private Hashtable<String, Class<?>> classNameMap = new Hashtable<String, Class<?>>();
     private Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader> cursorLoaderMap = new Hashtable<Pair<Class<?>, Class<?>>, ICursorLoader>();
     private SQLiteDatabase db;
-	private boolean initialized = false;
+	private boolean initializedDb = false;
 	private MVVM mvvm = null;
 	private Context ctx;
     private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
     private HashMap<String, QueryBuilder> queries = new HashMap<>();
 
-    private PublishRelay<StatusMessage> statusRelay = PublishRelay
-            .create();
+    private ReplaySubject<StatusMessage> statusRelay;
 
-    public PersistanceManager(IDbDescription dbDesc, Observer<StatusMessage> statusObserver) {
-        if (null != statusObserver) {
-            statusRelay.observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(statusObserver);
-        }
-        statusRelay.call(new StatusMessage(PersistanceManager.Status.INITIALIZINGPM));
+    public PersistanceManager(IDbDescription dbDesc) {
+        this(dbDesc, null);
+    }
+
+    public PersistanceManager(IDbDescription dbDesc, ReplaySubject<StatusMessage> statusRelay) {
+        this.statusRelay = statusRelay;
+        publishStatus(new StatusMessage(PersistanceManager.Status.INITIALIZINGPM));
         init(dbDesc);
     }
 
     private void init(IDbDescription dbDesc)
     {
         this.dbDesc = dbDesc;
-        statusRelay.call(new StatusMessage(Status.UNINITIALIZED, "PersistanceManager created"));
+
+        for(Class<?> classObj : dbDesc.getPersisterTypes())
+            this.addPersister(classObj);
+
+        for(Class<?> classObj : dbDesc.getPersistentTypes())
+            this.addPersistentType(classObj);
+
+        /** Count the number of references to types (needed for updates) **/
+        for(Class<?> classObj : dbDesc.getPersistentTypes()) {
+            IPersister persister = this.getIPersister(classObj);
+
+            Collection<ObjectRelation> rels = persister.getDescription().getOneToOneRelations();
+            for (ObjectRelation rel : rels) {
+                IPersister referencedPersister = this.getIPersister(rel.getField().getType());
+                referencedPersister.getDescription().increaseRefCount();
+            }
+
+            rels = persister.getDescription().getOneToManyRelations();
+            for (ObjectRelation rel : rels) {
+                IPersister referencedPersister = this.getIPersister(rel.getReferencedListType());
+                referencedPersister.getDescription().increaseRefCount();
+            }
+        }
+
+        /**
+         * Work on the extends-relationships
+         */
+        for(Class<?> persistentType : dbDesc.getPersistentTypes()) {
+            DbExtends anno = persistentType.getAnnotation(DbExtends.class);
+
+            if (null != anno) {
+                AutomaticPersister persister = (AutomaticPersister)this.getIPersister(persistentType);
+                if (null == persister)
+                    throw new DBException(String.format("Could not find persister for type \"%s\"", persistentType.getName()));
+                AutomaticPersister parentPersister = (AutomaticPersister)this.getIPersister(anno.extendedType());
+                if (null == parentPersister)
+                    throw new DBException(String.format("Could not find persister for parent of extends-relationship of type \"%s\"!", anno.extendedType().getName()));
+                persister.extendsPersister(parentPersister);
+            }
+        }
+
+        /**
+         * Register the query-Builders
+         */
+        for(Class<?> queryBuilderType : dbDesc.getQueryBuilderTypes()) {
+            try {
+                Constructor constructor = queryBuilderType.getConstructor();
+                QueryBuilder queryBuilder = (QueryBuilder)constructor.newInstance();
+
+                this.registerQuery(queryBuilder);
+
+            } catch (Exception e) {
+                String msg = String.format("unable to create or register Querybuilder of type \"%s\"",
+                        queryBuilderType.getName());
+                if (statusRelay == null)
+                    throw new ArgumentException(msg, e);
+                else {
+                    Exception ex = new ArgumentException(msg, e);
+
+                    if (statusRelay != null)
+                        this.publishStatus(new StatusMessage(PersistanceManager.Status.ERROR, msg, ex));
+                }
+            }
+        }
+
+        publishStatus(new StatusMessage(Status.UNINITIALIZED, "PersistanceManager created"));
     }
 
     public IDbDescription getDbDescription() { return dbDesc; }
 
-    public PublishRelay<StatusMessage> getStatusRelay() {
-        return statusRelay;
-    }
-
     public void publishStatus(StatusMessage msg) {
-        statusRelay.call(msg);
+        if (null != statusRelay)
+            statusRelay.onNext(msg);
     }
 
     public void publishStatus(String msg, Exception ex) {
-        if (statusRelay.hasObservers()) {
-            statusRelay.call(new StatusMessage(Status.ERROR, msg, ex));
+        if ( (null != statusRelay) && (statusRelay.hasObservers())) {
+            statusRelay.onNext(new StatusMessage(Status.ERROR, msg, ex));
         }
         else
             throw new DBException(msg, ex);
+    }
+
+    protected File getUpgradingDbFile() {
+        String dbName = "upgrading_";
+        dbName = dbName.concat(dbDesc.getName());
+        File dbFile = ctx.getDatabasePath(dbName);
+        return dbFile;
+    }
+
+    protected File getDbFile() {
+        String dbName = dbDesc.getName();
+        File dbFile = ctx.getDatabasePath(dbName);
+        return dbFile;
+    }
+
+    /**
+     * This method initializes the database.
+     * This means:
+     * - open the database
+     * - create the database if it does not exist yet
+     *
+     * @param ctx
+     * @throws DBException
+     */
+    public void initializeDb(Context ctx) throws DBException
+    {
+        initializeDb(ctx, false);
     }
 
     /**
@@ -119,19 +210,19 @@ public class PersistanceManager {
 	 * - create the database if it does not exist yet
 	 *
 	 * @param ctx
+     * @param duringUpgrade if this parameter is set to true the DB-Name is manipulated to be prefixed
+     *                      with "upgrading_" this prefix is removed later if the upgrade was successful
 	 * @throws DBException
 	 */
-	public void initializeDB(Context ctx) throws DBException
+	public void initializeDb(Context ctx, boolean duringUpgrade) throws DBException
 	{
-        publishStatus(new StatusMessage(Status.CREATINGDB));
         int version = -1;
 
 		try {
 			if (null == this.db)
 			{
 				this.ctx = ctx;
-				ContextWrapper ctxWrapper = new ContextWrapper(ctx);
-                File dbFile = ctxWrapper.getDatabasePath(dbDesc.getName());
+                File dbFile = duringUpgrade ? getUpgradingDbFile() : getDbFile();
 
                 File dbDir = new File(dbFile.getParent());
 				if (!dbDir.exists())
@@ -139,15 +230,16 @@ public class PersistanceManager {
 	
 				boolean createDB = false;
 	
-				if (!dbFile.exists()) { 
+				if (!dbFile.exists()) {
+                    publishStatus(new StatusMessage(Status.CREATINGDB));
 					createDB=true;
 				}
 	
 				db = SQLiteDatabase.openOrCreateDatabase(dbFile, null);
-                version = getDb().getVersion();
-				if (createDB) {
+                if (createDB) {
                     try {
                         onCreate(getDb());
+                        publishStatus(new StatusMessage(Status.CREATEDDB));
                     }
                     catch (DBException ex) {
                         db.close();
@@ -156,7 +248,7 @@ public class PersistanceManager {
                     }
                 }
 
-                if (!this.initialized)
+                if (!this.initializedDb)
 				{
 					for(IPersister<? extends IPersistable> persister : persisterMap.values())
 					{
@@ -180,10 +272,8 @@ public class PersistanceManager {
                 }
 
                 cursorLoaderFactories.clear();
-				this.initialized = true;
+				this.initializedDb = true;
 			}
-
-            publishStatus(new StatusMessage(Status.CREATEDDB));
 		}
 		catch (Exception ex)
 		{
@@ -191,7 +281,7 @@ public class PersistanceManager {
 		}
 	}
 	
-	public boolean isInitialized() { return this.initialized; }
+	public boolean hasInitializedDb() { return this.initializedDb; }
 	
 	/**
 	 * When this method returns without exception, there is no dbfile existent anymore
@@ -326,18 +416,19 @@ public class PersistanceManager {
 	}
 
 	public void onUpgrade(Context ctx, int oldVersion, int newVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) throws DBException {
-        if (!isInitialized())
-            initializeDB(ctx);
+        if (!hasInitializedDb())
+            initializeDb(ctx, true);
 
-        publishStatus(new StatusMessage(Status.UPGRADINGDB));
         IDbHistoryDescription history = getDbDescription().getDbHistory();
         PersistanceManager oldPm = null;
 
         if (dbNames.containsKey(oldVersion))
         {
+            IDbDescription oldDescription = null;
+
             for(int instance : dbNames.get(oldVersion).keySet()) {
                 try {
-                    IDbDescription oldDescription = history.getDbDescription(oldVersion, instance);
+                    oldDescription = history.getDbDescription(oldVersion, instance);
                     Map<Integer, IConversionDescription> conversionDescriptions = history.getDbConversions();
                     IConversionDescription conv = conversionDescriptions.get(newVersion);
 
@@ -346,20 +437,46 @@ public class PersistanceManager {
                             oldDescription.getVersion(),
                             oldDescription.getInstance());
                     publishStatus(new StatusMessage(Status.UPGRADINGDB, msg));
-                    oldPm = PersistanceManagerLocator.getInstance().getPersistanceManager(ctx, oldDescription);
+
+                    oldPm = new PersistanceManager(oldDescription, null);
+                    oldPm.initializeDb(ctx);
+
                     ConversionManager convMan = new ConversionManager(oldPm, this, conv);
                     conv.convert(convMan);
+
+                    db.close();
+                    File newDbFile = getDbFile();
+                    Files.move(getUpgradingDbFile(), newDbFile);
+                    db = SQLiteDatabase.openOrCreateDatabase(newDbFile, null);
                 }
                 catch (Exception ex) {
                     String errMsg = String.format("Error converting '%s' to new Version '%d' Instance '%d'",
                             dbDesc.getBaseName(), newVersion, instance);
                     Log.e(getClass().getName(), errMsg);
                     publishStatus(errMsg, ex);
-                    throw ex;
+                    throw new DBException(ex);
                 }
                 finally {
                     if (null != oldPm)
                        oldPm.close();
+
+                    try {
+                        File filesDir = ctx.getExternalFilesDir(null);
+                        File backupOldDbFile = new File(filesDir, oldDescription.getName());
+                        File dir = backupOldDbFile.getParentFile();
+                        if (!dir.exists())
+                            dir.createNewFile();
+                        File oldDbFile = ctx.getDatabasePath(oldDescription.getName());
+
+                        Files.move(oldDbFile, backupOldDbFile);
+                    }
+                    catch (IOException ex) {
+                        String errMsg = String.format("Error moving db-file '%s' to %s",
+                                oldDescription.getName(), ctx.getExternalFilesDir(null).getName());
+                        Log.e(getClass().getName(), errMsg);
+                        publishStatus(errMsg, ex);
+                        throw new DBException(errMsg, ex);
+                    }
                 }
             }
         }
@@ -900,6 +1017,7 @@ public class PersistanceManager {
             dbId.setClean();
             dbId.setObj(persistable);
         }
+        csr.close();
 
 		return persistable;
 	}
@@ -936,6 +1054,7 @@ public class PersistanceManager {
 
         csr.moveToNext();
         long id = csr.getLong(1);
+        csr.close();
 
         return load(referencingType, id);
     }
@@ -993,7 +1112,7 @@ public class PersistanceManager {
 	
 	public void close()
 	{
-		this.initialized = false;
+		this.initializedDb = false;
         this.db.close();
         this.db = null;
 	}
@@ -1007,6 +1126,7 @@ public class PersistanceManager {
             T persistable = this.load(persister, cursor, cursor.getPosition());
             lst.add(persistable);
         }
+        cursor.close();
 		
 		return lst;
 	}
