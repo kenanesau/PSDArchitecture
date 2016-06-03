@@ -46,7 +46,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     };
 
     public interface IViewHolderFactory<M> {
-        MVVMRecyclerViewModelAdapter.ViewHolder createViewHolder(ViewGroup parent, int viewType);
+        MVVMRecyclerViewModelAdapter.ViewHolder createViewHolder(ViewGroup parent);
     };
 
     public static abstract class ViewHolder<V> extends RecyclerView.ViewHolder
@@ -204,6 +204,11 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         notifyDataSetChanged();
 	}
 
+    public IListViewModel<M, COMPLEXVM> getData()
+    {
+        return this.data;
+    }
+
     public int getItemCount() {
         return data == null ? 0 : data.size();
     }
@@ -222,7 +227,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 	
 	public MVVMRecyclerViewModelAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        ViewHolder holder = recyclerStrategy.createViewHolder(parent, viewType);
+        ViewHolder holder = recyclerStrategy.createViewHolder(parent);
         holder.setAdapter(this);
         return holder;
     }

@@ -19,7 +19,7 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
-import rx.Observer;
+import rx.subjects.ReplaySubject;
 
 /**
  * Activity which supports easier restoration and saving of instance state. It also provides
@@ -33,7 +33,7 @@ public class MVVMActivity extends AppCompatActivity
     private boolean isResumed = false;
     private List<MVVMComplexVmAdapter> adapters = new ArrayList<>();
 
-	public PersistanceManager createPM(IDbDescription desc, Observer<StatusMessage> statusObserver)
+	public PersistanceManager createPM(IDbDescription desc, ReplaySubject<StatusMessage> statusObserver)
 	{
 		PersistanceManagerLocator pmLoc = PersistanceManagerLocator.getInstance();
 		return pmLoc.getPersistanceManager(this, desc, statusObserver);
@@ -74,7 +74,7 @@ public class MVVMActivity extends AppCompatActivity
 	public PersistanceManager getDefaultPM()
 	{
 		if (null == pmUUID)
-			throw new ArgumentException("No default PersistanceManager set yet!");
+			return null;
 					
 		return (PersistanceManager)DataHive.getInstance().get(pmUUID);
 	}
@@ -100,8 +100,6 @@ public class MVVMActivity extends AppCompatActivity
 
         if (savedInstanceState != null) {
             instanceStateHandler.restoreInstanceState(savedInstanceState);
-
-
         }
 
         super.onCreate(savedInstanceState);
@@ -130,21 +128,45 @@ public class MVVMActivity extends AppCompatActivity
     }
 
     public <T extends IPersistable> T getModel(Class type) {
-        return instanceStateHandler.getModel(getDefaultPM(), type);
+        T model = null;
+        try {
+            return instanceStateHandler.getModel(getDefaultPM(), type);
+        }
+        finally {
+            return model;
+        }
     }
 
     public <T extends IPersistable> T  getModel(String tag) {
-        return instanceStateHandler.getModel(getDefaultPM(), tag);
+        T model = null;
+        try {
+            model = instanceStateHandler.getModel(getDefaultPM(), tag);
+        }
+        finally {
+            return model;
+        }
     }
 
     public <T extends IViewModel> T getViewModel(Class type)
     {
-        return instanceStateHandler.getViewModel(getDefaultPM(), type);
+        T vm = null;
+        try {
+            vm = instanceStateHandler.getViewModel(getDefaultPM(), type);
+        }
+        finally {
+            return vm;
+        }
     }
 
     public <T extends IViewModel> T getViewModel(String tag)
     {
-        return instanceStateHandler.getViewModel(getDefaultPM(), tag);
+        T vm = null;
+        try {
+            vm = instanceStateHandler.getViewModel(getDefaultPM(), tag);
+        }
+        finally {
+            return vm;
+        }
     }
 
     @Override
