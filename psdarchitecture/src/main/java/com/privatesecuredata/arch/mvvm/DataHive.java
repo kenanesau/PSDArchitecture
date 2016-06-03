@@ -28,6 +28,13 @@ public class DataHive
 		
 		return instance;
 	}
+
+	public <T> String put(T obj, String tag)
+	{
+		UUID ret = UUID.nameUUIDFromBytes(tag.getBytes());
+		data.put(ret, new WeakReference<T>(obj));
+		return ret.toString();
+	}
 	
 	public <T> String put(T obj)
 	{
@@ -35,27 +42,34 @@ public class DataHive
 		data.put(ret, new WeakReference<T>(obj));
 		return ret.toString();
 	}
-	
+
+	public <T> T getTag(String tag)
+	{
+		return get(UUID.nameUUIDFromBytes(tag.getBytes()));
+	}
 	public <T> T get(String key)
 	{
 		return get(UUID.fromString(key));		
 	}
-	
+
 	public <T> T get(UUID key)
 	{
 		T ret = null;
 		WeakReference<T> ref = (WeakReference<T>)data.get(key);
 		if (null!=ref)
 			ret = ref.get();
-		
+
 		return ret;
 	}
-	
+
+	public <T> T removeTag(String tag)
+	{
+		return remove(UUID.nameUUIDFromBytes(tag.getBytes()));
+	}
 	public <T> T remove(String key)
 	{
 		return this.remove(UUID.fromString(key));
 	}
-
 	public <T> T remove(UUID key)
 	{
 		T ret = null;
