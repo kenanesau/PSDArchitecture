@@ -15,18 +15,10 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> extends MVVMFragment {
 
-    public interface OnItemClickedListener<T> {
-        public void onStockItemClicked(T item);
-    }
-
     private Context attachedActivity;
 	private EncapsulatedListViewModel<T, TVM> items;
 	private MVVMRecyclerViewModelAdapter<T, TVM> adapter;
     private RecyclerView lstView;
-
-	public AbstractGenericListFragment()
-	{
-    }
 
     @Override
     public void onAttach(Context activity) {
@@ -34,14 +26,35 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
 
         super.onAttach(activity);
     }
+
+    /**
+     * Override this function if you want to inject your own adapter;
+     *
+     * @return Implementation of MVVMRecyclerViewModelAdapter<T, TVM>
+     */
+    protected MVVMRecyclerViewModelAdapter<T, TVM> createAdapter() {
+        return new MVVMRecyclerViewModelAdapter(attachedActivity, getVhFactory());
+    }
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		adapter = configureAdapter(new MVVMRecyclerViewModelAdapter(attachedActivity, getVhFactory()));
+        adapter =  createAdapter();
+		configureAdapter(adapter, savedInstanceState);
+
+        /**
+        if (null != savedInstanceState)
+        {
+            String typeName = savedInstanceState.getString(TAG_TYPE_NAME);
+            if (null != typeName) {
+                ComplexViewModel<?> parentVM = getViewModel(typeName);
+                if (parentVM != null)
+                    updateParent(parentVM);
+            }
+        }*/
 	}
-	
-	@Override
+
+    @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(getLayoutId(), container, false);
@@ -54,7 +67,7 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
     public abstract MVVMRecyclerViewModelAdapter.IViewHolderFactory<T> getVhFactory();
     public int getLayoutId() { return R.layout.psdarch_list; }
     public int getRecyclerViewId() { return R.id.psdarch_recyclerview; }
-    public abstract MVVMRecyclerViewModelAdapter<T, TVM> configureAdapter(MVVMRecyclerViewModelAdapter<T, TVM> adapter);
+    public abstract void configureAdapter(MVVMRecyclerViewModelAdapter<T, TVM> adapter, Bundle savedInstanceState);
 
     public MVVMRecyclerViewModelAdapter<T, TVM> getAdapter() { return this.adapter; }
     public void updateItems(EncapsulatedListViewModel<T, TVM> newItems)
@@ -66,7 +79,20 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
         }
     }
 
+    protected EncapsulatedListViewModel<T, TVM> getItems() { return items; }
     protected RecyclerView getListView() {
         return lstView;
+    }
+
+    @Override
+    public void onStop() {
+        super.onDestroyView();
+
+        adapter.dispose();
+    }
+
+    @Override
+    protected void doViewToVMMapping() {
+        adapter.setData(items);
     }
 }
