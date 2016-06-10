@@ -7,6 +7,13 @@ import java.util.Calendar;
  */
 public class TimeAndDate {
 
+    /**
+     * Calculate the difference in days between two dates
+     *
+     * @param d1 Calendar representing the start-date
+     * @param d2 Calendar representing the end-date
+     * @return The time difference in days
+     */
     public static int daysBetween(Calendar d1, Calendar d2){
         Calendar start = (Calendar) d1.clone();
         Calendar end = (Calendar) d2.clone();
