@@ -15,6 +15,7 @@ public class SimpleDivider extends RecyclerView.ItemDecoration {
 
     Drawable dividerDrawable;
     int leftInset = 0;
+    int space = -1;
 
     /**
      * Constructor for Divider
@@ -52,9 +53,9 @@ public class SimpleDivider extends RecyclerView.ItemDecoration {
         super.getItemOffsets(outRect, view, parent, state);
 
         //skip for first item in list
-        if (parent.getChildAdapterPosition(view) == 0) {
-            return;
-        }
+//        if (parent.getChildAdapterPosition(view) == 0) {
+//            return;
+//        }
 
         //add some space for the divider to draw
         outRect.bottom = dividerDrawable.getIntrinsicHeight();
@@ -94,10 +95,22 @@ public class SimpleDivider extends RecyclerView.ItemDecoration {
             RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
 
             int top = child.getBottom() + params.bottomMargin;
-            int bottom = top + dividerDrawable.getIntrinsicHeight();
+            int bottom;
+            if (space == -1)
+                bottom = top + dividerDrawable.getIntrinsicHeight();
+            else
+                bottom = top + space;
 
             dividerDrawable.setBounds(left, top, right, bottom);
             dividerDrawable.draw(c);
         }
+    }
+
+    public void setSpace(int px) {
+        this.space = px;
+    }
+
+    public void setSpaceRes(Context ctx, int dimenRes) {
+        setSpace(ctx.getResources().getDimensionPixelSize(dimenRes));
     }
 }
