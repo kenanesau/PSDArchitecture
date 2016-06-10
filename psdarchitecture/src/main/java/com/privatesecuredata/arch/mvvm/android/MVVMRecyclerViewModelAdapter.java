@@ -237,7 +237,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         holder.updateViews(this, model);
 
         /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
-        for (ViewManipulator manipulator : manipulators)
+        for (ViewManipulator manipulator : getManipulators())
         {
             manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
         }
@@ -252,6 +252,10 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     public void registerViewManipulator(ViewManipulator manipulator)
     {
         manipulators.add(manipulator);
+    }
+
+    protected List<ViewManipulator> getManipulators() {
+        return manipulators;
     }
 	
     /**
@@ -394,6 +398,4 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     public void setOnLongClickCb(ILongClickListener onLongClickCb) {
         this.onLongClickCb = onLongClickCb;
     }
-
-
 }

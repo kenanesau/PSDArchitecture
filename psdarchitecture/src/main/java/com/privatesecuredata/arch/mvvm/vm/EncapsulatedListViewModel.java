@@ -391,7 +391,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 				return positionToViewModel.get(pos);
 			else
 			{
-                if (pos < this.size()) {
+                if (pos < this.size() - 1) {
                     M model = get(pos);
                     if (null != model) {
                         vm = (VM)getMVVM().createVM(model);
