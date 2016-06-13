@@ -67,6 +67,40 @@ public class PersistanceManager {
         }
     }
 
+    public enum ActionType {
+        SAVE(1),
+        LOAD(2),
+        DELETE(3);
+
+        private int value;
+
+        private ActionType(int value) {
+            this.value = value;
+        }
+
+        int valueOf() {
+            return value;
+        }
+    }
+
+    /**
+     * Interface for manipulating data before saving or after loading
+     *
+     * @param <T> A type which implements IPersistable
+     */
+    public interface Action<T extends IPersistable> {
+        /**
+         * Type SAVE: Called BEFORE actually saving the data
+         * Type LOAD: Called AFTER loading the data from DB
+         * Type DELETE: Called BEFORE actually deleting the data
+         *
+         * @param pm Reference to the PersistanceManager
+         * @param data The data to be saved
+         */
+        void execute(PersistanceManager pm, T data);
+        ActionType getType();
+    }
+
     private IDbDescription dbDesc;
     private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
     private Hashtable<String, Class<?>> classNameMap = new Hashtable<String, Class<?>>();
@@ -868,13 +902,38 @@ public class PersistanceManager {
 //		}
 //	}
 
-    public void delete(Class type) {
+    public <T extends IPersistable> void delete(Class<T> type) {
+        AbstractPersister<T> persister = (AbstractPersister<T>) getPersister(type);
         try {
-            db.execSQL(String.format("DELETE FROM %s", DbNameHelper.getTableName(type)));
+            db.beginTransaction();
+            if (!persister.hasDeleteActions()) {
+                db.execSQL(String.format("DELETE FROM %s", DbNameHelper.getTableName(type)));
+            }
+            else
+            {
+                Cursor csr = getLoadAllCursor(type);
+                for (int row = 0; row < csr.getCount(); row++) {
+                    csr.moveToPosition(row);
+                    persister.disableActions();
+                    T res = persister.rowToObject(row, csr);
+                    persister.enableActions();
+                    persister.delete(res);
+                }
+            }
+
+
+            db.setTransactionSuccessful();
         }
         catch (Exception ex) {
-            ex.printStackTrace();
+            throw new DBException(
+						String.format("Error deleting objects of type=%s",
+								type.getName()), ex);
         }
+        finally
+		{
+    		db.endTransaction();
+            persister.enableActions();
+		}
     }
 
 	public <T extends IPersistable> void delete(T persistable) throws DBException
@@ -891,8 +950,8 @@ public class PersistanceManager {
 
 			persister.delete(persistable);
             persistable.setDbId(null);
+
             db.setTransactionSuccessful();
-            db.endTransaction();
 		}
 		catch (Exception ex)
 		{
@@ -900,7 +959,10 @@ public class PersistanceManager {
 					String.format("Error deleting an object of type=%s",
 							persistable.getClass().getName()), ex);
 		}
-	}
+        finally {
+            db.endTransaction();
+        }
+    }
 	
 	public ICursorLoader getLoader(Class<?> referencingType, Class<?> referencedType)
 	{
@@ -991,7 +1053,7 @@ public class PersistanceManager {
         return null != terms ? persister.getLoadAllCursor(terms) : persister.getLoadAllCursor();
     }
 	
-	public <T extends IPersistable> Collection<T> loadAll(Class<T> classObj) throws DBException
+	public <T extends IPersistable> Collection<T> loadAll(Class classObj) throws DBException
 	{
 		IPersister<T> persister = getPersister(classObj);
 		Collection<T> ret = persister.loadAll();
@@ -1231,6 +1293,42 @@ public class PersistanceManager {
 
     public Query getQuery(String queryId) {
         return this.queries.get(queryId).createQuery(this);
+    }
+
+    /**
+     * Register an action which is executed each time either on Save, Load or Delete (Determined by
+     * the ActionType.
+     * @param type Persistable type
+     * @param action Action to exeute
+     * @param <T> Type parameter
+     * @see Action
+     * @see ActionType
+     */
+    public <T extends IPersistable> void registerAction(Class<T> type, Action<T> action) {
+        IPersister<T> persister = getPersister(type);
+        if (null != persister) {
+            persister.registerAction(action);
+        }
+        else
+            throw new ArgumentException(String.format("Error registering Action. No persister for type '%s' found", type.getName()));
+    }
+
+    /**
+     * Unregister an action.
+     *
+     * @param type Persistable type
+     * @param action Action to exeute
+     * @param <T> Type parameter
+     * @see Action
+     * @see ActionType
+     */
+    public <T extends IPersistable> void unregisterAction(Class<T> type, Action<T> action) {
+        IPersister<T> persister = getPersister(type);
+        if (null != persister) {
+            persister.unregisterAction(action);
+        }
+        else
+            throw new ArgumentException(String.format("Error unregistering Action. No persister for type '%s' found", type.getName()));
     }
 
     public int version() { return this.dbDesc.getVersion(); }

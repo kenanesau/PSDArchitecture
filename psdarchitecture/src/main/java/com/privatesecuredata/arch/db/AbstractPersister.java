@@ -27,6 +27,63 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     private int _version = -1;
     private String _dbTypeName;
     private PersisterDescription<T> _persisterDesc;
+    private boolean actionsEnabled=true;
+
+    private List<PersistanceManager.Action<T> > actionsSave = new ArrayList<>();
+    private List<PersistanceManager.Action<T> > actionsLoad = new ArrayList<>();
+    private List<PersistanceManager.Action<T> > actionsDelete = new ArrayList<>();
+
+    /**
+     * Register an Action which is executed on SAVE, LOAD or DELETE
+     * @param action
+     * @ss
+     */
+    public void registerAction(PersistanceManager.Action<T> action) {
+        if (action.getType() == PersistanceManager.ActionType.SAVE)
+            actionsSave.add(action);
+        else if (action.getType() == PersistanceManager.ActionType.LOAD)
+            actionsLoad.add(action);
+        else if (action.getType() == PersistanceManager.ActionType.DELETE)
+            actionsDelete.add(action);
+    }
+
+    public void unregisterAction(PersistanceManager.Action<T> action) {
+        if (action.getType() == PersistanceManager.ActionType.SAVE)
+            actionsSave.remove(action);
+        else if (action.getType() == PersistanceManager.ActionType.LOAD)
+            actionsLoad.remove(action);
+        else if (action.getType() == PersistanceManager.ActionType.DELETE)
+            actionsDelete.remove(action);
+    }
+
+    protected <T extends IPersistable> void onActionsSave(T data) {
+        if (actionsEnabled()) {
+            for (PersistanceManager.Action act : actionsSave)
+                act.execute(getPM(), data);
+        }
+    }
+
+    protected <T extends IPersistable> void onActionsLoad(T data) {
+        if (actionsEnabled()) {
+            for (PersistanceManager.Action act : actionsLoad)
+                act.execute(getPM(), data);
+        }
+    }
+
+    protected <T extends IPersistable> void onActionsDelete(T data) {
+        if (actionsEnabled()) {
+            for (PersistanceManager.Action act : actionsDelete)
+                act.execute(getPM(), data);
+        }
+    }
+
+    public boolean hasDeleteActions() {
+        return (actionsDelete.size() > 0);
+    }
+
+    public void disableActions() { actionsEnabled = false; }
+    public void enableActions() { actionsEnabled = true; }
+    public boolean actionsEnabled() { return actionsEnabled; }
 
     /**
      * Update-Statements for the item counts for the foreign key relations
@@ -66,6 +123,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
     @Override
     public void delete(T persistable) throws DBException {
+        onActionsDelete(persistable);
         delete.clearBindings();
         long _id = persistable.getDbId().getId();
         delete.bindLong(1, _id);

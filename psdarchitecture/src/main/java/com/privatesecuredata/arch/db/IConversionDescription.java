@@ -1,7 +1,8 @@
 package com.privatesecuredata.arch.db;
 
 /**
- * Created by kenan on 3/11/16.
+ * This interface has to be implemented to do the actual conversion from one DB-model to
+ * the next.
  */
 public interface IConversionDescription {
     /**

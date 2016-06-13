@@ -50,4 +50,8 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 
     Query getQuery(String queryId);
     PersisterDescription<T> getDescription();
+
+    void registerAction(PersistanceManager.Action<T> action);
+    void unregisterAction(PersistanceManager.Action<T> action);
+    boolean hasDeleteActions();
 }

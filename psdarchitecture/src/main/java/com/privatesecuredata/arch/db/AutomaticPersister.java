@@ -459,6 +459,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             for (SqlDataField field : getDescription().getTableFields()) {
                 bind(sql, i++, field, persistable);
             }
+
+            onActionsSave(persistable);
         } catch (Exception e) {
             throw new DBException(
                     String.format("Error binding to SQL statement \"%s\"", sql.toString()), e);
@@ -666,6 +668,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
 			}
 
+            onActionsLoad(obj);
         } catch (Exception e) {
 			if (currentField != null) {
 				throw new DBException(
