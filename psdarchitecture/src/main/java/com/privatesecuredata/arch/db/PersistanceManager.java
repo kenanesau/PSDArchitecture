@@ -1175,8 +1175,10 @@ public class PersistanceManager {
 	public void close()
 	{
 		this.initializedDb = false;
-        this.db.close();
-        this.db = null;
+        if (null != db) {
+            this.db.close();
+            this.db = null;
+        }
 	}
 
 	public <T extends IPersistable> ArrayList<T> loadCursor(Class<T> clazz, Cursor cursor) throws DBException {
