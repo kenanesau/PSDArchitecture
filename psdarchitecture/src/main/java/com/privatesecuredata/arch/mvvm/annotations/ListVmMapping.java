@@ -12,4 +12,5 @@ public @interface ListVmMapping {
 	Class<?> modelType();
 	Class<?> vmType();
 	boolean loadLazy() default true;
+	String query() default "";
 }

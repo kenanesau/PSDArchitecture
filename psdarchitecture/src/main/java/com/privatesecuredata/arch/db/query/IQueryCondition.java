@@ -1,5 +1,7 @@
 package com.privatesecuredata.arch.db.query;
 
+import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
 
 import java.util.Map;
@@ -24,11 +26,12 @@ public interface IQueryCondition {
     /**
      * Append condition to an SQL-Query
      *
-     * @param fields All fields contained in the persister (Map Sql-Fieldname -> SqlDataField)
+     * @param pm Reference to the Persistance-Manager
+     * @param desc Description of all fields contained in the persister
      * @param sb Stringbuilder which contains the SQL-Query to append the condition to
      * @return SQL-Query with appended condition
      */
-    StringBuilder append(Map<String, SqlDataField> fields, StringBuilder sb);
+    StringBuilder append(PersistanceManager pm, PersisterDescription desc, StringBuilder sb);
 
     /**
      * @return returns a deep copy of the QueryCondition

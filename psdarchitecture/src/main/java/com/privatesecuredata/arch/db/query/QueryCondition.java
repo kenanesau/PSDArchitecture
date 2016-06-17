@@ -1,6 +1,8 @@
 package com.privatesecuredata.arch.db.query;
 
 import com.privatesecuredata.arch.db.DbNameHelper;
+import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
 import com.privatesecuredata.arch.exceptions.DBException;
 
@@ -48,6 +50,11 @@ public class QueryCondition implements IQueryCondition {
     private Operation op;
     private ConditionType type = ConditionType.VALUE;
     private String condId;
+    /*
+        If this is set, the condition is meant for another table which is joined. this type is the
+        persistable type of that other table
+     */
+    private Class persistableType;
 
     protected QueryCondition() {}
 
@@ -93,16 +100,38 @@ public class QueryCondition implements IQueryCondition {
     public boolean isTypeCondition() { return this.type == ConditionType.TYPE; }
 
     /**
+     * @return The type for which this condition is meant (only used for joins)
+     */
+    public Class getPersistableType() {
+        return persistableType;
+    }
+
+    /**
+     * Set the type/table for which this condition is meant (only needed for joins)
+     * @param persistableType
+     */
+    public void setPersistableType(Class persistableType) {
+        this.persistableType = persistableType;
+    }
+
+    public String getPersistableTypeDb() {
+        return DbNameHelper.getDbTypeName(persistableType);
+    }
+
+    /**
      * Append condition to an SQL-Query
      *
-     * @param fields All fields contained in the persister (Map Sql-Fieldname -> SqlDataField)
+     * @param pm Reference to the persistance-manager
+     * @param desc Description of all fields contained in the persister
      * @param sb Stringbuilder which contains the SQL-Query to append the condition to
      * @return SQL-Query with appended condition
      */
     @Override
-    public StringBuilder append(Map<String, SqlDataField> fields, StringBuilder sb) {
+    public StringBuilder append(PersistanceManager pm, PersisterDescription desc, StringBuilder sb) {
         String sqlFieldName = null;
         SqlDataField sqlField = null;
+        Map<String, SqlDataField> fields = desc.getFieldMap();
+
         if (isTypeCondition())
             sqlFieldName = DbNameHelper.getFieldName(params[0].fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
         else if (isDbIdCondition()) {
@@ -112,9 +141,22 @@ public class QueryCondition implements IQueryCondition {
         else
             sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
 
-        sqlField = fields.get(sqlFieldName);
-        if (null == sqlField)
-            throw new DBException(String.format("Unable to create query: Could not find sqlField with name \"%s\"", params[0].fieldName()));
+        if (getPersistableType() == null) {
+            sqlField = fields.get(sqlFieldName);
+            if (null == sqlField)
+                throw new DBException(String.format("Unable to create query: Could not find sqlField with name \"%s\"", params[0].fieldName()));
+        }
+        else {
+            PersisterDescription joinedDesc = pm.getPersister(getPersistableType()).getDescription();
+            sqlField = joinedDesc.getTableField(sqlFieldName);
+            if (null == sqlField)
+                throw new DBException(String.format("Unable to create query: Could not find sqlField of joined type \"%s\" with name \"%s\"",
+                        getPersistableType().getName(),
+                        params[0].fieldName()));
+
+            sb.append(DbNameHelper.getTableName(getPersistableType()))
+                    .append(".");
+        }
 
         sb.append(sqlField.getSqlName());
 

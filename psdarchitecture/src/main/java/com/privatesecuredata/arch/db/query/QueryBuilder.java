@@ -2,11 +2,15 @@ package com.privatesecuredata.arch.db.query;
 
 import com.privatesecuredata.arch.db.AbstractPersister;
 import com.privatesecuredata.arch.db.AutomaticPersister;
+import com.privatesecuredata.arch.db.DbNameHelper;
 import com.privatesecuredata.arch.db.OrderByTerm;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersisterDescription;
+import com.privatesecuredata.arch.db.SqlDataField;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * A QueryBuilder can be used to build queries. The Querybuilder is for setting up the
@@ -41,12 +45,16 @@ public class QueryBuilder<T> {
 
     private Class type;
     private String queryId;
+    /* (object)-fieldname -> Type */
+    private LinkedHashMap<String, Class> joins;
+
     /**
      * Condition-ID -> Condition
      */
     private QueryConditionContainer rootCondition = new QueryConditionContainer("root");
     private LinkedList<OrderByTerm> orderByTerms = new LinkedList<>();
     private IDescriptionGetter descriptionGetter;
+    private Map<String, QueryParameter> predefinedparams = new LinkedHashMap<>();
 
     public QueryBuilder(Class type, String queryId) {
         this(new DefaultDescriptionGetter(type), queryId);
@@ -59,6 +67,18 @@ public class QueryBuilder<T> {
 
     public void addCondition(IQueryCondition cond) {
         rootCondition.addCondition(cond);
+
+        IQueryCondition localCondition = cond.clone();
+        for (QueryParameter param : localCondition.parameters())
+        {
+            predefinedparams.put(param.id(), param);
+        }
+    }
+
+    public void addCondition(Class persistableType, String fldName) {
+        QueryCondition cond = new QueryCondition(fldName);
+        cond.setPersistableType(persistableType);
+        addCondition(cond);
     }
 
     public void addCondition(String fldName) {
@@ -69,6 +89,13 @@ public class QueryBuilder<T> {
         addCondition(new QueryCondition(condId, fldName));
     }
 
+    public void addTypeCondition(Class persistableType, String condId, String paraId, String fldName) {
+        QueryCondition cond = new QueryCondition(condId, paraId, fldName);
+        cond.setTypeCondition();
+        cond.setPersistableType(persistableType);
+        addCondition(cond);
+    }
+
     public void addTypeCondition(String condId, String paraId, String fldName) {
         QueryCondition cond = new QueryCondition(condId, paraId, fldName);
         cond.setTypeCondition();
@@ -77,6 +104,10 @@ public class QueryBuilder<T> {
 
     public void addTypeCondition(String condId, String fldName) {
         addTypeCondition(condId, fldName, fldName);
+    }
+
+    public void addTypeCondition(Class persistableType, String fldNameAndId) {
+        addTypeCondition(persistableType, fldNameAndId, fldNameAndId, fldNameAndId);
     }
 
     public void addTypeCondition(String fldNameAndId) {
@@ -112,6 +143,42 @@ public class QueryBuilder<T> {
 
     public String id() { return queryId; }
 
+    /**
+     * Set a predefined parameter for the query. When the query is created via createQuery()
+     * these parameter-values will already be set.
+     *
+     * @param paraId ID of the parameter
+     * @param value Value of the parameter
+     */
+    public void setParameter(String paraId, Object value)
+    {
+        predefinedparams.get(paraId).setValue(value);
+    }
+
+    /**
+     * Set a predefined parameter for the query. When the query is created via createQuery()
+     * these parameter-values will already be set.
+     *
+     * @param paraId ID of the parameter
+     * @param value Type-Value
+     */
+    public void setParameter(String paraId, Class value)
+    {
+        predefinedparams.get(paraId).setValue(DbNameHelper.getDbTypeName(value));
+    }
+
+    public void join(Class t, String fieldName) {
+        if (null == joins)
+            joins = new LinkedHashMap<>();
+
+        joins.put(fieldName, t);
+    }
+
+    public void unjoin(Class t) {
+        if (null != joins)
+            joins.remove(t);
+    }
+
     public Query createQuery(PersistanceManager pm) {
         Query query = new Query(id());
         PersisterDescription desc = this.descriptionGetter.getDescription(pm);
@@ -133,12 +200,32 @@ public class QueryBuilder<T> {
                     desc.getTableFields(),
                     null));
 
+        if (null != joins) {
+            for (String objFieldName : joins.keySet()) {
+                Class type = joins.get(objFieldName);
+                String otherTable =  DbNameHelper.getTableName(type);
+                sb.append(" JOIN ")
+                        .append(otherTable)
+                        .append(" ON ")
+                        .append(DbNameHelper.getFieldName(objFieldName, SqlDataField.SqlFieldType.OBJECT_REFERENCE))
+                        .append("==")
+                        .append(otherTable).append("._id");
+            }
+        }
+
         sb.append(" WHERE ");
-        sb = rootCondition.append(desc.getFieldMap(), sb);
+        sb = rootCondition.append(pm, desc, sb);
         query.addCondition(rootCondition);
 
         AbstractPersister.appendOrderByString(sb, termAr);
 
+        /**
+         * Set the predefined parameters
+         */
+        for(String paramId : predefinedparams.keySet())
+        {
+            query.setParameter(paramId, predefinedparams.get(paramId).value());
+        }
         query.prepare(pm, desc, sb.toString());
         /** maybe prohibit future changes...
         query.seal() **/

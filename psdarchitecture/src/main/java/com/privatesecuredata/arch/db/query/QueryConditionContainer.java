@@ -1,5 +1,7 @@
 package com.privatesecuredata.arch.db.query;
 
+import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
 
 import java.util.LinkedList;
@@ -79,7 +81,7 @@ public class QueryConditionContainer implements IQueryCondition {
     }
 
     @Override
-    public StringBuilder append(Map<String, SqlDataField> fields, StringBuilder sb) {
+    public StringBuilder append(PersistanceManager pm, PersisterDescription desc, StringBuilder sb) {
         String operation = "";
 
         switch (op)
@@ -95,7 +97,7 @@ public class QueryConditionContainer implements IQueryCondition {
         sb.append("( ");
 
         for(int i = 0; i < conditions.size(); i++) {
-            sb = conditions.get(i).append(fields, sb);
+            sb = conditions.get(i).append(pm, desc, sb);
 
             if ( (conditions.size() > 1) && (i + 1 < conditions.size()) ) {
                 sb.append(operation);
