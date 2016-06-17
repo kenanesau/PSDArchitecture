@@ -3,7 +3,9 @@ package com.privatesecuredata.arch.db.query;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.DbNameHelper;
+import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
@@ -52,6 +54,24 @@ public class Query<T> {
     public void setParameter(String paraId, Class value)
     {
         params.get(paraId).setValue(DbNameHelper.getDbTypeName(value));
+    }
+
+    public void setForeignKeyParameter(String paraId, IPersistable value)
+    {
+        setForeignKeyParameter(paraId, value.getDbId());
+    }
+
+    public void setForeignKeyParameter(String paraId, DbId value)
+    {
+        setParameter(paraId, value.getId());
+    }
+
+    public void setForeignKeyParameter(IPersistable value) {
+        setForeignKeyParameter(value.getDbId());
+    }
+
+    public void setForeignKeyParameter(DbId<?> value) {
+        setForeignKeyParameter(DbNameHelper.getTableName(value.getType()), value);
     }
 
     /**

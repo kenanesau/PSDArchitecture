@@ -128,6 +128,23 @@ public class QueryBuilder<T> {
         addLikeCondition(fldNameAndId, fldNameAndId, fldNameAndId);
     }
 
+    public void addForeignKeyCondition(String condId, String paraId, Class foreignKeyType)
+    {
+        QueryCondition cond = new QueryCondition(condId, paraId, foreignKeyType);
+        cond.setForeignKeyCondition();
+        addCondition(cond);
+    }
+
+    public void addForeignKeyCondition(String condId, Class foreignKeyType)
+    {
+        addForeignKeyCondition(condId, condId, foreignKeyType);
+    }
+
+    public void addForeignKeyCondition(Class foreignKeyType)
+    {
+        addForeignKeyCondition(DbNameHelper.getTableName(foreignKeyType), foreignKeyType);
+    }
+
     public void appendOrderByTerm(OrderByTerm term) {
         orderByTerms.addLast(term);
     }

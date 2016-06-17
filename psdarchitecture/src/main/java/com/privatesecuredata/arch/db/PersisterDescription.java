@@ -162,7 +162,7 @@ public class PersisterDescription<T> {
         return  ret;
     }
 
-    SqlForeignKeyField getForeignKeyField(Class foreignType)
+    public SqlForeignKeyField getForeignKeyField(Class foreignType)
     {
         SqlForeignKeyField fld = _foreignKeyFields.get(foreignType);
         if (null == fld)

@@ -37,7 +37,8 @@ public class QueryCondition implements IQueryCondition {
     public enum ConditionType {
         VALUE(1),
         TYPE(2),
-        DBID(3);
+        DBID(3),
+        FOREIGNKEY(4);
 
         private int value;
 
@@ -57,6 +58,19 @@ public class QueryCondition implements IQueryCondition {
     private Class persistableType;
 
     protected QueryCondition() {}
+
+    /**
+     * Constructor for creating a query condition for foreign-key-related queries
+     *
+     * @param condId ID of the condition
+     * @param paraId ID of the parameter
+     * @param referencingType The foreign key type
+     */
+    public QueryCondition(String condId, String paraId, Class<?> referencingType) {
+        this.params[0] = new ForeignKeyParameter(paraId, referencingType);
+        this.condId = condId;
+        op = Operation.EQUALS;
+    }
 
     /**
      * Create a query
@@ -98,6 +112,9 @@ public class QueryCondition implements IQueryCondition {
     public boolean isDbIdCondition() { return this.type == ConditionType.DBID; }
     public void setTypeCondition() { this.type = ConditionType.TYPE; }
     public boolean isTypeCondition() { return this.type == ConditionType.TYPE; }
+    public void setForeignKeyCondition() { this.type = ConditionType.FOREIGNKEY; }
+    public boolean isForeignKeyCondition() { return this.type == ConditionType.FOREIGNKEY; }
+
 
     /**
      * @return The type for which this condition is meant (only used for joins)
@@ -138,15 +155,35 @@ public class QueryCondition implements IQueryCondition {
             sqlFieldName = params[0].fieldName();
             fields.put("_id", new SqlDataField("_id", SqlDataField.SqlFieldType.LONG));
         }
+        else if (isForeignKeyCondition()) {
+            sqlFieldName = DbNameHelper.getForeignKeyFieldName(params[0].fieldName());
+        }
         else
             sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
 
         if (getPersistableType() == null) {
-            sqlField = fields.get(sqlFieldName);
+            /**
+             * "Non-Join"-case
+             */
+            if (isForeignKeyCondition()) {
+                /**
+                 * Foreign-Key
+                 */
+                Class foreignKeyType = ((ForeignKeyParameter)params[0]).getForeignKeyType();
+                sqlField = desc.getForeignKeyField(foreignKeyType);
+            } else {
+                /**
+                 * Non-Foreign-Key-field
+                 */
+                sqlField = fields.get(sqlFieldName);
+            }
             if (null == sqlField)
                 throw new DBException(String.format("Unable to create query: Could not find sqlField with name \"%s\"", params[0].fieldName()));
         }
         else {
+            /**
+             * Join-case
+             */
             PersisterDescription joinedDesc = pm.getPersister(getPersistableType()).getDescription();
             sqlField = joinedDesc.getTableField(sqlFieldName);
             if (null == sqlField)

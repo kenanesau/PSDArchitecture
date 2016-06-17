@@ -40,7 +40,7 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
 	{
 		return persistableObj;
 	}
-    public Class getType() { return this.type; }
+    public Class<?> getType() { return this.type; }
 	
 	public boolean getDirty() { return this.dirty; }
 	public void setDirty() { this.dirty = true; }
