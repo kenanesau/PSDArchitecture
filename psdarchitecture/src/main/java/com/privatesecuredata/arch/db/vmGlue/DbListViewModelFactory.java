@@ -6,8 +6,11 @@ import com.privatesecuredata.arch.db.CollectionProxyFactory;
 import com.privatesecuredata.arch.db.CursorToListAdapter;
 import com.privatesecuredata.arch.db.ICursorChangedListener;
 import com.privatesecuredata.arch.db.IPersistable;
+import com.privatesecuredata.arch.db.IPersister;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
+import com.privatesecuredata.arch.db.ObjectRelation;
 import com.privatesecuredata.arch.db.PersistanceManager;
+import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
@@ -67,6 +70,11 @@ public class DbListViewModelFactory implements IListViewModelFactory {
         else
         {
             CursorToListAdapter<?> cb = (CursorToListAdapter<?>)getter.getCb();
+            IPersister parentPersister = pm.getUnspecificPersister(parentVM.getModel().getClass());
+            ObjectRelation rel = parentPersister.getDescription().getOneToManyRelation(modelField.getName());
+            Query query = rel.getAndCacheQuery(pm);
+            if (null != query)
+                cb.setQuery(query);
             listVM = new EncapsulatedListViewModel(parentVM.getMVVM(), parentModelType, modelType, viewModelType, cb);
             final Object lst = parentVM.getModel();
             if (Proxy.isProxyClass(lst.getClass()))

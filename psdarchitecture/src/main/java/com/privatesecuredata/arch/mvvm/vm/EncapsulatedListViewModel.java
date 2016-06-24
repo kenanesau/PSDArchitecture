@@ -4,6 +4,7 @@ import android.widget.Filter;
 import android.widget.Filterable;
 
 import com.privatesecuredata.arch.db.DbId;
+import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.MVVM;
 
@@ -61,6 +62,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         void registerForDataChange(IDataChangedListener provider);
 
         void setQuery(String queryId);
+        void setQuery(Query query);
         void where(String id, Object value);
         void where(String id, Class value);
         void runQuery();

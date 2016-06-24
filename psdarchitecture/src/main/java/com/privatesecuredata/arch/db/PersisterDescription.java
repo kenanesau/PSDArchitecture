@@ -35,9 +35,15 @@ public class PersisterDescription<T> {
 
     /**
      * List of Fields to be filled in an persistable and the corresponding types
+     *
+     * Object-field-name -> ObjectRelation
      */
     private Map<String, ObjectRelation> _thisToOneRelations;
     private Map<String, ObjectRelation> _oneToManyRelations;
+
+    /**
+     * Type which object of this class describes
+     */
     private Class<T> _persistentType;
 
     public PersisterDescription(Class<T> type) {

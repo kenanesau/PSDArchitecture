@@ -169,8 +169,8 @@ public class SqlDataField {
 		this._tableName = _tableName;
 	}
 	
-	public Field getField() { return _field; }
-    public void setField(Field fld) { _field = fld; }
+	public Field getObjectField() { return _field; }
+    public void setObjectField(Field fld) { _field = fld; }
 
     public String getId() { return _id; }
     public void setId(String id) { _id = id; }

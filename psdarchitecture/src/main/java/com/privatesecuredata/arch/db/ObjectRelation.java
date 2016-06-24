@@ -1,5 +1,7 @@
 package com.privatesecuredata.arch.db;
 
+import com.privatesecuredata.arch.db.query.Query;
+
 import java.lang.reflect.Field;
 
 /**
@@ -15,6 +17,8 @@ public class ObjectRelation {
     private Class<?> _referencingType;
     private Class<?> _referencedListType;
     private boolean _deleteChildren;
+    private String _queryId;
+    private Query _cachedQuery;
 
     /**
      * Constructor used for referencing lists of child-objects
@@ -23,13 +27,20 @@ public class ObjectRelation {
      * @param referencedListType
      * @param referencingType
      * @param deleteChildren
+     * @param queryId
      */
-    public ObjectRelation(Field fld, Class<?> referencedListType,  Class<?> referencingType, boolean deleteChildren)
+    public ObjectRelation(Field fld, Class<?> referencedListType,  Class<?> referencingType, boolean deleteChildren, String queryId)
     {
         _fld = fld;
         _referencedListType = referencedListType;
         _referencingType = referencingType;
         _deleteChildren = deleteChildren;
+        if ( (null != queryId) && (queryId.compareTo("") == 0) ) {
+            _queryId = null;
+        }
+        else {
+            _queryId = queryId;
+        }
     }
 
     /**
@@ -41,7 +52,7 @@ public class ObjectRelation {
      */
 	public ObjectRelation(Field fld, Class<?> referencedType, boolean deleteChildren)
 	{
-		this(fld, null, referencedType, deleteChildren);
+		this(fld, null, referencedType, deleteChildren, null);
 	}
 	
 	public Field getField() { return _fld; }
@@ -55,4 +66,15 @@ public class ObjectRelation {
 		return _persister;
 	}
     public boolean deleteChildren() { return _deleteChildren; }
+    public String getQueryId() { return _queryId; }
+    public Query getAndCacheQuery(PersistanceManager pm) {
+        if (null != this._cachedQuery)
+            return this._cachedQuery;
+
+        if (null != this._queryId) {
+            this._cachedQuery = pm.getQuery(_queryId);
+        }
+
+        return _cachedQuery;
+    }
 }

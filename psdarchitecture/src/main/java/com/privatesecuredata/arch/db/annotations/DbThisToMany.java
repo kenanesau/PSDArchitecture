@@ -17,4 +17,5 @@ public @interface DbThisToMany {
 	boolean isMandatory() default false;
     boolean deleteChildren() default true;
 	Class<?> referencedType();
+	String queryId() default "";
 }

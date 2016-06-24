@@ -85,7 +85,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
             if (null != oneToManyAnno) {
                 field.setAccessible(true);
-                ObjectRelation objRel = new ObjectRelation(field, oneToManyAnno.referencedType(), getPersistentType(), oneToManyAnno.deleteChildren());
+                ObjectRelation objRel = new ObjectRelation(field, oneToManyAnno.referencedType(), getPersistentType(), oneToManyAnno.deleteChildren(), oneToManyAnno.queryId());
                 getDescription().addOneToManyRelation(objRel);
 
                 Class referencedType = oneToManyAnno.referencedType();
@@ -376,7 +376,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             for (SqlDataField collectionProxySizeFld : proxyCntFields) {
                 // Create an update-Statement for the collection-proxy-size
                 SQLiteStatement updateListCountStatement = createUpdateListCountStatement(getTableName(), collectionProxySizeFld);
-                addUpdateProxyStatement(collectionProxySizeFld.getField(), updateListCountStatement);
+                addUpdateProxyStatement(collectionProxySizeFld.getObjectField(), updateListCountStatement);
             }
 
             proxyCntFields.clear();
@@ -384,7 +384,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     }
 
     public void bind(SQLiteStatement sql, int idx, SqlDataField sqlField, T persistable) throws IllegalAccessException, IllegalArgumentException {
-        Field fld = sqlField.getField();
+        Field fld = sqlField.getObjectField();
         if (null != fld)
             fld.setAccessible(true);
 
@@ -596,7 +596,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             for (SqlDataField field : coll) {
                 currentField = field;
 
-                Field fld = field.getField();
+                Field fld = field.getObjectField();
                 fld.setAccessible(true);
                 switch(field.getSqlType())
                 {
@@ -651,7 +651,15 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
                         //TODO: If object is not lazily loaded omit the proxy-stuff ...
                         //TODO: Get type of objects in collection...
-                        ICursorLoader loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
+                        ObjectRelation rel = getDescription().getOneToManyRelation(field.getObjectField().getName());
+                        Query q = rel.getAndCacheQuery(getPM());
+                        ICursorLoader loader;
+                        if (null != q) {
+                            loader = new QueryCursorLoader(q);
+                        }
+                        else {
+                            loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
+                        }
                         Collection lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class)field.getReferencedType(), obj, collSize, loader);
 
                         fld.set(obj, lstItems);

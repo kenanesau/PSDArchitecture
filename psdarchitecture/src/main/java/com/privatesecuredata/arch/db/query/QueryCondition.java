@@ -290,7 +290,7 @@ public class QueryCondition implements IQueryCondition {
                 String dbFieldName = DbNameHelper.getFieldName(para.fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
                 if (fields.containsKey(dbFieldName)) {
                     SqlDataField sqlField = fields.get(dbFieldName);
-                    para.setValue(sqlField.getField().getType().getName());
+                    para.setValue(sqlField.getObjectField().getType().getName());
                 }
             }
         }

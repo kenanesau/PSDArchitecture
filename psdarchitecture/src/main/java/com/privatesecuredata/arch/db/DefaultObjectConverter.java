@@ -80,12 +80,12 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
     }
 
     public void convertField(SqlDataField newSqlField, IPersistable newObject, Object oldObject) throws IllegalAccessException {
-        Field fld = newSqlField.getField();
+        Field fld = newSqlField.getObjectField();
         fld.setAccessible(true);
 
         SqlDataField oldSqlField = _oldDesc.getTableField(newSqlField.getSqlName());
         if (null != oldSqlField) {
-            Object oldData = oldSqlField.getField().get(oldObject);
+            Object oldData = oldSqlField.getObjectField().get(oldObject);
             fld.set(newObject, oldData);
         }
     }
@@ -202,7 +202,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
                         fldType == SqlDataField.SqlFieldType.OBJECT_REFERENCE)
                     continue;
 
-                IFieldConverter<T> fldConverter = _fieldConverterMap.get(newSqlField.getField().getName());
+                IFieldConverter<T> fldConverter = _fieldConverterMap.get(newSqlField.getObjectField().getName());
 
                 if (null == fldConverter)
                     convertField(newSqlField, newObject, oldObject);

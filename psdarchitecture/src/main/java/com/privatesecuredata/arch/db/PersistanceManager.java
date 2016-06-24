@@ -380,7 +380,7 @@ public class PersistanceManager {
         }
 		catch (Exception ex)
 		{
-			throw new DBException("Error adding common Persister!", ex);			
+			throw new DBException(String.format("Error adding common Persister for type '%s'!", (null != persistentType) ? persistentType.getName() : "NULL"), ex);
 		}
 	}
 
@@ -392,6 +392,18 @@ public class PersistanceManager {
     public IPersister getIPersister(Class classObj)
     {
         IPersister persister = persisterMap.get(classObj);
+        if(null == persister) {
+            Class newType = getPersistentType(DbNameHelper.getDbTypeName(classObj));
+            if (null != newType)
+                persister = persisterMap.get(newType);
+        }
+
+        return persister;
+    }
+
+    public IPersister<?> getUnspecificPersister(Class<?> classObj)
+    {
+        IPersister<?> persister = persisterMap.get(classObj);
         if(null == persister) {
             Class newType = getPersistentType(DbNameHelper.getDbTypeName(classObj));
             if (null != newType)
@@ -1294,7 +1306,11 @@ public class PersistanceManager {
     }
 
     public Query getQuery(String queryId) {
-        return this.queries.get(queryId).createQuery(this);
+        QueryBuilder qb = this.queries.get(queryId);
+        if (null == qb)
+            throw new ArgumentException(String.format("Could not find query with id '%s'", queryId));
+
+        return qb.createQuery(this);
     }
 
     /**

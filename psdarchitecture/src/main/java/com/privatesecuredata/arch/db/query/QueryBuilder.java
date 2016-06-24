@@ -43,7 +43,6 @@ public class QueryBuilder<T> {
         }
     }
 
-    private Class type;
     private String queryId;
     /* (object)-fieldname -> Type */
     private LinkedHashMap<String, Class> joins;
@@ -56,6 +55,8 @@ public class QueryBuilder<T> {
     private IDescriptionGetter descriptionGetter;
     private Map<String, QueryParameter> predefinedparams = new LinkedHashMap<>();
 
+    protected QueryBuilder() {}
+
     public QueryBuilder(Class type, String queryId) {
         this(new DefaultDescriptionGetter(type), queryId);
     }
@@ -63,6 +64,10 @@ public class QueryBuilder<T> {
     public QueryBuilder(IDescriptionGetter getter, String queryId) {
         this.descriptionGetter = getter;
         this.queryId = queryId;
+    }
+
+    protected void setDescriptionGetter(IDescriptionGetter getter) {
+        this.descriptionGetter = getter;
     }
 
     public void addCondition(IQueryCondition cond) {
@@ -142,7 +147,7 @@ public class QueryBuilder<T> {
 
     public void addForeignKeyCondition(Class foreignKeyType)
     {
-        addForeignKeyCondition(DbNameHelper.getTableName(foreignKeyType), foreignKeyType);
+        addForeignKeyCondition(DbNameHelper.getForeignKeyFieldName(foreignKeyType), foreignKeyType);
     }
 
     public void appendOrderByTerm(OrderByTerm term) {
@@ -201,21 +206,11 @@ public class QueryBuilder<T> {
         PersisterDescription desc = this.descriptionGetter.getDescription(pm);
 
         StringBuilder sb;
-        OrderByTerm[] termAr = null;
-        if (orderByTerms.size() > 0) {
-            termAr = new OrderByTerm[orderByTerms.size()];
-            orderByTerms.toArray(termAr);
-            sb = new StringBuilder(
-                    AbstractPersister.createSelectAllStatement(
-                            desc.getTableName(),
-                            desc.getTableFields(),
-                            termAr));
-        }
-        else
-            sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
-                    desc.getTableName(),
-                    desc.getTableFields(),
-                    null));
+
+        sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
+                desc.getTableName(),
+                desc.getTableFields(),
+                null));
 
         if (null != joins) {
             for (String objFieldName : joins.keySet()) {
@@ -234,7 +229,12 @@ public class QueryBuilder<T> {
         sb = rootCondition.append(pm, desc, sb);
         query.addCondition(rootCondition);
 
-        AbstractPersister.appendOrderByString(sb, termAr);
+        if (orderByTerms.size() > 0) {
+            OrderByTerm[] termAr = null;
+            termAr = new OrderByTerm[orderByTerms.size()];
+            orderByTerms.toArray(termAr);
+            query.setOrderByTerms(termAr);
+        }
 
         /**
          * Set the predefined parameters

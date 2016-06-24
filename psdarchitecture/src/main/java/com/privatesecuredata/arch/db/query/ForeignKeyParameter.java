@@ -9,7 +9,7 @@ public class ForeignKeyParameter extends QueryParameter {
     private Class foreignKeyType;
 
     public ForeignKeyParameter(String paraId, Class foreignKeyType) {
-        super(paraId, DbNameHelper.getTableName(foreignKeyType));
+        super(paraId, DbNameHelper.getForeignKeyFieldName(foreignKeyType));
         this.foreignKeyType = foreignKeyType;
     }
 

@@ -256,6 +256,12 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     }
 
     @Override
+    public void setQuery(Query q)
+    {
+        query = q;
+    }
+
+    @Override
     public void setQuery(String queryId) {
         query = pm.getQuery(queryId);
         if (null == query)

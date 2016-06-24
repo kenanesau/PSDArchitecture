@@ -3,9 +3,11 @@ package com.privatesecuredata.arch.db.query;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.privatesecuredata.arch.db.AbstractPersister;
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.DbNameHelper;
 import com.privatesecuredata.arch.db.IPersistable;
+import com.privatesecuredata.arch.db.OrderByTerm;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
@@ -18,11 +20,14 @@ import java.util.Map;
  * Created by kenan on 1/29/16.
  */
 public class Query<T> {
+    public final String PARA_ID = "para_id";
+
     private String queryId;
     private String sql;
     private SQLiteDatabase db;
     private Map<String, IQueryCondition> conditions = new LinkedHashMap<>();
     private Map<String, QueryParameter> params = new LinkedHashMap<>();
+    private OrderByTerm[] orderByTerms;
 
     public Query(String id) {
         this.queryId = id;
@@ -44,6 +49,11 @@ public class Query<T> {
         {
             params.put(param.id(), param);
         }
+    }
+
+    public void setOrderByTerms(OrderByTerm[] orderByTerms)
+    {
+        this.orderByTerms = orderByTerms;
     }
 
     public void setParameter(String paraId, Object value)
@@ -71,7 +81,7 @@ public class Query<T> {
     }
 
     public void setForeignKeyParameter(DbId<?> value) {
-        setForeignKeyParameter(DbNameHelper.getTableName(value.getType()), value);
+        setForeignKeyParameter(DbNameHelper.getForeignKeyFieldName(value.getType()), value);
     }
 
     /**
@@ -91,9 +101,19 @@ public class Query<T> {
         }
     }
 
-    public Cursor run() {
+    /**
+     * Run the query, overriding the order-by-terms set within the query
+     *
+     * @param order New order-by-terms
+     * @return Cursor with results
+     */
+    public Cursor run(OrderByTerm[] order) {
         String[] args = new String[params.size()];
         int i=0;
+        StringBuilder sb = new StringBuilder(this.sql);
+
+        sb = AbstractPersister.appendOrderByString(sb, order);
+
         for(QueryParameter para : params.values())
         {
             if (null == para.value())
@@ -101,7 +121,16 @@ public class Query<T> {
 
             args[i++] = para.getDbString();
         }
-        return this.db.rawQuery(this.sql, args);
+        return this.db.rawQuery(sb.toString(), args);
+    }
+
+    /**
+     * Run the query
+     *
+     * @return The cursur with results
+     */
+    public Cursor run() {
+        return run(this.orderByTerms);
     }
 
 
