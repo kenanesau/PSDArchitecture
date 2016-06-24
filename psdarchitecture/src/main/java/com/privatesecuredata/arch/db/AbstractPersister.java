@@ -24,8 +24,6 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     private String tableName;
     private boolean tableExists = false;
     private Class<T> _persistentType;
-    private int _version = -1;
-    private String _dbTypeName;
     private PersisterDescription<T> _persisterDesc;
     private boolean actionsEnabled=true;
 
@@ -265,7 +263,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
             sql.append(fld.getSqlName());
             if (fld.getSqlType()== SqlDataField.SqlFieldType.OBJECT_REFERENCE)
-                references.put(fld.getField().getType(), fld);
+                references.put(fld.getObjectField().getType(), fld);
 
             fieldCount++;
         }
