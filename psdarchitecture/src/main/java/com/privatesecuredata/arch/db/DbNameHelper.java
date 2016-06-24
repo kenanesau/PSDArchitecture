@@ -53,9 +53,9 @@ public class DbNameHelper {
 		return getFieldName(field.getName(), type);
 	}
 	
-	public static String getForeignKeyFieldName(Class<?> persistable)
+	public static String getForeignKeyFieldName(Class<?> persistableType)
 	{
-		return getForeignKeyFieldName(getTableName(persistable));
+		return getForeignKeyFieldName(getTableName(persistableType));
 	}
 
     public static String getForeignKeyFieldName(String tableName)
