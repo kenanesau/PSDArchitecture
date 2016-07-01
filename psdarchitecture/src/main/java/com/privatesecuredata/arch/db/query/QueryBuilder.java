@@ -225,15 +225,17 @@ public class QueryBuilder<T> {
             }
         }
 
-        sb.append(" WHERE ");
-        sb = rootCondition.append(pm, desc, sb);
-        query.addCondition(rootCondition);
+        if (!rootCondition.isEmpty()) {
+            sb.append(" WHERE ");
+            sb = rootCondition.append(pm, desc, sb);
+            query.addCondition(rootCondition);
 
-        if (orderByTerms.size() > 0) {
-            OrderByTerm[] termAr = null;
-            termAr = new OrderByTerm[orderByTerms.size()];
-            orderByTerms.toArray(termAr);
-            query.setOrderByTerms(termAr);
+            if (orderByTerms.size() > 0) {
+                OrderByTerm[] termAr = null;
+                termAr = new OrderByTerm[orderByTerms.size()];
+                orderByTerms.toArray(termAr);
+                query.setOrderByTerms(termAr);
+            }
         }
 
         /**

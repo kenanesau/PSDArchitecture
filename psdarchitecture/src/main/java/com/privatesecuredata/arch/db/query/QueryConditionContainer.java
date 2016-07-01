@@ -128,4 +128,8 @@ public class QueryConditionContainer implements IQueryCondition {
             cond.setDefaultValues(fields);
     }
 
+    public boolean isEmpty() {
+        return conditions.size() == 0;
+    }
+
 }
