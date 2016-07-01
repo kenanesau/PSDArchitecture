@@ -8,6 +8,7 @@ public class OrderByTerm {
     private String _dbTableName;
     private String _sqlFieldStr;
     private String _sqlOrderStr;
+
     public OrderByTerm(Class type, String objectFieldName, boolean asc)
     {
         _type = type;

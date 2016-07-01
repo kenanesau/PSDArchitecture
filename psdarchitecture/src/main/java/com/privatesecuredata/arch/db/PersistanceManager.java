@@ -292,8 +292,8 @@ public class PersistanceManager {
 						catch (Exception ex)
 						{
 	 						throw new DBException(
-									String.format("Error initializing persister \"%s\"" , 
-											persister.getClass().getName()), ex);
+									String.format("Error initializing persister for type \"%s\"" ,
+											persister.getDescription().getType().getName()), ex);
 						}
 					}
 				}

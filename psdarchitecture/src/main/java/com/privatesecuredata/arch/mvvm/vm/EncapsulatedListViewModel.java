@@ -66,6 +66,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         void where(String id, Object value);
         void where(String id, Class value);
         void runQuery();
+
+        /**
+         * Call this to get rid of still open resources (Cursor)
+         */
+        void dispose();
     }
 	
 	protected ArrayList<M> deletedItems = new ArrayList<M>();

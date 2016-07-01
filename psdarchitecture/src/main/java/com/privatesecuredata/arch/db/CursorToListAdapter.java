@@ -230,10 +230,11 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
                 listener.notifyCursorChanged(csr);
             }
 
-            listener.notifyDataChanged();
+            if (listener != null)
+                listener.notifyDataChanged();
         }
         catch(Exception e) {
-            e.printStackTrace();
+            throw new DBException("Error changing cursor!", e);
         }
         finally {
             if (null != oldCursor)
@@ -286,5 +287,11 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     @Override
     public void runQuery() {
         changeCursor(query.run());
+    }
+
+    @Override
+    public void dispose() {
+        if (null != csr)
+            this.csr.close();
     }
 }
