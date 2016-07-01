@@ -19,6 +19,8 @@
         <attr name="txt_title" format="reference" />
         <attr name="txt_ok" format="reference" />
         <attr name="hide_ok" format="boolean" />
+        <attr name="hide_cancel" format="boolean" />
+        <attr name="hide_title" format="boolean" />
     </declare-styleable>
 </resources>
  

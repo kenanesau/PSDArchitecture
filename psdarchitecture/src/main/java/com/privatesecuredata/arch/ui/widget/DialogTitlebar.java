@@ -70,11 +70,46 @@ public class DialogTitlebar extends FrameLayout {
             else
                 _txtActionOk.setVisibility(View.VISIBLE);
 
+            boolean hideCancel = a.getBoolean(R.styleable.psdarch_dialog_titlebar_hide_cancel, false);
+            if (hideCancel)
+                _defaultCancelIcon.setVisibility(View.GONE);
+            else
+                _defaultCancelIcon.setVisibility(View.VISIBLE);
+
+            boolean hideTitle = a.getBoolean(R.styleable.psdarch_dialog_titlebar_hide_title, false);
+            if (hideTitle)
+                _txtTitle.setVisibility(View.GONE);
+            else
+                _txtTitle.setVisibility(View.VISIBLE);
+
             int txtOkId = a.getResourceId(R.styleable.psdarch_dialog_titlebar_txt_ok, R.string.psdarch_dialog_titlebar_txt_ok);
             String action = res.getString(txtOkId);
             _txtActionOk.setText(action);
 
             a.recycle();
         }
+    }
+
+    public void setTitle(CharSequence text) {
+        _txtTitle.setText(text);
+    }
+
+    public void setTitleVisibility(int visibility)
+    {
+        _txtTitle.setVisibility(visibility);
+    }
+
+    public void setOKVisibility(int visibility)
+    {
+        _txtActionOk.setVisibility(visibility);
+    }
+
+    public void setCancelVisibility(int visibility)
+    {
+        _defaultCancelIcon.setVisibility(visibility);
+    }
+
+    public void setActionText(CharSequence text) {
+        _txtActionOk.setText(text);
     }
 }
