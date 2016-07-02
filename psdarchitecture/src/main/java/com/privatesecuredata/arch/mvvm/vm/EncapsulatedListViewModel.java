@@ -7,10 +7,10 @@ import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.MVVM;
+import com.privatesecuredata.arch.mvvm.android.MVVMActivity;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -81,10 +81,28 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	private Constructor<VM> vmConstructor;
 	private IModelListCallback<M> listCB;
     private boolean dataLoaded = false;
-    private Method modelSetter;
-    private OrderBy[] sortOrderTerms;
 
 	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
+
+    public EncapsulatedListViewModel(MVVMActivity ctx,
+                                     Class<M> referencedType,
+                                     Class<VM> vmType,
+                                     IModelListCallback<M> listCB,
+                                     OrderBy... sortOrderTerms)
+    {
+        this(ctx.getDefaultPM().createMVVM(), null, referencedType, vmType, listCB);
+        if (null != sortOrderTerms)
+            setSortOrder(sortOrderTerms);
+    }
+
+    public EncapsulatedListViewModel(MVVMActivity ctx,
+                                     Class<M> referencedType,
+                                     Class<VM> vmType,
+                                     IModelListCallback<M> listCB
+                                     )
+    {
+        this(ctx, referencedType, vmType, listCB,  null);
+    }
 
     /**
      *
@@ -180,8 +198,6 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     {
         setModelGetter(model, modelField);
     }
-
-    protected Method getModelSetter() { return this.modelSetter; }
 
     public IModelListCallback<M> getModelListCallback() {
         return this.listCB;
