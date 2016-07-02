@@ -178,7 +178,7 @@ public class QueryCondition implements IQueryCondition {
                 sqlField = fields.get(sqlFieldName);
             }
             if (null == sqlField)
-                throw new DBException(String.format("Unable to create query: Could not find sqlField with name \"%s\"", params[0].fieldName()));
+                throw new DBException(String.format("Could not find sqlField with name \"%s\" in description for type \"%s\"",  params[0].fieldName(), desc.getDbTypeName()));
         }
         else {
             /**

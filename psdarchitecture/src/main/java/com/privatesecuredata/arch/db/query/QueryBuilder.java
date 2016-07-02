@@ -1,5 +1,7 @@
 package com.privatesecuredata.arch.db.query;
 
+import android.util.Pair;
+
 import com.privatesecuredata.arch.db.AbstractPersister;
 import com.privatesecuredata.arch.db.AutomaticPersister;
 import com.privatesecuredata.arch.db.DbNameHelper;
@@ -7,6 +9,7 @@ import com.privatesecuredata.arch.db.OrderByTerm;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
+import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -44,8 +47,9 @@ public class QueryBuilder<T> {
     }
 
     private String queryId;
-    /* (object)-fieldname -> Type */
-    private LinkedHashMap<String, Class> joins;
+    /* <foreignType, (object)-fieldname> -> Type */
+    private LinkedHashMap<Pair<Class, String>, Class> joins;
+
 
     /**
      * Condition-ID -> Condition
@@ -189,11 +193,15 @@ public class QueryBuilder<T> {
         predefinedparams.get(paraId).setValue(DbNameHelper.getDbTypeName(value));
     }
 
-    public void join(Class t, String fieldName) {
+    public void join(Class t, Class foreignType, String fieldName) {
         if (null == joins)
             joins = new LinkedHashMap<>();
 
-        joins.put(fieldName, t);
+        joins.put(new Pair(foreignType, fieldName), t);
+    }
+
+    public void join(Class t, String fieldName) {
+        join(t, null, fieldName);
     }
 
     public void unjoin(Class t) {
@@ -202,54 +210,60 @@ public class QueryBuilder<T> {
     }
 
     public Query createQuery(PersistanceManager pm) {
-        Query query = new Query(id());
-        PersisterDescription desc = this.descriptionGetter.getDescription(pm);
+        try {
+            Query query = new Query(id());
+            PersisterDescription desc = this.descriptionGetter.getDescription(pm);
 
-        StringBuilder sb;
+            StringBuilder sb;
 
-        sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
-                desc.getTableName(),
-                desc.getTableFields(),
-                null));
+            sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
+                    desc.getTableName(),
+                    desc.getTableFields(),
+                    null));
 
-        if (null != joins) {
-            for (String objFieldName : joins.keySet()) {
-                Class type = joins.get(objFieldName);
-                String otherTable =  DbNameHelper.getTableName(type);
-                sb.append(" JOIN ")
-                        .append(otherTable)
-                        .append(" ON ")
-                        .append(DbNameHelper.getFieldName(objFieldName, SqlDataField.SqlFieldType.OBJECT_REFERENCE))
-                        .append("==")
-                        .append(otherTable).append("._id");
+            if (null != joins) {
+                for (Pair<Class, String> join : joins.keySet()) {
+                    Class type = joins.get(join);
+                    String otherTable = DbNameHelper.getTableName(type);
+                    sb.append(" JOIN ")
+                            .append(otherTable)
+                            .append(" ON ")
+                            .append(join.first == null ? "" : DbNameHelper.getTableName(join.first))
+                            .append(join.first == null ? "" : ".")
+                            .append(DbNameHelper.getFieldName(join.second, SqlDataField.SqlFieldType.OBJECT_REFERENCE))
+                            .append("==")
+                            .append(otherTable).append("._id");
+                }
             }
-        }
 
-        if (!rootCondition.isEmpty()) {
-            sb.append(" WHERE ");
-            sb = rootCondition.append(pm, desc, sb);
-            query.addCondition(rootCondition);
+            if (!rootCondition.isEmpty()) {
+                sb.append(" WHERE ");
+                sb = rootCondition.append(pm, desc, sb);
+                query.addCondition(rootCondition);
 
-            if (orderByTerms.size() > 0) {
-                OrderByTerm[] termAr = null;
-                termAr = new OrderByTerm[orderByTerms.size()];
-                orderByTerms.toArray(termAr);
-                query.setOrderByTerms(termAr);
+                if (orderByTerms.size() > 0) {
+                    OrderByTerm[] termAr = null;
+                    termAr = new OrderByTerm[orderByTerms.size()];
+                    orderByTerms.toArray(termAr);
+                    query.setOrderByTerms(termAr);
+                }
             }
-        }
 
-        /**
-         * Set the predefined parameters
-         */
-        for(String paramId : predefinedparams.keySet())
-        {
-            query.setParameter(paramId, predefinedparams.get(paramId).value());
-        }
-        query.prepare(pm, desc, sb.toString());
-        /** maybe prohibit future changes...
-        query.seal() **/
+            /**
+             * Set the predefined parameters
+             */
+            for (String paramId : predefinedparams.keySet()) {
+                query.setParameter(paramId, predefinedparams.get(paramId).value());
+            }
+            query.prepare(pm, desc, sb.toString());
+            /** maybe prohibit future changes...
+             query.seal() **/
 
-        return query;
+            return query;
+        }
+        catch (Exception ex) {
+            throw new DBException(String.format("Query \"%s\" was unable to build query string!", id()), ex);
+        }
     }
 
 }
