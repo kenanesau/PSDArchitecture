@@ -178,6 +178,7 @@ public class PersistanceManagerLocator {
     }
 
     public void clear() {
+        Log.d(getClass().getName(), "Clearing PersistanceManagerLocator!");
         for(PersistanceManager pm : pmMap.values())
             pm.close();
 

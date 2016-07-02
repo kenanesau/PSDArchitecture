@@ -1079,19 +1079,32 @@ public class PersistanceManager {
 		return ret;
 	}
 
-	public <T extends IPersistable> T loadFirst(Class<T> classObj) throws DBException
-	{
+    public <T extends IPersistable> T loadFirst(Class<T> classObj, Cursor csr) throws DBException
+    {
         T persistable = null;
-		Cursor csr = getLoadAllCursor(classObj);
         IPersister persister = getIPersister(classObj);
         if (csr.getCount() > 0) {
             persistable = (T) persister.rowToObject(0, csr);
-
             DbId<T> dbId = persistable.getDbId();
             dbId.setClean();
             dbId.setObj(persistable);
         }
-        csr.close();
+
+        return persistable;
+    }
+
+	public <T extends IPersistable> T loadFirst(Class<T> classObj) throws DBException
+	{
+        T persistable = null;
+        Cursor csr = null;
+        try {
+            csr = getLoadAllCursor(classObj);
+            persistable = loadFirst(classObj, csr);
+        }
+        finally {
+            if (csr != null)
+                csr.close();
+        }
 
 		return persistable;
 	}
@@ -1187,6 +1200,7 @@ public class PersistanceManager {
 	public void close()
 	{
 		this.initializedDb = false;
+        Log.d(getClass().getName(), "Closing PersistanceManager!");
         if (null != db) {
             this.db.close();
             this.db = null;
