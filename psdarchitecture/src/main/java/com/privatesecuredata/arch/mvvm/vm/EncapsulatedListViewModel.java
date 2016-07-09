@@ -212,7 +212,6 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         if (!dataLoaded) {
             listCB.init(referencingType, getParentModel(), referencedType);
             dataLoaded = true;
-            notifyModelChanged();
         }
     }
 
