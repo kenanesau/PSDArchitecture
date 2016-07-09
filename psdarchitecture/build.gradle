@@ -23,7 +23,7 @@ android {
 
     retrolambda {
         jvmArgs '-noverify'
-        jdk '/usr/lib/jvm/java-8-oracle'
+        jdk '/usr/lib/jvm/java-8-openjdk-amd64'
     }
 }
 dependencies {

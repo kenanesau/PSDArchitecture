@@ -15,15 +15,12 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> extends MVVMFragment {
 
-    private Context attachedActivity;
 	private EncapsulatedListViewModel<T, TVM> items;
 	private MVVMRecyclerViewModelAdapter<T, TVM> adapter;
     private RecyclerView lstView;
 
     @Override
     public void onAttach(Context activity) {
-        this.attachedActivity = activity;
-
         super.onAttach(activity);
     }
 
@@ -33,7 +30,7 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
      * @return Implementation of MVVMRecyclerViewModelAdapter<T, TVM>
      */
     protected MVVMRecyclerViewModelAdapter<T, TVM> createAdapter() {
-        return new MVVMRecyclerViewModelAdapter(attachedActivity, getVhFactory());
+        return new MVVMRecyclerViewModelAdapter(getActivity(), getVhFactory());
     }
 	
 	@Override
