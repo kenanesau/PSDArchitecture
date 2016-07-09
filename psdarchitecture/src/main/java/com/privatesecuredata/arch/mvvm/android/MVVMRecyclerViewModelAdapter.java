@@ -1,7 +1,6 @@
 package com.privatesecuredata.arch.mvvm.android;
 
 import android.app.Activity;
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
@@ -52,6 +51,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     public static abstract class ViewHolder<V> extends RecyclerView.ViewHolder
             implements  View.OnClickListener, View.OnLongClickListener {
         private View rowView;
+        private View emptyView;
         private ViewGroup parentView;
         private MVVMRecyclerViewModelAdapter adapter;
 
@@ -68,12 +68,36 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             this.parentView = parent;
         }
 
+        /**
+         * Override this if you do not like an empty space to be displayed on lists with
+         * no data
+         *
+         * @return Returns the ressource-Id for an emtpy list
+         */
+        public int getEmtpyViewRessourceId() {
+            return R.layout.psdarch_empty_frame;
+        }
+
         public void updateViews(MVVMRecyclerViewModelAdapter adapter, V model) {
             View v = getRowView();
+            v.setVisibility(adapter.isEmpty() ? View.GONE : View.VISIBLE);
 
-            if (adapter.hasActionMode()) {
-                boolean activated = adapter.isItemChecked(getAdapterPosition());
-                v.setActivated(activated);
+            if (!adapter.isEmpty()) {
+                if (emptyView != null)
+                    emptyView.setVisibility(View.GONE);
+                if (adapter.hasActionMode()) {
+                    boolean activated = adapter.isItemChecked(getAdapterPosition());
+                    v.setActivated(activated);
+                }
+            }
+            else {
+                if (emptyView == null) {
+                    emptyView = LayoutInflater.from(parentView.getContext()).inflate(
+                            getEmtpyViewRessourceId(),
+                            parentView, false);
+
+                }
+                emptyView.setVisibility(View.VISIBLE);
             }
         };
 
@@ -101,7 +125,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     private SparseBooleanArray selectedPos = new SparseBooleanArray();
     private int selectedCnt = 0;
 
-	private final Context ctx;
+	private final Activity ctx;
 	private IListViewModel<M, COMPLEXVM> data;
     private List<ViewManipulator> manipulators = new ArrayList<>();
     private ArrayList<IViewModel> updatingVMs = new ArrayList<>();
@@ -112,6 +136,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     private IClickListener onClickCb;
     private ILongClickListener onLongClickCb;
     private RecyclerView view;
+    private boolean isEmpty = true;
 
 
 	/**
@@ -123,13 +148,13 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
     private String filteredParamId = null;
 
-    public MVVMRecyclerViewModelAdapter(Context ctx, IViewHolderFactory strategy)
+    public MVVMRecyclerViewModelAdapter(Activity ctx, IViewHolderFactory strategy)
 	{
 		this.ctx = ctx;
         this.recyclerStrategy = strategy;
 	}
 
-	public MVVMRecyclerViewModelAdapter(Context ctx, IListViewModel<M, COMPLEXVM> lstVMs, IViewHolderFactory strategy)
+	public MVVMRecyclerViewModelAdapter(Activity ctx, IListViewModel<M, COMPLEXVM> lstVMs, IViewHolderFactory strategy)
 	{
 		this(ctx, strategy);
 		setData(lstVMs);
@@ -169,9 +194,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             v.setBackgroundResource(R.drawable.activated_selector_no_press);
             setItemChecked(pos, !isItemChecked(pos));
 
-            if (ctx instanceof Activity) {
-                ((Activity)ctx).startActionMode(getActionModeCb());
-            }
+            ctx.startActionMode(getActionModeCb());
         }
         else {
             v.setBackgroundResource(R.drawable.activated_selector);
@@ -189,19 +212,30 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 	 */
 	public void setData(IListViewModel<M, COMPLEXVM> data)
 	{
-		if (null != this.data)
-			this.data.delModelListener(this);
-		this.data = data;
+        if (data == this.data)
+            return;
+
         if (null != this.data) {
-            this.data.size(); // force loading
+            this.data.delModelListener(this);
+        }
+        else
+            setEmpty(true);
+
+        this.data = data;
+        if (null != this.data) {
             this.data.addModelListener(this);
             if (null != sortOrder)
                 this.data.setSortOrder(sortOrder);
+
+            if (this.data.size() > 0)
+                setEmpty(false);
+            else
+                setEmpty(true);
         }
         if (null != filteredParamId)
             this.data.setFilterParamId(filteredParamId);
 
-        notifyDataSetChanged();
+        redrawViews();
 	}
 
     public IListViewModel<M, COMPLEXVM> getData()
@@ -209,8 +243,57 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         return this.data;
     }
 
+    /**
+     * Returns the number of items (If the list has no data 1 is returned to be
+     * able to display one item with some info that the list is empty).
+     *
+     * If the list contains data or not pleas use isEmpty()
+     * @return the number of (displayed) items
+     * @sa isEmpty()
+     */
     public int getItemCount() {
-        return data == null ? 0 : data.size();
+        int ret = 1;
+
+        if ( (data == null) || (data.size() == 0) )
+        {
+            setEmpty(true);
+        }
+        else {
+            ret = data.size();
+            setEmpty(false);
+        }
+
+
+        return ret;
+    }
+
+    /**
+     * @return true if the list contains data, false otherwise
+     */
+    public boolean isEmpty() {
+        return isEmpty;
+    }
+
+    /**
+     * Internal setter for empty-information
+     * @param empty
+     * @sa isEmpty()
+     */
+    private void setEmpty(boolean empty)
+    {
+        if (empty != isEmpty) {
+            /// TODO: Make this optional via setting in adapter otherwise empty row-View would be obsolete
+            if (null != this.view) {
+                ctx.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        MVVMRecyclerViewModelAdapter.this.view.setVisibility(empty ? View.GONE : View.VISIBLE);
+                    }
+                });
+            }
+        }
+
+        this.isEmpty = empty;
     }
 
     public int getCheckedItemCount() { return selectedCnt; }
@@ -233,14 +316,17 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 
     public void onBindViewHolder(MVVMRecyclerViewModelAdapter.ViewHolder holder, int position) {
-        M model = data.get(position);
+        M model = null;
+
+        if (!isEmpty())
+         model = data.get(position);
         holder.updateViews(this, model);
 
         /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
-        for (ViewManipulator manipulator : getManipulators())
-        {
+        for (ViewManipulator manipulator : getManipulators()) {
             manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
         }
+
 
     }
 
@@ -264,7 +350,18 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     @Override
     public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
         //notify (list)view of changed data -> redraw
-        this.notifyDataSetChanged();
+        redrawViews();
+    }
+
+    protected void redrawViews() {
+        ctx.runOnUiThread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                      MVVMRecyclerViewModelAdapter.this.notifyDataSetChanged();
+                    }
+                }
+        );
     }
 
     @Override
@@ -300,7 +397,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 
     public void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator) {
-        MVVMRecyclerViewModelAdapter.this.notifyDataSetChanged();
+        redrawViews();
     }
 
     /**
@@ -315,7 +412,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         updatingVMs.clear();
     }
 
-    public Context getContext() { return this.ctx; }
+    public Activity getContext() { return this.ctx; }
 
     public void setItemChecked(int position, boolean isChecked) {
         selectedPos.put(position, isChecked);
@@ -323,7 +420,13 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             setCheckedItemCount(getCheckedItemCount() + 1);
         else
             setCheckedItemCount(getCheckedItemCount() - 1);
-        notifyItemChanged(position);
+        ctx.runOnUiThread(new Runnable() {
+                              @Override
+                              public void run() {
+                                  notifyItemChanged(position);
+                              }
+                          }
+        );
     }
 
     public boolean isItemChecked(int position) {
@@ -337,7 +440,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     public void clearSelectedPositions() {
         selectedPos.clear();
         setCheckedItemCount(0);
-        notifyDataSetChanged();
+        redrawViews();
     }
 
     public boolean hasActionMode() {
@@ -348,6 +451,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
         this.view = recyclerView;
+        this.view.setVisibility(isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     @Override
