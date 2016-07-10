@@ -26,7 +26,7 @@ public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChan
     boolean removeAll(Collection<?> arg0);
     int size();
     VM getViewModel(int pos);
-    ComplexViewModel<?> getParentViewModel();
+    <T extends ComplexViewModel> T getParentViewModel();
     void setSortOrder(OrderBy... sortOrderTerms);
     void setFilterParamId(String filterParamId);
     Filter getFilter();

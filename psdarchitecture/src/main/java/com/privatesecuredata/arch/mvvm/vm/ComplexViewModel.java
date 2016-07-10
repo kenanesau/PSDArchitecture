@@ -601,7 +601,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 				.toString();
 	}
 
-    public ComplexViewModel getParentViewModel() { return this.parentViewModel; }
+    public <T extends ComplexViewModel> T getParentViewModel() { return (T)this.parentViewModel; }
     protected void setParentViewModel(ComplexViewModel parentViewModel) { this.parentViewModel = parentViewModel; }
 
     public int getHandle() {

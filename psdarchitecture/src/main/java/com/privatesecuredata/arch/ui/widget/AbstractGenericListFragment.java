@@ -10,12 +10,12 @@ import android.view.ViewGroup;
 import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.mvvm.android.MVVMFragment;
 import com.privatesecuredata.arch.mvvm.android.MVVMRecyclerViewModelAdapter;
-import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> extends MVVMFragment {
 
-	private EncapsulatedListViewModel<T, TVM> items;
+	private IListViewModel<T, TVM> items;
 	private MVVMRecyclerViewModelAdapter<T, TVM> adapter;
     private RecyclerView lstView;
 
@@ -67,7 +67,7 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
     public abstract void configureAdapter(MVVMRecyclerViewModelAdapter<T, TVM> adapter, Bundle savedInstanceState);
 
     public MVVMRecyclerViewModelAdapter<T, TVM> getAdapter() { return this.adapter; }
-    public void updateItems(EncapsulatedListViewModel<T, TVM> newItems)
+    public void updateItems(IListViewModel<T, TVM> newItems)
     {
         items = newItems;
 
@@ -76,7 +76,7 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
         }
     }
 
-    protected EncapsulatedListViewModel<T, TVM> getItems() { return items; }
+    protected IListViewModel<T, TVM> getItems() { return items; }
     protected RecyclerView getListView() {
         return lstView;
     }
