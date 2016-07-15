@@ -73,8 +73,10 @@ public class DbListViewModelFactory implements IListViewModelFactory {
             IPersister parentPersister = pm.getUnspecificPersister(parentVM.getModel().getClass());
             ObjectRelation rel = parentPersister.getDescription().getOneToManyRelation(modelField.getName());
             Query query = rel.getAndCacheQuery(pm);
-            if (null != query)
+            if (null != query) {
+                query.setForeignKeyParameter(model);
                 cb.setQuery(query);
+            }
             listVM = new EncapsulatedListViewModel(parentVM.getMVVM(), parentModelType, modelType, viewModelType, cb);
             final Object lst = parentVM.getModel();
             if (Proxy.isProxyClass(lst.getClass()))

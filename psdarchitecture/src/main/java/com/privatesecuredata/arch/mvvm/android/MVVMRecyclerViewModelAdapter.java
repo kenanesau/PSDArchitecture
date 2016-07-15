@@ -319,7 +319,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         M model = null;
 
         if (!isEmpty())
-         model = data.get(position);
+            model = data.get(position);
         holder.updateViews(this, model);
 
         /** Search for View-IDs of the views to manipulate and register them with the viewholder **/

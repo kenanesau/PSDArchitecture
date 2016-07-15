@@ -125,7 +125,16 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
 	public M get(int pos) {
-		return  pm.load(persister, csr, pos);
+        try {
+            return pm.load(persister, csr, pos);
+        }
+        catch (Exception e)
+        {
+            if (query != null)
+                throw new DBException(String.format("Error loading data from cursor with SQL-statement \"%s\"", query.getSqlStatement()), e);
+            else
+                throw new DBException(String.format("Error loading data from cursor", query.getSqlStatement()), e);
+        }
 	}
     public long getPosition(DbId dbId) {
         long pos = -1;

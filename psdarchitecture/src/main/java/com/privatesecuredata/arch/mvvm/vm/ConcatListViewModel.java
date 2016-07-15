@@ -46,7 +46,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
         Pair<IListViewModel<M, VM>, Integer> ret = null;
         int posCurrent = 0;
         int lastIterationListSize = 0;
-        for (int i=0; i<data.size(); i++) {
+        for (int i=0; i < data.size(); i++) {
             int localSize = data.get(i).size();
             posCurrent += localSize;
 
@@ -55,6 +55,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
             ret = new Pair<>(data.get(i), globalPosition - lastIterationListSize);
             lastIterationListSize += localSize;
+            break;
         }
 
         return ret;

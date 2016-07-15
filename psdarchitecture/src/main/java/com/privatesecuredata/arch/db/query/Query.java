@@ -117,7 +117,9 @@ public class Query<T> {
         for(QueryParameter para : params.values())
         {
             if (null == para.value())
-                throw new ArgumentException(String.format("Parameter with ID \"%s\" has no value", para.id()));
+                throw new ArgumentException(String.format(
+                        "Running query \"%s\" Parameter with ID \"%s\" has no value",
+                        id(), para.id()));
 
             args[i++] = para.getDbString();
         }
@@ -131,6 +133,19 @@ public class Query<T> {
      */
     public Cursor run() {
         return run(this.orderByTerms);
+    }
+
+    public String getSqlStatement() {
+        String[] args = new String[params.size()];
+        int i=0;
+        StringBuilder sb = new StringBuilder(this.sql);
+
+        for(QueryParameter para : params.values())
+        {
+            args[i++] = (para.value() != null ? para.getDbString() : "NULL");
+        }
+
+        return sb.toString();
     }
 
 
