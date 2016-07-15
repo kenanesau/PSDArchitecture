@@ -253,7 +253,9 @@ public class QueryBuilder<T> {
              * Set the predefined parameters
              */
             for (String paramId : predefinedparams.keySet()) {
-                query.setParameter(paramId, predefinedparams.get(paramId).value());
+                QueryParameter para = predefinedparams.get(paramId);
+                if (para.value() != null)
+                    query.setParameter(paramId, para.value());
             }
             query.prepare(pm, desc, sb.toString());
             /** maybe prohibit future changes...
