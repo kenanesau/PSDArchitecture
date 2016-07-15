@@ -3,7 +3,9 @@ package com.privatesecuredata.arch.db;
 import java.util.Map;
 
 /**
- * Created by kenan on 3/21/16.
+ * Objects implementing IbHistoryDescription link the DB-version to the implementation of
+ * IConversionDescription. The IDBHistoryDescription can contain the complete description
+ * of all DB-changes from the beginning of time ;-)
  */
 public interface IDbHistoryDescription {
     Map<Integer, IDbDescription> getDbDescriptionHistory();
