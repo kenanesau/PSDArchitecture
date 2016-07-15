@@ -1,5 +1,7 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
+
 /**
  * This is a simple VM which can be used to format strings around other
  * SimpleValueVMs.
@@ -21,8 +23,12 @@ public class StringFormatVM extends SimpleValueVM<String> {
 
         this._valueVMs = valueVM;
         if (null != _valueVMs) {
-            for (SimpleValueVM valVM : _valueVMs)
-                valVM.addViewModelListener(this);
+            for (SimpleValueVM valVM : _valueVMs) {
+                if (null != valVM)
+                    valVM.addViewModelListener(this);
+                else
+                    throw new ArgumentException("Null parameter is not allowed for  \"valueVM\"");
+            }
         }
     }
 

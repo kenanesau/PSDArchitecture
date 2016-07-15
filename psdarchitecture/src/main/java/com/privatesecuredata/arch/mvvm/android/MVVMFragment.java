@@ -18,6 +18,11 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import java.util.HashMap;
 
 public class MVVMFragment extends Fragment {
+
+    public interface IVMGetter<T extends IViewModel> {
+        T getVM();
+    }
+
     private final static String KEY_DEFAULT_PM_UUID = "PSDARCH_MVVMFRAGMENT_PM_UUID";
     private Context attachedActivity;
     private IViewModel[] rememberedInstanceStateChache;
