@@ -262,4 +262,8 @@ public class ConversionManager {
     public <T extends IPersistable> T loadCorrespondingNewObject(IPersistable oldObject) {
         return _newPm.load(_oldIdToNewId.get(oldObject.getDbId()));
     }
+
+    public PersistanceManager getNewPm() {
+        return _newPm;
+    }
 }

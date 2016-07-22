@@ -161,7 +161,10 @@ public class MVVM {
 
     public void setResources(Resources res) { this.res = res; }
     public Resources getResources() { return res; }
-    public void setContext(Context ctx) { this.ctx = ctx; }
+    public void setContext(Context ctx) {
+        this.ctx = ctx;
+        this.res = ctx.getResources();
+    }
     public Context getContext() { return ctx; }
 
     public void registerVmProvider(Class modelType, Class providerType) throws IllegalAccessException, InstantiationException {

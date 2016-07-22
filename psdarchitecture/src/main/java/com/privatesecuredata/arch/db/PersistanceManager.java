@@ -478,6 +478,11 @@ public class PersistanceManager {
                     Map<Integer, IConversionDescription> conversionDescriptions = history.getDbConversions();
                     IConversionDescription conv = conversionDescriptions.get(newVersion);
 
+                    if (conv == null)
+                        throw new ArgumentException(
+                                String.format("You have no Conversion for DB \"%s\" Version %d",
+                                oldDescription.getName(), newVersion));
+
                     String msg = String.format("Upgrading DB '%s' Version %d Instance %d",
                             oldDescription.getName(),
                             oldDescription.getVersion(),
@@ -1253,7 +1258,6 @@ public class PersistanceManager {
 		if (this.mvvm == null) {
 			this.mvvm = MVVM.createMVVM(this);
 			if (null != this.ctx) {
-				this.mvvm.setResources(this.ctx.getResources());
 				this.mvvm.setContext(this.ctx);
 			}
 			IListViewModelFactory factory = new DbListViewModelFactory(this);
@@ -1364,5 +1368,10 @@ public class PersistanceManager {
     }
 
     public int version() { return this.dbDesc.getVersion(); }
+
+    public Context getContext() {
+        return ctx;
+    }
+
 }
  
