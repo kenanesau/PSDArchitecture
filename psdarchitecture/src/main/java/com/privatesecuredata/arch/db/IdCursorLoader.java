@@ -140,23 +140,33 @@ public class IdCursorLoader implements ICursorLoader {
     @Override
     public Cursor getCursor(DbId<?> foreignKey)
     {
-        StringBuilder sb = new StringBuilder(getBaseQuery(foreignKey));
-        return _pm.getDb().rawQuery(sb.toString(), new String[]{});
+        try {
+            StringBuilder sb = new StringBuilder(getBaseQuery(foreignKey));
+            return _pm.getDb().rawQuery(sb.toString(), new String[]{});
+        }
+        catch (Exception ex) {
+            throw new DBException(String.format("Error getting cursor for DB '%s'", _pm.getDbDescription().getName()), ex);
+        }
     }
 
     @Override
     public Cursor getCursor(DbId<?> foreignKey, OrderByTerm... orderByTerms) {
-        if (null == orderByTerms)
-            return getCursor(foreignKey);
+        try {
+            if (null == orderByTerms)
+                return getCursor(foreignKey);
 
-        StringBuilder sb = AbstractPersister.appendOrderByString(
-                AbstractPersister.appendWhereClause(
-                    AbstractPersister.createSelectAllStatement(_tableName,
-                        _fields,
-                        orderByTerms),
-                    _foreignKeyColumn,
-                    foreignKey),
-                orderByTerms);
-        return _pm.getDb().rawQuery(sb.toString(), new String[]{});
+            StringBuilder sb = AbstractPersister.appendOrderByString(
+                    AbstractPersister.appendWhereClause(
+                            AbstractPersister.createSelectAllStatement(_tableName,
+                                    _fields,
+                                    orderByTerms),
+                            _foreignKeyColumn,
+                            foreignKey),
+                    orderByTerms);
+            return _pm.getDb().rawQuery(sb.toString(), new String[]{});
+        }
+        catch (Exception ex){
+            throw new DBException(String.format("Error getting cursor for DB '%s'", _pm.getDbDescription().getName()), ex);
+        }
     }
 }

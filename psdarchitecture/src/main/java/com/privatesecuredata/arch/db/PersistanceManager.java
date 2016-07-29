@@ -1106,6 +1106,10 @@ public class PersistanceManager {
             csr = getLoadAllCursor(classObj);
             persistable = loadFirst(classObj, csr);
         }
+        catch (Exception ex) {
+            throw new DBException(String.format("Error loading first instance of %s due to unknown error",
+                    classObj.getName()), ex);
+        }
         finally {
             if (csr != null)
                 csr.close();
