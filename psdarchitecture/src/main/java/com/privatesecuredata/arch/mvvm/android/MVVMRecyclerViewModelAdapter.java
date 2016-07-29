@@ -206,6 +206,13 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         notifyItemChanged(pos);
         return ret;
     }
+
+    protected void checkEmpty() {
+        if ( (null != data) && (this.data.size() > 0) )
+            setEmpty(false);
+        else
+            setEmpty(true);
+    }
 	
 	/*
 	 * This method discards the old VM and register a new one
@@ -227,10 +234,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             if (null != sortOrder)
                 this.data.setSortOrder(sortOrder);
 
-            if (this.data.size() > 0)
-                setEmpty(false);
-            else
-                setEmpty(true);
+            checkEmpty();
         }
         if (null != filteredParamId)
             this.data.setFilterParamId(filteredParamId);
@@ -349,6 +353,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
      */
     @Override
     public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
+        checkEmpty();
         //notify (list)view of changed data -> redraw
         redrawViews();
     }
