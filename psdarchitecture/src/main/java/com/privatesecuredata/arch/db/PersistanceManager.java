@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 
 import rx.subjects.ReplaySubject;
@@ -101,6 +102,7 @@ public class PersistanceManager {
         ActionType getType();
     }
 
+    protected static PersistanceManager instance = null;
     private IDbDescription dbDesc;
     private Hashtable<Class<?>, IPersister<? extends IPersistable>> persisterMap = new Hashtable<Class<?>, IPersister<? extends IPersistable>>();
     private Hashtable<String, Class<?>> classNameMap = new Hashtable<String, Class<?>>();
@@ -305,6 +307,28 @@ public class PersistanceManager {
                             factory.create());
                 }
 
+                /** set up trigger statements ...
+                * Do this after all persister are initialized
+                **/
+                for(IPersister<? extends IPersistable> persister : persisterMap.values())
+                {
+                    PersisterDescription desc = persister.getDescription();
+
+                    ArrayList<String> sqlStatements = new ArrayList<>();
+
+                    /**
+                     * Create delete Triggers
+                     */
+                    sqlStatements.addAll(createTriggerStatementLst(persister.getDescription().getType(),
+                            "one_", desc.getOneToOneRelations()));
+                    sqlStatements.addAll(createTriggerStatementLst(persister.getDescription().getType(),
+                            "lst_", desc.getOneToManyRelations()));
+
+                    for (String triggerSQL : sqlStatements) {
+                        getDb().execSQL(triggerSQL);
+                    }
+                }
+
                 cursorLoaderFactories.clear();
 				this.initializedDb = true;
 			}
@@ -314,6 +338,58 @@ public class PersistanceManager {
             publishStatus("Error initializing Persistance-Manager", ex);
 		}
 	}
+
+    protected String createTriggerStatement(Class persistentType, String prefix, Class<?> childType) {
+        String tableName = DbNameHelper.getTableName(persistentType);
+
+        return new StringBuilder("CREATE TEMP TRIGGER trigger_").append(prefix)
+                .append(tableName).append("_delete_").append(DbNameHelper.getTableName(childType))
+                .append(" AFTER DELETE ON ")
+                .append(tableName)
+                .append(" FOR EACH ROW BEGIN DELETE FROM ")
+                .append(DbNameHelper.getTableName(childType))
+                .append(" WHERE ")
+                .append(DbNameHelper.getForeignKeyFieldName(persistentType))
+                .append("=OLD._id; END").toString();
+    }
+
+
+    protected Collection<String> createTriggerStatementLst(Class persitentType, String prefix, Collection<ObjectRelation> relations) {
+        Hashtable<Pair<String, Class>, String> sqlStatements = new Hashtable<>();
+        for (ObjectRelation rel : relations) {
+            if (rel.deleteChildren()) {
+                Class<?> childType = rel.getReferencedListType();
+                if (null == childType)
+                    childType = rel.getField().getType();
+                IPersister persister = getIPersister(childType);
+
+                if (null == persister)
+                    continue;
+
+                if (persister.tableExists()) {
+                    Pair key = new Pair<String, Class>(prefix, childType);
+                    if (!sqlStatements.contains(key)) {
+                        String sqlTrigger = createTriggerStatement(persitentType, prefix, childType);
+                        sqlStatements.put(key, sqlTrigger);
+                    }
+                }
+
+                List<AutomaticPersister> lst = persister.getExtendingPersisters();
+                for (AutomaticPersister autoPersister : lst) {
+                    if (autoPersister.tableExists()) {
+                        childType = autoPersister.getPersistentType();
+                        Pair key = new Pair<String, Class>(prefix, childType);
+                        if (!sqlStatements.contains(key)) {
+                            String sqlTrigger = createTriggerStatement(persitentType, prefix, childType);
+                            sqlStatements.put(key, sqlTrigger);
+                        }
+                    }
+                }
+            }
+        }
+
+        return sqlStatements.values();
+    }
 	
 	public boolean hasInitializedDb() { return this.initializedDb; }
 	
@@ -430,8 +506,6 @@ public class PersistanceManager {
 		return (IPersister<T>)getPersister(persistable.getClass());
 	}
 	
-	protected static PersistanceManager instance = null;
-	
 	public void onCreate(SQLiteDatabase db) {
 		db.setVersion(dbDesc.getVersion());
 		db.beginTransaction();
@@ -532,6 +606,18 @@ public class PersistanceManager {
             }
         }
 	}
+
+    /**
+     * Sets the persistable dirty
+     *
+     * @param persistable
+     * @param <T>
+     */
+    public <T extends IPersistable> void forceDirty(T persistable) {
+        DbId<T> dbId = persistable.getDbId();
+        if (null != dbId)
+            dbId.setDirty();
+    }
 	
 	public <T extends IPersistable> void save(Collection<T> coll) throws DBException
 	{
@@ -754,6 +840,14 @@ public class PersistanceManager {
                                 dbId.getId()), ex);
             }
         }
+    }
+
+    public <T extends IPersistable> void forceSave(T persistable) throws DBException
+    {
+
+        forceDirty(persistable);
+
+        save(persistable);
     }
 
     public <T extends IPersistable> void save(T persistable) throws DBException

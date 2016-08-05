@@ -2,7 +2,6 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteStatement;
-import android.util.Pair;
 
 import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.annotations.DbFactory;
@@ -21,7 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -235,67 +233,6 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         return sql.toString();
     }
 
-    protected String createTriggerStatement(String prefix, Class<?> childType) {
-        return new StringBuilder("CREATE TEMP TRIGGER trigger_").append(prefix)
-                .append(getTableName()).append("_delete_").append(DbNameHelper.getTableName(childType))
-                .append(" AFTER DELETE ON ")
-                .append(getTableName())
-                .append(" FOR EACH ROW BEGIN DELETE FROM ")
-                .append(DbNameHelper.getTableName(childType))
-                .append(" WHERE ")
-                .append(DbNameHelper.getForeignKeyFieldName(getPersistentType()))
-                .append("=OLD._id; END").toString();
-    }
-
-    protected Collection<String> createTriggerStatementLst(String prefix, Collection<ObjectRelation> relations) {
-        Hashtable<Pair<String, Class>, String> sqlStatements = new Hashtable<>();
-        for (ObjectRelation rel : relations) {
-            if (rel.deleteChildren()) {
-                Class<?> childType = rel.getReferencedListType();
-                if (null == childType)
-                    childType = rel.getField().getType();
-                IPersister persister = getPM().getIPersister(childType);
-
-                if (null == persister)
-                    continue;
-
-                if (persister.tableExists()) {
-                    Pair key = new Pair<String, Class>(prefix, childType);
-                    if (!sqlStatements.contains(key)) {
-                        String sqlTrigger = createTriggerStatement(prefix, childType);
-                        sqlStatements.put(key, sqlTrigger);
-                    }
-                }
-
-                List<AutomaticPersister> lst = persister.getExtendingPersisters();
-                for (AutomaticPersister autoPersister : lst) {
-                    if (autoPersister.tableExists()) {
-                        childType = autoPersister.getPersistentType();
-                        Pair key = new Pair<String, Class>(prefix, childType);
-                        if (!sqlStatements.contains(key)) {
-                            String sqlTrigger = createTriggerStatement(prefix, childType);
-                            sqlStatements.put(key, sqlTrigger);
-                        }
-                    }
-                }
-            }
-        }
-
-        return sqlStatements.values();
-    }
-
-    protected String[] getTriggerStatements() {
-        ArrayList<String> sqlStatements = new ArrayList<>();
-
-        /**
-         * Create delete Triggers
-         */
-        sqlStatements.addAll(createTriggerStatementLst("one_", getDescription().getOneToOneRelations()));
-        sqlStatements.addAll(createTriggerStatementLst("lst_", getDescription().getOneToManyRelations()));
-
-        String[] sql = new String[sqlStatements.size()];
-        return sqlStatements.toArray(sql);
-    }
 
     /**
      * Creates the SQL-Statement for creating the database
@@ -360,14 +297,6 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         if (getDescription().hasForeignKeyFields()) {
             for (SqlForeignKeyField fld : getDescription().getForeignKeyFields()) {
                 fld.compileUpdateStatement(getDb());
-            }
-        }
-
-        String[] triggerSQLs = getTriggerStatements();
-        if (null != triggerSQLs) {
-            for (String triggerSQL : triggerSQLs) {
-                if (null != triggerSQL)
-                    getPM().getDb().execSQL(triggerSQL);
             }
         }
 
