@@ -15,7 +15,6 @@ import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel;
-import com.privatesecuredata.arch.mvvm.vm.FastListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModelFactory;
 
@@ -65,7 +64,7 @@ public class DbListViewModelFactory implements IListViewModelFactory {
         IListViewModel<?, ?> listVM;
         final IPersistable model = (IPersistable)parentVM.getModel();
         if (null == model) {
-            listVM = new FastListViewModel(this.mvvm, modelType, viewModelType);
+            listVM = null;
         }
         else
         {

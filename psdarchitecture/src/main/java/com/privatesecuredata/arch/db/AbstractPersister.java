@@ -189,9 +189,11 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 		
 	@Override
 	public T load(long id) throws DBException {
+        T res = null;
 		Cursor csr = getDb().rawQuery(getSelectSingleSqlString(),
                                       new String[] { Long.toString(id) } );
-		T res = rowToObject(0, csr);
+        if (csr.getCount() > 0)
+		    res = rowToObject(0, csr);
         csr.close();
         return  res;
 	}

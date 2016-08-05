@@ -283,6 +283,8 @@ public class PersistanceManager {
                         throw ex;
                     }
                 }
+                Cursor csr = db.rawQuery("PRAGMA recursive_triggers=ON", null);
+                csr.close();
 
                 if (!this.initializedDb)
 				{
@@ -698,7 +700,8 @@ public class PersistanceManager {
 		try {
 			IPersister<T> persister = getPersister(classObj);
 			T persistable = persister.load(id);
-            assignDbId(persistable, id);
+            if (null != persistable)
+                assignDbId(persistable, id);
 			return (T) persistable;
 		} 
 		catch (Exception ex)
