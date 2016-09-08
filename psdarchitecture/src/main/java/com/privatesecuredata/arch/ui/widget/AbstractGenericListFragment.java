@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.privatesecuredata.arch.R;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.android.MVVMFragment;
 import com.privatesecuredata.arch.mvvm.android.MVVMRecyclerViewModelAdapter;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
@@ -59,6 +60,8 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
                              Bundle savedInstanceState) {
         View view = inflater.inflate(getLayoutId(), container, false);
         lstView = (RecyclerView) view.findViewById(getRecyclerViewId());
+        if (null == lstView)
+            throw new ArgumentException("Could not find a Recycler-View!! Maybe you didn't set the correct id by overwriting getRecyclerViewId()?");
         lstView.setAdapter(adapter);
 
 		return view;
