@@ -28,9 +28,9 @@ public interface IPersister<T extends IPersistable> extends ILoadCollection<T> {
 	T rowToObject(int pos, Cursor csr) throws DBException;
     List<SqlDataField> getSqlFields();
 	Cursor getLoadAllCursor() throws DBException;
-    public Cursor getLoadAllCursor(OrderByTerm[] orderTerms) throws DBException;
+    Cursor getLoadAllCursor(OrderByTerm[] orderTerms) throws DBException;
     Cursor getFilteredCursor(String fieldName, CharSequence constraint) throws DBException;
-    public Cursor getFilteredCursor(String fieldName, CharSequence constraint,
+    Cursor getFilteredCursor(String fieldName, CharSequence constraint,
                                     OrderByTerm[] orderTerms) throws DBException;
 	T load(long id) throws DBException;
 	Collection<T> loadAll() throws DBException;
