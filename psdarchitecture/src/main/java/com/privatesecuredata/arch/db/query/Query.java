@@ -118,8 +118,8 @@ public class Query<T> {
         {
             if (null == para.value())
                 throw new ArgumentException(String.format(
-                        "Running query \"%s\" Parameter with ID \"%s\" has no value",
-                        id(), para.id()));
+                        "Running query \"%s\" Parameter with ID \"%s\" has no value. SQL: '%s'",
+                        id(), para.id(), sb.toString()));
 
             args[i++] = para.getDbString();
         }
