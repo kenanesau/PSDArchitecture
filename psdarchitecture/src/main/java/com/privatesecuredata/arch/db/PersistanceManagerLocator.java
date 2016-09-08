@@ -151,6 +151,7 @@ public class PersistanceManagerLocator {
 
     private PersistanceManager init(Context ctx, IDbDescription dbDesc,
                                     ReplaySubject<StatusMessage> statusObserver) throws DBException {
+        ctx = ctx.getApplicationContext();
         PersistanceManager pm = null;
         try {
             if (!pmMap.containsKey(dbDesc))
@@ -162,6 +163,7 @@ public class PersistanceManagerLocator {
                     pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
                 }
                 else {
+                    /* This also creates the tables if they do not exist yet */
                     pm.initializeDb(ctx);
                     pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
                 }

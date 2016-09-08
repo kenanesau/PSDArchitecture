@@ -257,7 +257,7 @@ public class PersistanceManager {
 		try {
 			if (null == this.db)
 			{
-				this.ctx = ctx;
+				this.ctx = ctx.getApplicationContext();
                 File dbFile = duringUpgrade ? getUpgradingDbFile() : getDbFile();
 
                 File dbDir = new File(dbFile.getParent());
@@ -274,6 +274,7 @@ public class PersistanceManager {
 				db = SQLiteDatabase.openOrCreateDatabase(dbFile, null);
                 if (createDB) {
                     try {
+                        /* Here the tables are created ... */
                         onCreate(getDb());
                         publishStatus(new StatusMessage(Status.CREATEDDB));
                     }

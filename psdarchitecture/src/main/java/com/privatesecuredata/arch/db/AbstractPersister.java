@@ -4,6 +4,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.lang.reflect.Field;
@@ -343,6 +344,9 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     @Override
     public Cursor getFilteredCursor(String fieldName, CharSequence constraint, OrderByTerm[] orderTerms)
     {
+        if (null == fieldName)
+            throw new ArgumentException("Parameter fieldName is empty!");
+
         StringBuilder sb = appendFilterString(new StringBuilder(getSelectAllStatement(orderTerms))
                 , fieldName, constraint);
 
