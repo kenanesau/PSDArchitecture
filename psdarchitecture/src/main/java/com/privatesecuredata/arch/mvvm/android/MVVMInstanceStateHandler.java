@@ -7,10 +7,8 @@ import android.util.Log;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
-import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -46,7 +44,10 @@ public class MVVMInstanceStateHandler {
 
     public void rememberInstanceState(IViewModel... vms) {
         for(IViewModel vm : vms) {
-            if (vm.getModel() instanceof IPersistable) {
+            if (vm == null)
+                continue;
+
+            if ( vm.getModel() instanceof IPersistable) {
                 ViewModelState state = new ViewModelState(vm);
                 rememberInstanceState(state, vm);
             }

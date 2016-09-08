@@ -32,6 +32,7 @@ import java.util.List;
  */
 public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
                                                                     implements IListViewModel<M, VM>,
+                                                                    IDbBackedListViewModel,
                                                                     Filterable
 {
 
@@ -159,7 +160,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		}
 	}
 
-    public void setQuery(String queryId) { listCB.setQuery(queryId); }
+    public void setQueryId(String queryId) { listCB.setQuery(queryId); }
     public void where(String id, Object val) { listCB.where(id, val);}
     public void where(String id, Class val) { listCB.where(id, val);}
     public void runQuery() { listCB.runQuery(); }
@@ -432,6 +433,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
 		return vm;
 	}
+
+    @Override
+    public IDbBackedListViewModel db() {
+        return this;
+    }
 
     @Override
     public Filter getFilter() {

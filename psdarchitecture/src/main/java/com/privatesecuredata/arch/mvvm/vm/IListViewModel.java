@@ -1,7 +1,5 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
-import android.widget.Filter;
-
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
@@ -27,7 +25,6 @@ public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChan
     int size();
     VM getViewModel(int pos);
     <T extends ComplexViewModel> T getParentViewModel();
-    void setSortOrder(OrderBy... sortOrderTerms);
-    void setFilterParamId(String filterParamId);
-    Filter getFilter();
+
+    IDbBackedListViewModel db();
 }

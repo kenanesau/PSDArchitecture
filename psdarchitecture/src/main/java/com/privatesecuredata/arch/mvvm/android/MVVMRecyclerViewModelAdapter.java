@@ -13,8 +13,10 @@ import android.widget.Filter;
 import android.widget.Filterable;
 
 import com.privatesecuredata.arch.R;
+import com.privatesecuredata.arch.db.query.QueryParameterCache;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.binder.TransientViewToVmBinder;
+import com.privatesecuredata.arch.mvvm.vm.IDbBackedListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
@@ -33,7 +35,7 @@ import java.util.List;
  */
 public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> extends RecyclerView.Adapter<MVVMRecyclerViewModelAdapter.ViewHolder>
 															implements IModelChangedListener, Filterable,
-                                                            IViewModelChangedListener
+                                                            IViewModelChangedListener, IDbBackedListViewModel
 
 {
     public interface IClickListener {
@@ -129,7 +131,6 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 	private IListViewModel<M, COMPLEXVM> data;
     private List<ViewManipulator> manipulators = new ArrayList<>();
     private ArrayList<IViewModel> updatingVMs = new ArrayList<>();
-    private OrderBy[] sortOrder;
     private IViewHolderFactory<M> recyclerStrategy;
     private ActionMode actionMode;
     private ActionMode.Callback actionModeCb;
@@ -138,15 +139,15 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     private RecyclerView view;
     private boolean isEmpty = true;
 
+    private QueryParameterCache queryParaCache = new QueryParameterCache();
 
-	/**
+    /**
 	 * id of the Checkbox in the Row-Layout which is used for selection
 	 */
 	private int selectionViewId = -1;
 
 	private Hashtable<Integer, TransientViewToVmBinder<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToVmBinder<?>>();
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
-    private String filteredParamId = null;
 
     public MVVMRecyclerViewModelAdapter(Activity ctx, IViewHolderFactory strategy)
 	{
@@ -231,13 +232,12 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         this.data = data;
         if (null != this.data) {
             this.data.addModelListener(this);
-            if (null != sortOrder)
-                this.data.setSortOrder(sortOrder);
 
+            if (this.data.db() != null) {
+                queryParaCache.configureListViewModel(this.data.db());
+            }
             checkEmpty();
         }
-        if (null != filteredParamId)
-            this.data.setFilterParamId(filteredParamId);
 
         redrawViews();
 	}
@@ -288,10 +288,11 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         if (empty != isEmpty) {
             /// TODO: Make this optional via setting in adapter otherwise empty row-View would be obsolete
             if (null != this.view) {
+                final RecyclerView v = this.view;
                 ctx.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        MVVMRecyclerViewModelAdapter.this.view.setVisibility(empty ? View.GONE : View.VISIBLE);
+                        v.setVisibility(empty ? View.GONE : View.VISIBLE);
                     }
                 });
             }
@@ -371,21 +372,52 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 
     @Override
     public Filter getFilter() {
-        return null == data ? null : data.getFilter();
+        return null == data || data.db() == null ? null : data.db().getFilter();
     }
 
-    public void setFilterParamId(String filterParamId)
+    protected boolean isDbBacked() {
+        return ( (null != data) && (null != data.db()) );
+    }
+
+    @Override
+    public void setQueryId(String queryId) {
+        queryParaCache.setQueryId(queryId);
+
+        if (isDbBacked())
+            data.db().setQueryId(queryId);
+    }
+
+    @Override
+    public void where(String id, Object val) {
+        queryParaCache.where(id, val);
+
+        if (isDbBacked()) {
+            data.db().setQueryId(this.queryParaCache.getQueryId());
+            data.db().where(id, val);
+        }
+    }
+
+    @Override
+    public void where(String id, Class val) {
+        queryParaCache.where(id, val);
+
+        if (isDbBacked()) {
+            data.db().setQueryId(this.queryParaCache.getQueryId());
+            data.db().where(id, val);
+        }
+    }
+
+    public void setFilterParamId(String objFieldName)
     {
-        if (null == data)
-            this.filteredParamId = filterParamId;
-        else
-            data.setFilterParamId(filterParamId);
+        this.queryParaCache.setFilterParamId(objFieldName);
+        if (isDbBacked())
+            data.db().setFilterParamId(this.queryParaCache.getFilteredParamId());
     }
 
     public void setSortOrder(OrderBy... sortOrderTerms) {
-        this.sortOrder = sortOrderTerms;
-        if (null != data)
-            data.setSortOrder(sortOrderTerms);
+        this.queryParaCache.setSortOrder(sortOrderTerms);
+        if (isDbBacked())
+            data.db().setSortOrder(this.queryParaCache.getSortOrder());
     }
 
     public void updateViewOnChange(SimpleValueVM vm) {

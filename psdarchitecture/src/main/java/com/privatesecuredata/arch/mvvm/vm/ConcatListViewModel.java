@@ -19,7 +19,7 @@ import java.util.List;
  * manner
  */
 public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
-        implements IListViewModel<M, VM>,
+        implements IListViewModel<M, VM>, IDbBackedListViewModel,
         Filterable
 {
     ArrayList<IListViewModel> data;
@@ -144,20 +144,53 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     }
 
     @Override
+    public IDbBackedListViewModel db() {
+        return this;
+    }
+
+    @Override
     public void setSortOrder(OrderBy... sortOrderTerms) {
-        for (IListViewModel<M, VM> vm : data)
-            vm.setSortOrder(sortOrderTerms);
+        for (IListViewModel<M, VM> vm : data) {
+            if (vm instanceof IDbBackedListViewModel)
+                ((IDbBackedListViewModel)vm).setSortOrder(sortOrderTerms);
+        }
     }
 
     @Override
     public void setFilterParamId(String filterParamId) {
         for (IListViewModel<M, VM> vm : data)
-            vm.setFilterParamId(filterParamId);
+            if (vm instanceof IDbBackedListViewModel)
+                ((IDbBackedListViewModel)vm).setFilterParamId(filterParamId);
     }
 
     @Override
     public Filter getFilter() {
-        return data.get(0).getFilter();
+        IListViewModel vm = data.get(0);
+        if (vm instanceof IDbBackedListViewModel)
+            return ((IDbBackedListViewModel)vm).getFilter();
+        else
+            return null;
+    }
+
+    @Override
+    public void setQueryId(String queryId) {
+        for(IListViewModel vm : data)
+            if (vm.db() != null)
+                vm.db().setQueryId(queryId);
+    }
+
+    @Override
+    public void where(String id, Object val) {
+        for(IListViewModel vm : data)
+            if (vm.db() != null)
+                vm.db().where(id, val);
+    }
+
+    @Override
+    public void where(String id, Class val) {
+        for(IListViewModel vm : data)
+            if (vm.db() != null)
+                vm.db().where(id, val);
     }
 
 }

@@ -1,7 +1,5 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
-import android.widget.Filter;
-
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -375,28 +373,17 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		return vm;
 	}
 
-    @Override
+	@Override
+	public IDbBackedListViewModel db() {
+		return null;
+	}
+
+	@Override
     public ComplexViewModel<?> getParentViewModel() {
         return this.parentVM;
     }
 
-    @Override
-    public void setSortOrder(OrderBy... sortOrderTerms) {
-        // FIXME: Implement setSortOrde()
-    }
-
-    @Override
-    public void setFilterParamId(String filterParamId) {
-        // FIXME: Implement setFilterParamId()
-    }
-
-    @Override
-    public Filter getFilter() {
-        // FIXME: Implement getFilter()
-        return null;
-    }
-
-    private ArrayList<M> getItems() {
+  	private ArrayList<M> getItems() {
 		if (!initialized)
 			getModel();
 		

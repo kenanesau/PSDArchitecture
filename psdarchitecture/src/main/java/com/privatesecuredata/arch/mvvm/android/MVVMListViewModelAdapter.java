@@ -84,11 +84,13 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 		this.data = data;
         if (null != this.data) {
             this.data.addModelListener(this);
-            if (null != sortOrder)
-                this.data.setSortOrder(sortOrder);
+            if ( (null != sortOrder) && (data.db() != null) )
+                this.data.db().setSortOrder(sortOrder);
         }
-        if (null != filteredParamId)
-            this.data.setFilterParamId(filteredParamId);
+        if ( (null != filteredParamId) &&
+				(this.data != null) &&
+				(this.data.db() != null))
+            this.data.db().setFilterParamId(filteredParamId);
 		this.notifyDataSetChanged();
 	}
 
@@ -270,21 +272,25 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 
     @Override
     public Filter getFilter() {
-        return null == data ? null : data.getFilter();
+        return null == data || data.db() == null ? null : data.db().getFilter();
     }
 
-    public void setFilterParamId(String filterParamId)
+	protected boolean isDbBacked() {
+		return ( (null != data) && (null != data.db()) );
+	}
+
+	public void setFilterParamId(String filterParamId)
     {
         if (null == data)
             this.filteredParamId = filterParamId;
-        else
-            data.setFilterParamId(filterParamId);
+        else if (isDbBacked())
+            data.db().setFilterParamId(filterParamId);
     }
 
     public void setSortOrder(OrderBy... sortOrderTerms) {
         this.sortOrder = sortOrderTerms;
-        if (null != data)
-            data.setSortOrder(sortOrderTerms);
+		if (isDbBacked())
+            data.db().setSortOrder(sortOrderTerms);
     }
 
     public void updateViewOnChange(SimpleValueVM vm) {
