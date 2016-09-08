@@ -11,6 +11,7 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ListView;
 
+import com.privatesecuredata.arch.db.query.QueryParameterCache;
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.IModelReaderStrategy;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
@@ -46,7 +47,6 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
     private List<ViewManipulator> manipulators = new ArrayList<>();
     private List<IViewHolder> viewHolders = new LinkedList<>();
     private ArrayList<IViewModel> updatingVMs = new ArrayList<>();
-    private OrderBy[] sortOrder;
 
 	/**
 	 * id of the Row-layout
@@ -60,7 +60,8 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 
 	private Hashtable<Integer, TransientViewToVmBinder<?>> view2ModelAdapters = new Hashtable<Integer, TransientViewToVmBinder<?>>();
 	private ArrayList<SimpleValueVM<Boolean>> selectedItemVMs;
-    private String filteredParamId = null;
+
+    private QueryParameterCache queryParaCache = new QueryParameterCache();
 
     public MVVMListViewModelAdapter(Class<COMPLEXVM> vmClass, Context ctx)
 	{
@@ -73,8 +74,8 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 		this(vmClass, ctx);
 		setData(lstVMs);
 	}
-	
-	/*
+
+    /*
 	 * This method discards the old VM and register a new one
 	 */
 	public void setData(IListViewModel<M, COMPLEXVM> data)
@@ -84,13 +85,9 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 		this.data = data;
         if (null != this.data) {
             this.data.addModelListener(this);
-            if ( (null != sortOrder) && (data.db() != null) )
-                this.data.db().setSortOrder(sortOrder);
+            if ( isDbBacked() )
+                queryParaCache.configureListViewModel(this.data.db());
         }
-        if ( (null != filteredParamId) &&
-				(this.data != null) &&
-				(this.data.db() != null))
-            this.data.db().setFilterParamId(filteredParamId);
 		this.notifyDataSetChanged();
 	}
 
@@ -279,18 +276,43 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 		return ( (null != data) && (null != data.db()) );
 	}
 
+    public void setQueryId(String queryId) {
+        queryParaCache.setQueryId(queryId);
+
+        if (isDbBacked())
+            data.db().setQueryId(queryId);
+    }
+
 	public void setFilterParamId(String filterParamId)
     {
-        if (null == data)
-            this.filteredParamId = filterParamId;
-        else if (isDbBacked())
+        queryParaCache.setFilterParamId(filterParamId);
+
+        if (isDbBacked())
             data.db().setFilterParamId(filterParamId);
     }
 
     public void setSortOrder(OrderBy... sortOrderTerms) {
-        this.sortOrder = sortOrderTerms;
+        queryParaCache.setSortOrder(sortOrderTerms);
 		if (isDbBacked())
             data.db().setSortOrder(sortOrderTerms);
+    }
+
+    public void where(String id, Object val) {
+        queryParaCache.where(id, val);
+
+        if (isDbBacked()) {
+            data.db().setQueryId(this.queryParaCache.getQueryId());
+            data.db().where(id, val);
+        }
+    }
+
+    public void where(String id, Class val) {
+        queryParaCache.where(id, val);
+
+        if (isDbBacked()) {
+            data.db().setQueryId(this.queryParaCache.getQueryId());
+            data.db().where(id, val);
+        }
     }
 
     public void updateViewOnChange(SimpleValueVM vm) {
