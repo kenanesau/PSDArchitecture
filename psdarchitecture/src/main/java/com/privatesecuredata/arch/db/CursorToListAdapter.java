@@ -216,9 +216,11 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
         if (null == query) {
             if (this.sortOrderTerms != null)
-                csr = persister.getFilteredCursor(getFilteredParamId(), constraint, sortOrderTerms);
+                csr = persister.getFilteredCursor(DbNameHelper.getSimpleFieldName(getFilteredParamId()),
+                        constraint, sortOrderTerms);
             else
-                csr = persister.getFilteredCursor(getFilteredParamId(), constraint);
+                csr = persister.getFilteredCursor(DbNameHelper.getSimpleFieldName(getFilteredParamId()),
+                        constraint);
         }
         else
         {
@@ -281,14 +283,14 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     @Override
     public void where(String paramId, Object value) {
         if (null == query)
-            throw new ArgumentException("No Query set yet. Use setQuery() first!");
+            throw new ArgumentException("No Query set yet. Use setQueryId() first!");
 
         query.setParameter(paramId, value);
     }
 
     public void where(String paramId, Class type) {
         if (null == query)
-            throw new ArgumentException("No Query set yet. Use setQuery() first!");
+            throw new ArgumentException("No Query set yet. Use setQueryId() first!");
 
         query.setParameter(paramId, type);
     }
