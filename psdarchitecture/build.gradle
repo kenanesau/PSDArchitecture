@@ -11,6 +11,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            testCoverageEnabled = true
+            jackOptions {
+                enabled false
+            }
+        }
         release {
             zipAlignEnabled true
         }

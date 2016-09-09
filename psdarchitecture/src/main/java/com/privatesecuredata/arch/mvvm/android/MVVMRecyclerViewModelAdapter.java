@@ -325,13 +325,15 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 
         if (!isEmpty())
             model = data.get(position);
-        holder.updateViews(this, model);
 
-        /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
-        for (ViewManipulator manipulator : getManipulators()) {
-            manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
+        if (null != model) {
+            holder.updateViews(this, model);
+
+            /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
+            for (ViewManipulator manipulator : getManipulators()) {
+                manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
+            }
         }
-
 
     }
 
