@@ -42,6 +42,13 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
             data.add(vm);
     }
 
+    /**
+     * Returns a Pair where the first-item is the ListViewModel which matches and
+     * the second-item is the position within that ListViewModel
+     *
+     * @param globalPosition
+     * @return
+     */
     protected Pair<IListViewModel<M, VM>, Integer> getLocalPos(int globalPosition) {
         Pair<IListViewModel<M, VM>, Integer> ret = null;
         int posCurrent = 0;
@@ -50,11 +57,12 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
             int localSize = data.get(i).size();
             posCurrent += localSize;
 
-            if (globalPosition > posCurrent - 1)
+            if (globalPosition > posCurrent - 1) {
+                lastIterationListSize += localSize;
                 continue;
+            }
 
             ret = new Pair<>(data.get(i), globalPosition - lastIterationListSize);
-            lastIterationListSize += localSize;
             break;
         }
 
@@ -90,7 +98,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     public M get(int pos) {
         Pair <IListViewModel<M, VM>, Integer> pair = getLocalPos(pos);
 
-        return (pair != null ? pair.first.get(pos) : null);
+        return (pair != null ? pair.first.get(pair.second) : null);
     }
 
     @Override
@@ -131,7 +139,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     public int size() {
         int size = 0;
         for (IListViewModel vm : data)
-            size += data.size();
+            size += vm.size();
 
         return size;
     }
