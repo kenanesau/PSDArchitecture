@@ -263,7 +263,6 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		{
 			addChild(vm);
 			vm.addViewModelListener(this);
-
         }
 		else 
 			throw new ArgumentException(String.format("You are trying to register a Viewmodel twice. ViewModel \"%s\" was already registered", vm.toString()));

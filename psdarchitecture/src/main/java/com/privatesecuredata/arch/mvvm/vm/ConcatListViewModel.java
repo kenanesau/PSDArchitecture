@@ -37,6 +37,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
         for(IListViewModel vm : lists) {
             data.add(vm);
+            vm.addModelListener(this);
             registerChildVM(vm);
         }
     }
