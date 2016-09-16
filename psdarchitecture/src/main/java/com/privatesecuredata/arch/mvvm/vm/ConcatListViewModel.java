@@ -6,7 +6,7 @@ import android.widget.Filterable;
 
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.IPersistable;
-import com.privatesecuredata.arch.mvvm.android.MVVMActivity;
+import com.privatesecuredata.arch.mvvm.MVVM;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -14,9 +14,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Simple ListViewModel which is readonly and can concatenate N other IListViewModels.
- * The contents of those ListViewModels are not intermixed but shown in a "concatenated"
- * manner
+ * Simple ListViewModel which is kind of readonly (you can not add but you can delete) and
+ * can concatenate N other IListViewModels. The contents of those ListViewModels are not intermixed
+ * but shown in a "concatenated" manner
  */
 public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
         implements IListViewModel<M, VM>, IDbBackedListViewModel,
@@ -26,20 +26,19 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
     /**
      *
-     * @param ctx Context
-     * @param referencedType Type of the Model
-     * @param vmType Type of the ViewModel
+     * @param mvvm MVVM-object
      * @param lists Array of IListViewModels
      */
-    public ConcatListViewModel(MVVMActivity ctx,
-                                     Class<M> referencedType,
-                                     Class<VM> vmType,
-                                     IListViewModel... lists)
+    public ConcatListViewModel(MVVM mvvm,
+                               IListViewModel... lists)
     {
+        super(mvvm);
         data = new ArrayList<>(lists.length);
 
-        for(IListViewModel vm : lists)
+        for(IListViewModel vm : lists) {
             data.add(vm);
+            registerChildVM(vm);
+        }
     }
 
     /**
@@ -122,16 +121,28 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
     @Override
     public boolean remove(M object) {
+        for (IListViewModel vm : data) {
+            if (remove(object))
+                return true;
+        }
+
         return false;
     }
 
     @Override
     public M remove(int location) {
-        return null;
+        Pair <IListViewModel<M, VM>, Integer> pair = getLocalPos(location);
+
+        return (pair != null ? pair.first.remove(pair.second) : null);
     }
 
     @Override
     public boolean removeAll(Collection<?> arg0) {
+        for (IListViewModel vm : data) {
+            if (data.removeAll(arg0))
+                return true;
+        }
+
         return false;
     }
 

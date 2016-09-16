@@ -34,12 +34,12 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     }
 
 	private HashMap<Integer, IViewModel<?>> children = new HashMap<Integer, IViewModel<?>>();
-	private ArrayList<IViewModel<?>> childrenOrdered = new ArrayList<IViewModel<?>>();
+    private ArrayList<IViewModel<?>> childrenOrdered = new ArrayList<IViewModel<?>>();
 	private SimpleValueVM<Boolean> selected = new SimpleValueVM<Boolean>(false);
+    private ArrayList<IListViewModel> listVMs = new ArrayList<>();
     private ListViewModelFactory vmFactory = null;
 	private Field modelField = null;
 	private ComplexViewModel<?> parentViewModel = null;
-    private List<IListViewModel> listVMs = new ArrayList<IListViewModel>();
     private HashMap<String, IViewModel<?>> nameViewModelMapping;
     private MVVM mvvm;
     private boolean globalNotify = true;
@@ -487,9 +487,12 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		if (!this.isDirty())
 			return;
 
+        List<IListViewModel> localListVMs = new ArrayList<IListViewModel>();
         for(IViewModel<?> vm : children.values()) {
-            if (vm instanceof IListViewModel)
+            if (vm instanceof IListViewModel) {
+                localListVMs.add((IListViewModel) vm);
                 continue;
+            }
 
             vm.commit();
 		}
@@ -498,7 +501,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
          * Commit the lists AFTER everything else since there could be a foreign key relation
          * in the DB -> Ensure that the rest of the parent-model is already clean.
          */
-        for(IListViewModel listVM : listVMs) {
+        for(IListViewModel listVM : localListVMs) {
             listVM.commit();
         }
 
