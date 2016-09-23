@@ -62,6 +62,12 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         this.mvvm = mvvm;
     }
 
+    /**
+     * Standard-Constructor for creating a VM-Tree for a model
+     *
+     * @param mvvm MVVM-object
+     * @param model Model
+     */
     public ComplexViewModel(MVVM mvvm, MODEL model)
     {
         this(mvvm);
@@ -78,18 +84,6 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
     }
 
-    /**
-     * Write a completely new Model to the VM
-     *
-     * @param m
-     */
-    public void updateModel(MODEL m)
-    {
-        setModel(null);
-        unsetLazy();
-        setModelAndRegisterChildren(m);
-        notifyModelChanged();
-    }
 /*
     public ComplexViewModel(ListViewModelFactory fac)
     {
@@ -211,7 +205,21 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	public boolean isSelected() { return this.selected.get(); }
 	public void setSelected(boolean val) { this.selected.set(val); }
 
-	private void addChild(IViewModel<?> vm) 
+    /**
+     * Add vm as a child, adding this as a parent to vm
+     * @param vm child-vm
+     */
+    protected void addChild(IViewModel<?> vm) {
+        addChild(vm, true);
+    }
+
+    /**
+     * Add vm as a child,
+     * @param vm child-vm child-vm
+     * @param useThisAsParent if true (default) us this as parent to vm
+     *                        otherwise not
+     */
+	protected void addChild(IViewModel<?> vm, boolean useThisAsParent)
 	{
 		this.children.put(System.identityHashCode(vm), vm);
 		this.childrenOrdered.add(vm);
@@ -221,7 +229,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
             complexVM.vmFactory = this.vmFactory;
             complexVM.setHandle(getHandle());
-            complexVM.setParentViewModel(this);
+            if (useThisAsParent)
+                complexVM.setParentViewModel(this);
         }
 	}
 	
@@ -288,7 +297,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
      *
      * @see {@link #doMappings(HashMap<String, IViewModel>)}
      */
-	private HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL m)
+    private HashMap<String, IViewModel<?>> setModelAndRegisterChildren(MODEL m)
 	{
 		HashMap<String, IViewModel<?>> childViewModels = new HashMap<String, IViewModel<?>>();
         if (this.hasModel())
@@ -611,9 +620,65 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     }
     public void setHandle(int handle) { _cfgHandle = handle; }
 
-    public void disableGlobalNotify() { this.globalNotify = false; }
+    public void disableGlobalNotify() {
+        this.globalNotify = false;
+        for (IViewModel childVM : children.values()) {
+            if (childVM instanceof ComplexViewModel) {
+                ((ComplexViewModel) childVM).disableGlobalNotify();
+            }
+        }
+    }
 
-    public void enableGlobalNotify() { this.globalNotify = true; }
+    public void enableGlobalNotify() {
+        this.globalNotify = true;
+        for (IViewModel childVM : children.values()) {
+            if (childVM instanceof ComplexViewModel) {
+                ((ComplexViewModel) childVM).enableGlobalNotify();
+            }
+        }
+    }
+
+    /**
+     * Write a new Model to the VM and completely rebuild the subsequent VM-tree
+     *
+     * @param m
+     */
+    public void replaceModel(MODEL m)
+    {
+        setModel(null);
+        unsetLazy();
+        setModelAndRegisterChildren(m);
+        notifyModelChanged();
+    }
+
+    /**
+     * Call this function to Replace a child-VM in a Complex VM
+     *
+     * Usually you use this function within a setter of a parent VM to replace one of its
+     * child VMs
+     *
+     * @param oldChildVM old child VM -- which needs to be replaced
+     * @param newChildViewModel new "value" for child-VM
+     * @param <T> Model-Type of the child VMs
+     * @return Returns the new child-VM
+     */
+    public <T extends ComplexViewModel> T replaceVM(T oldChildVM, T newChildViewModel) {
+        if (null != oldChildVM) {
+            unregisterChildVM(oldChildVM);
+
+            if (null != newChildViewModel) {
+                newChildViewModel.setModel(oldChildVM.getModel());
+            }
+        }
+
+        if (null != newChildViewModel) {
+            registerChildVM(newChildViewModel);
+            newChildViewModel.notifyViewModelDirty();
+        }
+
+        return newChildViewModel;
+    }
+
 
     public boolean isGlobalNotifyEnabled() { return this.globalNotify; }
 

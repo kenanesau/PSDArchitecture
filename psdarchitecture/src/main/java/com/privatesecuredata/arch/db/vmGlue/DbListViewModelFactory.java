@@ -77,6 +77,7 @@ public class DbListViewModelFactory implements IListViewModelFactory {
                 cb.setQuery(query);
             }
             listVM = new EncapsulatedListViewModel(parentVM.getMVVM(), parentModelType, modelType, viewModelType, cb);
+
             final Object lst = parentVM.getModel();
             if (Proxy.isProxyClass(lst.getClass()))
             {

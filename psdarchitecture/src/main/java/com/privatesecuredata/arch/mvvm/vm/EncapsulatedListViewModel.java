@@ -219,7 +219,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     public boolean add(VM vm)
     {
         this.registerChildVM(vm); //only registers if vm was not yet part of the parent-VM
-        return this.add(vm.getModel());
+        notifyViewModelDirty();
+        return true;
     }
 
 	public boolean add(M object) {
@@ -337,7 +338,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         load();
 
         /**
-         * first commit() ist called -- here we have to save all changed child-VMs
+         * first commit() is called -- here we have to save all changed child-VMs
          * later the DBViewModelCommitListener calls save() on this List-VM -- then those
          * VMs saved in the changedChildren-list are also saved to the DB...
          */
@@ -366,6 +367,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                     // whole list is saved
                     ((ComplexViewModel) vm).disableGlobalNotify();
                     vm.commit();
+                    if (vmType.isInstance(vm))
+                        newItems.add((M)vm.getModel());
                     ((ComplexViewModel) vm).enableGlobalNotify();
                 }
             }

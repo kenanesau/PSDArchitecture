@@ -22,7 +22,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
         implements IListViewModel<M, VM>, IDbBackedListViewModel,
         Filterable
 {
-    ArrayList<IListViewModel> data;
+    ArrayList<IListViewModel<M, VM>> data;
 
     /**
      *
@@ -40,6 +40,12 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
             vm.addModelListener(this);
             registerChildVM(vm);
         }
+    }
+
+    @Override
+    protected void addChild(IViewModel<?> vm) {
+        /* Add as a child without adding ourselves as parent to the child */
+        super.addChild(vm, false);
     }
 
     /**

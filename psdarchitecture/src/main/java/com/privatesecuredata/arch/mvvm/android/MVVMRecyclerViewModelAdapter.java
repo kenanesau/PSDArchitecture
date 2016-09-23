@@ -283,7 +283,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
      * @param empty
      * @sa isEmpty()
      */
-    private void setEmpty(boolean empty)
+    private void setEmpty(final boolean empty)
     {
         if (empty != isEmpty) {
             /// TODO: Make this optional via setting in adapter otherwise empty row-View would be obsolete
@@ -453,7 +453,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 
     public Activity getContext() { return this.ctx; }
 
-    public void setItemChecked(int position, boolean isChecked) {
+    public void setItemChecked(final int position, boolean isChecked) {
         selectedPos.put(position, isChecked);
         if (isChecked)
             setCheckedItemCount(getCheckedItemCount() + 1);

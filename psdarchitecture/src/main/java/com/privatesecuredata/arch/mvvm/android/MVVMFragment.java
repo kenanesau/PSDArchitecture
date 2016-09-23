@@ -13,6 +13,7 @@ import com.privatesecuredata.arch.db.IDbDescription;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersistanceManagerLocator;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 import java.util.HashMap;
@@ -30,7 +31,10 @@ public class MVVMFragment extends Fragment {
 
 	public PersistanceManager createPM(IDbDescription desc)
 	{
-		PersistanceManagerLocator.initializePM(desc);
+        Context ctx = getActivity();
+        if (null == ctx)
+            throw new ArgumentException("No activity attached yet -- we need a context!");
+
 		PersistanceManagerLocator pmLoc = PersistanceManagerLocator.getInstance();
 		return pmLoc.getPersistanceManager(getActivity(), desc); 
 	}
