@@ -29,11 +29,10 @@ public interface IViewModel<MODEL> extends IViewModelChangedListener, IModelChan
     void notifyModelChanged();
 
 	boolean isDirty();
-	void setDirty();
-	void setClean();
 
 	/**
-	 * commit all changes from the ViewModel to the Model;
+	 * commit all changes from the ViewModel to the Model; After commit the state of the model
+	 * and the VM are guaranteed to be the same
 	 */
 	void commit();
 	

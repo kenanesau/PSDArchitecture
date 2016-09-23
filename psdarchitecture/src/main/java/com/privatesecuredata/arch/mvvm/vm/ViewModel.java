@@ -1,11 +1,11 @@
 	package com.privatesecuredata.arch.mvvm.vm;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author kenan
@@ -110,10 +110,10 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	
 	@Override
 	public boolean isDirty() { return this.isDirty; }
-	@Override
-	public void setDirty() { this.isDirty = true; }
-	@Override
-	public void setClean() { this.isDirty = false; }
+
+	protected void setDirty() { this.isDirty = true; }
+
+	protected void setClean() { this.isDirty = false; }
 
 	/**
 	 * Write data from ViewModel to Model
@@ -139,6 +139,4 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	public abstract boolean equals(Object o);
 	@Override
 	public abstract String toString();
-
-
 }
