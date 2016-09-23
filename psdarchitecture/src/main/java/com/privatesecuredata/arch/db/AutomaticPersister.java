@@ -399,9 +399,11 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     @Override
     public long insert(T persistable) throws DBException {
         // First save the referenced objects
+        ObjectRelation errRel = null;
         try {
 
             for (ObjectRelation rel : getDescription().getOneToOneRelations()) {
+                errRel = rel;
                 IPersistable other = (IPersistable) rel.getField().get(persistable);
                 if (null == other)
                     continue;
@@ -410,8 +412,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     getPM().save(other);
             }
         } catch (Exception ex) {
-            throw new DBException(String.format("Error saving one-to-one relation in type \"%s\"!",
-                    persistable.getClass().getName()), ex);
+            throw new DBException(String.format("Error saving one-to-one relation from type \"%s\" to \"%s\"!",
+                    persistable.getClass().getName(), errRel.getField().getType().getName()), ex);
         }
 
         bind(insert, persistable);

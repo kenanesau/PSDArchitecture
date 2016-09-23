@@ -180,7 +180,7 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
                     dstListVM.size(),
                     dbIds);
             Object dstModel = pm.load(dstId);
-            dstVM.updateModel(dstModel);
+            dstVM.replaceModel(dstModel);
             return true;
         }
 
