@@ -110,9 +110,9 @@ public class PersistanceManager {
     private SQLiteDatabase db;
 	private boolean initializedDb = false;
 	private MVVM mvvm = null;
-	private Context ctx;
     private ArrayList<ICursorLoaderFactory> cursorLoaderFactories = new ArrayList<ICursorLoaderFactory>();
     private HashMap<String, QueryBuilder> queries = new HashMap<>();
+    private Context appCtx;
 
     private ReplaySubject<StatusMessage> statusRelay;
 
@@ -212,14 +212,14 @@ public class PersistanceManager {
             throw new DBException(msg, ex);
     }
 
-    protected File getUpgradingDbFile() {
+    protected File getUpgradingDbFile(Context ctx) {
         String dbName = "upgrading_";
         dbName = dbName.concat(dbDesc.getName());
         File dbFile = ctx.getDatabasePath(dbName);
         return dbFile;
     }
 
-    protected File getDbFile() {
+    protected File getDbFile(Context ctx) {
         String dbName = dbDesc.getName();
         File dbFile = ctx.getDatabasePath(dbName);
         return dbFile;
@@ -253,12 +253,12 @@ public class PersistanceManager {
 	public void initializeDb(Context ctx, boolean duringUpgrade) throws DBException
 	{
         int version = -1;
+        this.appCtx = ctx.getApplicationContext();
 
 		try {
 			if (null == this.db)
 			{
-				this.ctx = ctx.getApplicationContext();
-                File dbFile = duringUpgrade ? getUpgradingDbFile() : getDbFile();
+				File dbFile = duringUpgrade ? getUpgradingDbFile(ctx) : getDbFile(ctx);
 
                 File dbDir = new File(dbFile.getParent());
 				if (!dbDir.exists())
@@ -573,8 +573,8 @@ public class PersistanceManager {
                     conv.convert(convMan);
 
                     db.close();
-                    File newDbFile = getDbFile();
-                    Files.move(getUpgradingDbFile(), newDbFile);
+                    File newDbFile = getDbFile(ctx);
+                    Files.move(getUpgradingDbFile(ctx), newDbFile);
                     db = SQLiteDatabase.openOrCreateDatabase(newDbFile, null);
                 }
                 catch (Exception ex) {
@@ -1359,8 +1359,8 @@ public class PersistanceManager {
     public MVVM createMVVM() {
 		if (this.mvvm == null) {
 			this.mvvm = MVVM.createMVVM(this);
-			if (null != this.ctx) {
-				this.mvvm.setContext(this.ctx);
+			if (null != this.appCtx) {
+				this.mvvm.setContext(this.appCtx);
 			}
 			IListViewModelFactory factory = new DbListViewModelFactory(this);
 			this.mvvm.setListViewModelFactory(factory);
@@ -1422,7 +1422,14 @@ public class PersistanceManager {
     }
 
     public void registerQuery(QueryBuilder qb) {
-        this.queries.put(qb.id(), qb);
+        String id = qb.id();
+        if (queries.containsKey(id))
+            throw new ArgumentException(
+                    String.format(
+                        "unable to register Query 's' since a query with that id was already registered!",
+                        id));
+        else
+            this.queries.put(qb.id(), qb);
     }
 
     public Query getQuery(String queryId) {
@@ -1472,7 +1479,7 @@ public class PersistanceManager {
     public int version() { return this.dbDesc.getVersion(); }
 
     public Context getContext() {
-        return ctx;
+        return appCtx;
     }
 
 }

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.privatesecuredata.arch.exceptions.DBException;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -13,7 +14,7 @@ import rx.subjects.ReplaySubject;
 
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
-	private static HashMap<IDbDescription, PersistanceManager> pmMap = new HashMap<IDbDescription, PersistanceManager>();
+	private static HashMap<String, PersistanceManager> pmMap = new HashMap<String, PersistanceManager>();
 
 	private PersistanceManagerLocator() {}
 
@@ -25,16 +26,17 @@ public class PersistanceManagerLocator {
 		return instance;
 	}
 
-    public static void initializePM(IDbDescription dbDesc)
+    public static void initializePM(Context ctx, IDbDescription dbDesc)
     {
-        initializePM(dbDesc, null);
+        initializePM(ctx, dbDesc, null);
     }
 
-	public static void initializePM(IDbDescription dbDesc, ReplaySubject<StatusMessage> statusRelay) throws DBException {
+	public static void initializePM(Context ctx, IDbDescription dbDesc, ReplaySubject<StatusMessage> statusRelay) throws DBException {
         if (!pmMap.containsKey(dbDesc))
 		{
             PersistanceManager pm = new PersistanceManager(dbDesc, statusRelay);
-			pmMap.put(dbDesc, pm);
+            File dbFile = ctx.getDatabasePath(dbDesc.getName());
+			pmMap.put(dbFile.getAbsolutePath(), pm);
             pm.publishStatus(new StatusMessage(PersistanceManager.Status.INITIALIZEDPM));
 		}
 	}
@@ -151,13 +153,16 @@ public class PersistanceManagerLocator {
 
     private PersistanceManager init(Context ctx, IDbDescription dbDesc,
                                     ReplaySubject<StatusMessage> statusObserver) throws DBException {
-        ctx = ctx.getApplicationContext();
+        /* We do not save the reference to the context -> so we do NOT NEED the application-context
+        -> use the ctx directly since otherwise eg RenamingDelegatingContext would not work ... */
+
         PersistanceManager pm = null;
         try {
-            if (!pmMap.containsKey(dbDesc))
-                initializePM(dbDesc, statusObserver);
+            File dbFile = ctx.getDatabasePath(dbDesc.getName());
+            if (!pmMap.containsKey(dbFile.getAbsolutePath()))
+                initializePM(ctx, dbDesc, statusObserver);
 
-            pm = pmMap.get(dbDesc);
+            pm = pmMap.get(dbFile.getAbsolutePath());
             if (!pm.hasInitializedDb()) {
                 if (checkAndDoUpgrade(pm, ctx, dbDesc)) {
                     pm.publishStatus(new StatusMessage(PersistanceManager.Status.OPERATIONAL));
