@@ -162,7 +162,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                         model = loadProxyData(model);
                     }
 
-                    setModelAndRegisterChildren(model);
+                    if (null != model)
+                        setModelAndRegisterChildren(model);
                 }
 			}
 			catch(Exception ex)
@@ -302,8 +303,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		HashMap<String, IViewModel<?>> childViewModels = new HashMap<String, IViewModel<?>>();
         if (this.hasModel())
             throw new ArgumentException("This Viewmodel already has a Model, don't do this twice!!!");
-        if (null == m)
-            throw new ArgumentException("Your model is null -- this does not make any sense!!!");
+        /* if (null == m)
+            throw new ArgumentException("Your model is null -- this does not make any sense!!!"); */
 
         setModel(m);
 
@@ -426,7 +427,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             /**
              * If the Childmodel is != null -> it is in memory -> create the VM
              */
-            if (!complexAnno.loadLazy() ) // || childModel != null) {
+            if (!complexAnno.loadLazy() || childModel != null)
             {
                 isLazy = false;
                 if (childModel != null) {
@@ -663,18 +664,25 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
      * @return Returns the new child-VM
      */
     public <T extends ComplexViewModel> T replaceVM(T oldChildVM, T newChildViewModel) {
+        if (null == newChildViewModel)
+            throw new ArgumentException("Parameter 'newChildViewModel' must not be null!");
         if (null != oldChildVM) {
             unregisterChildVM(oldChildVM);
 
-            if (null != newChildViewModel) {
-                newChildViewModel.setModel(oldChildVM.getModel());
-            }
-        }
+            Field fld = oldChildVM.getModelField();
+            if (null == fld)
+                throw new ArgumentException("Field for setting own value in parent is null!!");
 
-        if (null != newChildViewModel) {
-            registerChildVM(newChildViewModel);
-            newChildViewModel.notifyViewModelDirty();
+            /**
+             * Without this it would not be possible for the child-VM to write it's new value
+             * to the parent-VM.
+             */
+            newChildViewModel.setModelGetter(this, oldChildVM.getModelField());
         }
+        else throw new ArgumentException("Parameter 'oldChildVM' must not be null!");
+
+        registerChildVM(newChildViewModel);
+        newChildViewModel.notifyViewModelDirty();
 
         return newChildViewModel;
     }
