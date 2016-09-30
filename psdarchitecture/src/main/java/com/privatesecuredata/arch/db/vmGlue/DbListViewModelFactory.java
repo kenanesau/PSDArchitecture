@@ -90,7 +90,7 @@ public class DbListViewModelFactory implements IListViewModelFactory {
                     @Override
                     public void notifyCursorChanged(Cursor csr) throws IllegalAccessException {
                         if (null != csr) {
-                            Collection lstItems = CollectionProxyFactory.getCollectionProxy(DbListViewModelFactory.this.pm, (Class) parentModelType, model, csr.getCount(), csr);
+                            Collection lstItems = CollectionProxyFactory.getCollectionProxy(DbListViewModelFactory.this.pm, (Class) modelType, model, csr.getCount(), csr);
                             Collection oldItems = (Collection) modelField.get(model);
                             if ((null != oldItems) && (oldItems.size() != lstItems.size())) {
                                 DbListViewModelFactory.this.pm.updateCollectionProxySize(model.getDbId(), modelField, lstItems);
