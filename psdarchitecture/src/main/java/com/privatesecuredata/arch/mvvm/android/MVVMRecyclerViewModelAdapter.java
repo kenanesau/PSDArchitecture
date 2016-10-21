@@ -218,18 +218,16 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 	/*
 	 * This method discards the old VM and register a new one
 	 */
-	public void setData(IListViewModel<M, COMPLEXVM> data)
+	public void setData(IListViewModel<M, COMPLEXVM> newData)
 	{
-        if (data == this.data)
+        if (newData == this.data)
             return;
 
         if (null != this.data) {
             this.data.delModelListener(this);
         }
-        else
-            setEmpty(true);
 
-        this.data = data;
+        this.data = newData;
         if (null != this.data) {
             this.data.addModelListener(this);
 
@@ -238,6 +236,8 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             }
             checkEmpty();
         }
+        else
+            setEmpty(true);
 
         redrawViews();
 	}

@@ -54,7 +54,7 @@ public class ViewModelState implements Parcelable {
     }
 
     /**
-     * Consturctor used by the MVVMInstanceStateHandler to save the instance state
+     * Constructor used by the MVVMInstanceStateHandler to save the instance state
      *
      * @param key Alternative key when not the class-name is used as a key
      * @param vm The Viewmodel containing an IPersistable
@@ -69,7 +69,7 @@ public class ViewModelState implements Parcelable {
 
     public Long getDbId() {
         long ret = -1L;
-        if (vm!=null)
+        if (vm != null)
         {
             IPersistable model = (IPersistable) vm.getModel();
 
@@ -209,8 +209,7 @@ public class ViewModelState implements Parcelable {
         if (o instanceof ViewModelState) {
             ViewModelState that = (ViewModelState) o;
             return Objects.equal(this.getKey(), that.getKey()) &&
-                    Objects.equal(this.getDbId(), that.getDbId()) &&
-                    Objects.equal(this.getTypeName(), that.getTypeName());
+                   Objects.equal(this.getTypeName(), that.getTypeName());
         }
         else {
             return false;
