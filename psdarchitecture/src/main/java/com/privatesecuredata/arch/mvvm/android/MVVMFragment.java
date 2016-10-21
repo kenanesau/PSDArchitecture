@@ -46,7 +46,7 @@ public class MVVMFragment extends Fragment {
 	 */
 	public PersistanceManager getDefaultPM()
 	{
-		return getMVVMActivity().getDefaultPM();
+		return getMVVMActivity() == null ? null : getMVVMActivity().getDefaultPM();
 	}
 	
 	public String getPMUUID() { return getMVVMActivity().getPMUUID(); }

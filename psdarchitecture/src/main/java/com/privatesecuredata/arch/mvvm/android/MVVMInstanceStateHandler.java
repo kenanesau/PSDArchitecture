@@ -64,9 +64,9 @@ public class MVVMInstanceStateHandler {
 
     protected void forgetInstanceState(ViewModelState state, IViewModel vm)
     {
-        rememberedInstances.remove(state);
-
         String key = state.getKey();
+        rememberedInstances.remove(key);
+
         if (modelCache.containsKey(key)) {
             modelCache.remove(key);
             viewModelCache.remove(key);
@@ -164,6 +164,7 @@ public class MVVMInstanceStateHandler {
         ViewModelState state = rememberedInstances.get(tag);
         if (state != null) {
             T viewModel =  state.getVM(pm);
+            modelCache.put(tag, viewModel.getModel());
             viewModelCache.put(tag, viewModel);
             return viewModel;
         }
