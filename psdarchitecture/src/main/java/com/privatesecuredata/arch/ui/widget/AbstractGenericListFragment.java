@@ -59,6 +59,7 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(getLayoutId(), container, false);
+
         lstView = (RecyclerView) view.findViewById(getRecyclerViewId());
         if (null == lstView)
             throw new ArgumentException("Could not find a Recycler-View!! Maybe you didn't set the correct id by overwriting getRecyclerViewId()?");
@@ -73,13 +74,26 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
     public abstract void configureAdapter(MVVMRecyclerViewModelAdapter<T, TVM> adapter, Bundle savedInstanceState);
 
     public MVVMRecyclerViewModelAdapter<T, TVM> getAdapter() { return this.adapter; }
+
+    /**
+     * Set items without causing an update
+     *
+     * @param newItems New Items
+     */
+    public void setItems(IListViewModel<T, TVM> newItems)
+    {
+        this.items = newItems;
+    }
+
+    /**
+     * Set the new items and cause a redraw on the adapter
+     *
+     * @param newItems
+     */
     public void updateItems(IListViewModel<T, TVM> newItems)
     {
-        items = newItems;
-
-        if (null != adapter) {
-            adapter.setData(items);
-        }
+        setItems(newItems);
+        doViewToVMMapping();
     }
 
     protected IListViewModel<T, TVM> getItems() { return items; }
@@ -88,14 +102,18 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
     }
 
     @Override
-    public void onStop() {
-        super.onDestroyView();
-
+    public void onDestroy() {
+        super.onDestroy();
         adapter.dispose();
+        adapter = null;
     }
 
+    /**
+     * Put the items to the adapter and cause a redraw
+     */
     @Override
     protected void doViewToVMMapping() {
-        adapter.setData(items);
+        if (null != adapter)
+            adapter.setData(items);
     }
 }

@@ -5,36 +5,30 @@
     android:background="@color/primary"
     android:id="@+id/psdarch_dialog_titlebar">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
+    <ImageView
+        android:id="@+id/psdarch_btn_cancel"
+        android:layout_width="@dimen/raster6"
+        android:layout_height="@dimen/raster6"
+        android:layout_marginLeft="@dimen/keyline1"
+        android:layout_marginStart="@dimen/keyline1"
+        android:layout_marginEnd="@dimen/raster6"
+        android:layout_marginRight="@dimen/raster6"
+        android:layout_marginTop="@dimen/raster4"
+        android:src="@drawable/ic_cancel"
+        android:clickable="true"
+        android:onClick="onButtonClick"/>
 
-        <ImageView
-            android:id="@+id/psdarch_btn_cancel"
-            android:layout_width="@dimen/raster6"
-            android:layout_height="@dimen/raster6"
-            android:layout_marginLeft="@dimen/keyline1"
-            android:layout_marginStart="@dimen/keyline1"
-            android:layout_marginEnd="@dimen/raster6"
-            android:layout_marginRight="@dimen/raster6"
-            android:layout_marginTop="@dimen/raster4"
-            android:src="@drawable/ic_cancel"
-            android:clickable="true"
-            android:onClick="onButtonClick"/>
-
-        <TextView
-            android:id="@+id/psdarch_dialog_titlebar_txt_title"
-            android:textSize="26sp"
-            android:padding="0dp"
-            android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:textColor="@color/background_light"
-            android:text="@string/psdarch_dialog_titlebar_title"
-            android:layout_marginLeft="@dimen/raster4"
-            android:layout_marginStart="@dimen/raster4"
-            android:layout_gravity="center_vertical" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/psdarch_dialog_titlebar_txt_title"
+        android:textSize="26sp"
+        android:padding="0dp"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:textColor="@color/background_light"
+        android:text="@string/psdarch_dialog_titlebar_title"
+        android:layout_marginLeft="@dimen/keyline2"
+        android:layout_marginStart="@dimen/keyline2"
+        android:layout_gravity="center_vertical" />
 
     <TextView
         android:id="@+id/psdarch_btn_ok"

@@ -25,6 +25,7 @@ public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChan
     int size();
     VM getViewModel(int pos);
     <T extends ComplexViewModel> T getParentViewModel();
+    void clear();
 
     IDbBackedListViewModel db();
 }

@@ -76,6 +76,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
+    protected ArrayList<VM> newVMs = null;
 	private Class<?> referencingType;
     private Class<M> referencedType;
 	private Class<VM> vmType;
@@ -218,7 +219,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
     public boolean add(VM vm)
     {
-        this.registerChildVM(vm); //only registers if vm was not yet part of the parent-VM
+        if (null == newVMs)
+            newVMs = new ArrayList<VM>();
+
+        vm.addViewModelListener(this);
+        this.newVMs.add(vm);
         notifyViewModelDirty();
         return true;
     }
@@ -228,13 +233,6 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         notifyViewModelDirty();
 		return ret;
 	}
-
-    /*@Override
-	public IModelListCallback<M> getModel() throws MVVMException
-	{
-        load();
-		return super.getModel();
-	}*/
 
 	public void add(int location, M object) {
 		newItems.add(location, object);
@@ -361,17 +359,23 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                     listVMs.add((IListViewModel) vm);
                     continue;
                 }
+            }
+        }
 
+        if (null != newVMs) {
+            for (IViewModel<?> vm : newVMs) {
                 if (vm instanceof ComplexViewModel) {
                     // Disable global notify since the children of a list are saved to DB when the
                     // whole list is saved
                     ((ComplexViewModel) vm).disableGlobalNotify();
                     vm.commit();
                     if (vmType.isInstance(vm))
-                        newItems.add((M)vm.getModel());
+                        newItems.add((M) vm.getModel());
                     ((ComplexViewModel) vm).enableGlobalNotify();
                 }
             }
+            newVMs.clear();
+            newVMs = null;
         }
 
         /**

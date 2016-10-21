@@ -219,5 +219,20 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
                 vm.db().where(id, val);
     }
 
+    @Override
+    public void clear() {
+        for(IListViewModel vm : data)
+            vm.clear();
+    }
+
+    public void dispose() {
+        for(IListViewModel vm : data) {
+            vm.delModelListener(vm);
+            unregisterChildVM(vm);
+        }
+
+        data.clear();
+    }
+
 }
 
