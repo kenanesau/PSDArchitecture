@@ -28,6 +28,8 @@ public class Query<T> {
     private Map<String, IQueryCondition> conditions = new LinkedHashMap<>();
     private Map<String, QueryParameter> params = new LinkedHashMap<>();
     private OrderByTerm[] orderByTerms;
+    private IPersistable foreignKeyPersistable;
+    private String foreignKeyParaId;
 
     public Query(String id) {
         this.queryId = id;
@@ -73,11 +75,25 @@ public class Query<T> {
 
     public void setForeignKeyParameter(String paraId, DbId value)
     {
+        foreignKeyParaId = paraId;
         setParameter(paraId, value.getId());
     }
 
     public void setForeignKeyParameter(IPersistable value) {
-        setForeignKeyParameter(value.getDbId());
+        if (value == null)
+            throw new ArgumentException("Parameter 'value' must not be null");
+
+        if (value.getDbId() != null) {
+            setForeignKeyParameter(value.getDbId());
+            foreignKeyPersistable = null;
+        }
+        else {
+            this.foreignKeyPersistable = value;
+            if (foreignKeyParaId != null) {
+                params.get(foreignKeyParaId).setValue(-1);
+                foreignKeyParaId = null;
+            }
+        }
     }
 
     public void setForeignKeyParameter(DbId<?> value) {
@@ -113,6 +129,12 @@ public class Query<T> {
         StringBuilder sb = new StringBuilder(this.sql);
 
         sb = AbstractPersister.appendOrderByString(sb, order);
+
+        if (foreignKeyPersistable != null) {
+            /* If the fk-persistable is not saved to the DB yet */
+            if (foreignKeyPersistable.getDbId() == null)
+                return null;
+        }
 
         for(QueryParameter para : params.values())
         {

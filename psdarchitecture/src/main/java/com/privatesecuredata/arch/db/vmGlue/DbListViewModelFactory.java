@@ -73,6 +73,9 @@ public class DbListViewModelFactory implements IListViewModelFactory {
             ObjectRelation rel = parentPersister.getDescription().getOneToManyRelation(modelField.getName());
             Query query = rel.getAndCacheQuery(pm);
             if (null != query) {
+                /* This can only work if the model is already in the DB -> otherwise the model
+                   has to be used as it is in memory...
+                 */
                 query.setForeignKeyParameter(model);
                 cb.setQuery(query);
             }

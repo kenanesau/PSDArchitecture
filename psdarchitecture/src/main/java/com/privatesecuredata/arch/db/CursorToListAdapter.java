@@ -63,26 +63,17 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         if (null == query) {
             if (null == parent) {
                 this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
-
-                if (null == csr)
-                    throw new DBException("Unable to load cursor");
             } else {
                 // Only load a cursor if there can be something in the DB
                 // If it is a new object (no DB-ID) -> don't load the cursor
                 if (((IPersistable)parent).getDbId() != null) {
                     this.csr = pm.getCursor((IPersistable) parent, childClazz, sortOrderTerms);
-
-                    if (null == csr)
-                        throw new DBException("Unable to load cursor");
                 }
             }
         }
         else
         {
             this.csr = query.run();
-
-            if (null == csr)
-                throw new DBException("Unable to run query using query");
         }
 
         try {
@@ -105,6 +96,8 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	public void init(Class<?> parentClazz, Object parent, Class<M> childClazz) {
         this.parentClazz = parentClazz;
         this.parent = (IPersistable) parent;
+        if ( (null != query) && (parent instanceof IPersistable) )
+            this.query.setForeignKeyParameter((IPersistable) parent);
         this.childClazz = childClazz;
         persister = pm.getPersister(childClazz);
 
@@ -126,7 +119,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     @Override
 	public M get(int pos) {
         try {
-            return pm.load(persister, csr, pos);
+            return (csr == null) ? null : pm.load(persister, csr, pos);
         }
         catch (Exception e)
         {
@@ -137,6 +130,9 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         }
 	}
     public long getPosition(DbId dbId) {
+        if (csr == null)
+            return -1;
+
         long pos = -1;
         long id = dbId.getId();
         csr.moveToFirst();
@@ -154,6 +150,9 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
     public DbId getDbId(int pos) {
+        if (null == csr)
+            return null;
+
         csr.moveToPosition(pos);
         DbId dbId = new DbId(this.childClazz, csr.getLong(0));
         return dbId;
@@ -200,7 +199,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
 	@Override
 	public List<M> getList() {
-		return pm.loadCursor(childClazz, csr);
+		return csr == null ? new ArrayList<M>() : pm.loadCursor(childClazz, csr);
 	}
 
     @Override
