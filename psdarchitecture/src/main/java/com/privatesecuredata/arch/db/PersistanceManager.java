@@ -253,7 +253,7 @@ public class PersistanceManager {
 	public void initializeDb(Context ctx, boolean duringUpgrade) throws DBException
 	{
         int version = -1;
-        this.appCtx = ctx.getApplicationContext();
+        this.appCtx = ctx.getApplicationContext() == null ? ctx : ctx.getApplicationContext();
 
 		try {
 			if (null == this.db)
