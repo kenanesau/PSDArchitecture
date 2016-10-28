@@ -11,6 +11,7 @@ import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.android.MVVMFragment;
 import com.privatesecuredata.arch.mvvm.android.MVVMRecyclerViewModelAdapter;
+import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
@@ -43,16 +44,15 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
         if (null != items)
             adapter.setData(items);
 
-        /**
         if (null != savedInstanceState)
         {
-            String typeName = savedInstanceState.getString(TAG_TYPE_NAME);
+            String typeName = savedInstanceState.getString(getInstanceStateTag());
             if (null != typeName) {
                 ComplexViewModel<?> parentVM = getViewModel(typeName);
                 if (parentVM != null)
                     updateParent(parentVM);
             }
-        }*/
+        }
 	}
 
     @Override
@@ -72,6 +72,10 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
     public int getLayoutId() { return R.layout.psdarch_list; }
     public int getRecyclerViewId() { return R.id.psdarch_recyclerview; }
     public abstract void configureAdapter(MVVMRecyclerViewModelAdapter<T, TVM> adapter, Bundle savedInstanceState);
+    public String getInstanceStateTag() {
+        return getClass().getCanonicalName();
+    }
+    public abstract void updateParent(ComplexViewModel<?> parent);
 
     public MVVMRecyclerViewModelAdapter<T, TVM> getAdapter() { return this.adapter; }
 
@@ -106,6 +110,22 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
         super.onDestroy();
         adapter.dispose();
         adapter = null;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        MVVMRecyclerViewModelAdapter adapter = getAdapter();
+        IListViewModel listVM = null;
+        if (null != adapter)
+            listVM = adapter.getData();
+
+        ComplexViewModel parent = listVM != null ? listVM.getParentViewModel() : null;
+        if ( (null != parent) && (null != parent.getModel()) ) {
+            rememberInstanceState(parent);
+            outState.putString(getInstanceStateTag(), parent.getModel().getClass().getCanonicalName());
+        }
+
+        super.onSaveInstanceState(outState);
     }
 
     /**
