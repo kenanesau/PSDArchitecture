@@ -1,6 +1,5 @@
 package com.privatesecuredata.arch.mvvm;
 
-import java.lang.ref.WeakReference;
 import java.util.Hashtable;
 import java.util.UUID;
 
@@ -17,7 +16,7 @@ import java.util.UUID;
 public class DataHive
 {
 	private static DataHive instance = null;
-	private Hashtable<UUID, WeakReference<?>> data = new Hashtable<UUID, WeakReference<?>>();
+	private Hashtable<UUID, Object> data = new Hashtable<UUID, Object>();
 			
 	private DataHive() {}
 	
@@ -32,14 +31,14 @@ public class DataHive
 	public <T> String put(T obj, String tag)
 	{
 		UUID ret = UUID.nameUUIDFromBytes(tag.getBytes());
-		data.put(ret, new WeakReference<T>(obj));
+		data.put(ret, obj);
 		return ret.toString();
 	}
 	
 	public <T> String put(T obj)
 	{
 		UUID ret = UUID.randomUUID();
-		data.put(ret, new WeakReference<T>(obj));
+		data.put(ret, obj);
 		return ret.toString();
 	}
 
@@ -55,11 +54,7 @@ public class DataHive
 	public <T> T get(UUID key)
 	{
 		T ret = null;
-		WeakReference<T> ref = (WeakReference<T>)data.get(key);
-		if (null!=ref)
-			ret = ref.get();
-
-		return ret;
+		return  (T)data.get(key);
 	}
 
 	public <T> T removeTag(String tag)
@@ -72,11 +67,6 @@ public class DataHive
 	}
 	public <T> T remove(UUID key)
 	{
-		T ret = null;
-		WeakReference<T> ref = (WeakReference<T>)data.remove(key);
-		if (null!=ref)
-			ret = ref.get();
-		
-		return ret;
+		return (T)data.remove(key);
 	}
 }
