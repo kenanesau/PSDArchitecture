@@ -47,7 +47,8 @@ public class MVVMInstanceStateHandler {
             if (vm == null)
                 continue;
 
-            if ( vm.getModel() instanceof IPersistable) {
+            Object model = vm.getModel();
+            if ( (null != model) && ( vm.getModel() instanceof IPersistable) ) {
                 ViewModelState state = new ViewModelState(vm);
                 rememberInstanceState(state, vm);
             }
