@@ -22,6 +22,10 @@ public class DialogTitlebar extends FrameLayout {
     private ImageView _defaultCancelIcon;
     private TextView  _txtTitle;
     private TextView  _txtActionOk;
+    private int layoutId = R.layout.psdarch_dialog_titlebar;
+    private int cancelId = R.id.psdarch_btn_cancel;
+    private int titleId = R.id.psdarch_dialog_titlebar_txt_title;
+    private int okId = R.id.psdarch_btn_ok;
 
     public DialogTitlebar(Context context) {
         this(context, null, 0, 0);
@@ -44,16 +48,32 @@ public class DialogTitlebar extends FrameLayout {
         init(context, attrs, defStyleAttr);
     }
 
+    protected int getLayoutId() {
+        return layoutId;
+    }
+
+    protected int getCancelId() {
+        return cancelId;
+    }
+
+    protected int getOkId() {
+        return okId;
+    }
+
+    protected int getTitleId() {
+        return titleId;
+    }
+
     protected void init(Context context, AttributeSet attrs, int defStyleAttr)
     {
-        LayoutInflater.from(context).inflate(R.layout.psdarch_dialog_titlebar, this, true);
-        _defaultCancelIcon = (ImageView)findViewById(R.id.psdarch_btn_cancel);
-        _txtTitle = (TextView)findViewById(R.id.psdarch_dialog_titlebar_txt_title);
-        _txtActionOk = (TextView)findViewById(R.id.psdarch_btn_ok);
-
-        Resources res = context.getResources();
+        LayoutInflater.from(context).inflate(getLayoutId(), this, true);
+        _defaultCancelIcon = (ImageView)findViewById(getCancelId());
+        _txtTitle = (TextView)findViewById(getTitleId());
+        _txtActionOk = (TextView)findViewById(getOkId());
 
         if (attrs != null) {
+            Resources res = context.getResources();
+
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_dialog_titlebar, 0, 0);
 
             int cancelDrawableId = a.getResourceId(R.styleable.psdarch_dialog_titlebar_icon_cancel, R.drawable.ic_cancel);
@@ -65,22 +85,13 @@ public class DialogTitlebar extends FrameLayout {
             _txtTitle.setText(title);
 
             boolean hideOk = a.getBoolean(R.styleable.psdarch_dialog_titlebar_hide_ok, false);
-            if (hideOk)
-                _txtActionOk.setVisibility(View.GONE);
-            else
-                _txtActionOk.setVisibility(View.VISIBLE);
+            _txtActionOk.setVisibility(hideOk ? View.GONE : View.VISIBLE);
 
             boolean hideCancel = a.getBoolean(R.styleable.psdarch_dialog_titlebar_hide_cancel, false);
-            if (hideCancel)
-                _defaultCancelIcon.setVisibility(View.GONE);
-            else
-                _defaultCancelIcon.setVisibility(View.VISIBLE);
+            _defaultCancelIcon.setVisibility(hideCancel ? View.GONE :View.VISIBLE);
 
             boolean hideTitle = a.getBoolean(R.styleable.psdarch_dialog_titlebar_hide_title, false);
-            if (hideTitle)
-                _txtTitle.setVisibility(View.GONE);
-            else
-                _txtTitle.setVisibility(View.VISIBLE);
+            _txtTitle.setVisibility(hideTitle ? View.GONE :View.VISIBLE);
 
             int txtOkId = a.getResourceId(R.styleable.psdarch_dialog_titlebar_txt_ok, R.string.psdarch_dialog_titlebar_txt_ok);
             String action = res.getString(txtOkId);

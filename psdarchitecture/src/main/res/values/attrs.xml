@@ -22,5 +22,9 @@
         <attr name="hide_cancel" format="boolean" />
         <attr name="hide_title" format="boolean" />
     </declare-styleable>
+    <declare-styleable name="psdarch_dialog_editable_title_titlebar"
+        parent="@declare-styleable/psdarch_dialog_titlebar">
+        <attr name="hide_title_icon" format="boolean" />
+    </declare-styleable>
 </resources>
  

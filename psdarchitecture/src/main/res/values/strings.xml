@@ -11,5 +11,6 @@
     <string name="psdarch_already_bought_title">Already bought!</string>
     <string name="psdarch_already_bought_message">You already bought that item!</string>
     <string name="psdarch_ok">OK</string>
+    <string name="psdarch_cancel">Cancel</string>
     <string name="psdarch_moving">moving…</string>
 </resources>
