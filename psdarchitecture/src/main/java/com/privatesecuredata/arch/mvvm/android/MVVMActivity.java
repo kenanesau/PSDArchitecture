@@ -60,9 +60,11 @@ public class MVVMActivity extends AppCompatActivity
 			throw new ArgumentException(String.format("Did not find any PersistanceManager with UUID=%s", uuid));
 		
 		if ( (null != pmUUID) && (!uuid.equals(pmUUID)) ) {
+            Log.d(getClass().getName(), String.format("removing PM with UUID=%s", pmUUID));
 			DataHive.getInstance().remove(pmUUID); 
 		}
-		
+
+        Log.d(getClass().getName(), String.format("setting new PM UUID=%s", uuid));
 		this.pmUUID = uuid;
 	}
 	
@@ -99,6 +101,8 @@ public class MVVMActivity extends AppCompatActivity
 		}
 
         if (savedInstanceState != null) {
+			String uuid = savedInstanceState.getString(MVVMActivity.TAG_PERSISTANCE_MANAGER);
+			setDefaultPM(uuid);
             instanceStateHandler.restoreInstanceState(savedInstanceState);
         }
 
@@ -130,7 +134,7 @@ public class MVVMActivity extends AppCompatActivity
     public <T extends IPersistable> T getModel(Class type) {
         T model = null;
         try {
-            return instanceStateHandler.getModel(getDefaultPM(), type);
+            model = instanceStateHandler.getModel(getDefaultPM(), type);
         }
         finally {
             return model;
@@ -181,7 +185,7 @@ public class MVVMActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         Log.d(getClass().getSimpleName(), "saveInstanceState");
         super.onSaveInstanceState(outState);
-
+		outState.putString(TAG_PERSISTANCE_MANAGER, getPMUUID());
         instanceStateHandler.saveInstanceState(outState, null);
     }
 
@@ -189,7 +193,7 @@ public class MVVMActivity extends AppCompatActivity
 	public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
 		Log.d(getClass().getSimpleName(), "saveInstanceState");
         super.onSaveInstanceState(outState, outPersistentState);
-
+		outState.putString(TAG_PERSISTANCE_MANAGER, getPMUUID());
         instanceStateHandler.saveInstanceState(outState, outPersistentState);
 	}
 
