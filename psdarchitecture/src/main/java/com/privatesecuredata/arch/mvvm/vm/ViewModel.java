@@ -83,9 +83,9 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	}
 
     @Override
-    public void notifyViewModelDirty(IViewModel<?> changedModel, IViewModelChangedListener originator)
+    public void notifyViewModelDirty(IViewModel<?> changedViewModel, IViewModelChangedListener originator)
     {
-        notifyChangeListeners(changedModel, originator);
+        notifyChangeListeners(changedViewModel, originator);
     }
 	
 	@Override
@@ -94,14 +94,22 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 		this.notifyViewModelDirty(this, this);
 	}
 
+	/**
+	 * Called at the end of the commit when all VM-changes have been commited to the model
+	 * @param changedViewModel Changed VM
+	 * @param originator	   VM which initiated this call
+     */
     @Override
-    public void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator)
+    public void notifyModelChanged(IViewModel<?> changedViewModel, IViewModel<?> originator)
     {
         this.setClean();
         for(IModelChangedListener listener : modelChangeListeners)
             listener.notifyModelChanged(this, originator);
     }
 
+    /**
+     * Called at the end of the commit when all VM-changes have been commited to the model
+     */
     @Override
     public void notifyModelChanged()
     {
