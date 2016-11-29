@@ -34,7 +34,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
-import rx.subjects.ReplaySubject;
+import io.reactivex.subjects.ReplaySubject;
 
 /**
  * 

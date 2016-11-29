@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import rx.subjects.ReplaySubject;
+import io.reactivex.subjects.ReplaySubject;
 
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;

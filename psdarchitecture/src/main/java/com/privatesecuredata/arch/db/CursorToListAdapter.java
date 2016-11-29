@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
+import android.util.SparseArray;
 import android.widget.Filter;
 
 import com.privatesecuredata.arch.db.query.Query;
@@ -41,7 +42,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     public CursorToListAdapter(PersistanceManager _pm, ICursorChangedListener listener) {
 		this(_pm);
 		addCursorChangedListener(listener);
-	}
+    }
 
 	public CursorToListAdapter(PersistanceManager _pm) {
         this.pm = _pm;
@@ -197,7 +198,18 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 			pm.save(items);
 	}
 
-	@Override
+    @Override
+    public void save(SparseArray<M> items) {
+        Collection<M> lst = new ArrayList<M>(items.size());
+
+        for(int i = 0; i < items.size(); i++) {
+            lst.add(items.get(items.keyAt(i)));
+        }
+
+        save(lst);
+    }
+
+    @Override
 	public List<M> getList() {
 		return csr == null ? new ArrayList<M>() : pm.loadCursor(childClazz, csr);
 	}

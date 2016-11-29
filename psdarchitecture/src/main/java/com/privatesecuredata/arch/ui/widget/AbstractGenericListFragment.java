@@ -43,7 +43,6 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
 
         if (null != items)
             adapter.setData(items);
-
         if (null != savedInstanceState)
         {
             String typeName = savedInstanceState.getString(getInstanceStateTag());
