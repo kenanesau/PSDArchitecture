@@ -59,6 +59,12 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 
         protected ViewHolder(View view) {
             super(view);
+
+            if (this.rowView != null) {
+                this.rowView.setOnClickListener(null);
+                this.rowView.setOnLongClickListener(null);
+            }
+
             this.rowView = view;
             //this.rowView.setOnTouchListener(this);
             this.rowView.setOnClickListener(this);
@@ -196,11 +202,15 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             setItemChecked(pos, !isItemChecked(pos));
 
             ctx.startActionMode(getActionModeCb());
+            ret = true;
         }
         else {
             v.setBackgroundResource(R.drawable.activated_selector);
         }
 
+        /**
+         * Call onLongClickCb.onLongCLick() even if action-mode is active
+         */
         if (null != onLongClickCb)
             ret = onLongClickCb.onLongClick(v, pos);
 

@@ -19,7 +19,7 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
-import rx.subjects.ReplaySubject;
+import io.reactivex.subjects.ReplaySubject;
 
 /**
  * Activity which supports easier restoration and saving of instance state. It also provides
@@ -80,8 +80,7 @@ public class MVVMActivity extends AppCompatActivity
 					
 		return (PersistanceManager)DataHive.getInstance().get(pmUUID);
 	}
-	
-	
+
 	public String getPMUUID() { return pmUUID; }
 
    	@Override
