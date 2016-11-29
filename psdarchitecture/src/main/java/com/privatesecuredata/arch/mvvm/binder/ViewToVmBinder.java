@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm.binder;
 
+import android.app.Activity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -406,9 +407,15 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
     @Override
     public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
         SimpleValueVM<T> simpleVM = getVM();
-        setVMUpdatesView();
-        writeViewCmd.set(this.view, simpleVM.get());
-        resetVMUpdatesView();
+
+		((Activity)view.getContext()).runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+                setVMUpdatesView();
+				writeViewCmd.set(ViewToVmBinder.this.view, simpleVM.get());
+                resetVMUpdatesView();
+			}
+		});
     }
 
     public void dispose()
