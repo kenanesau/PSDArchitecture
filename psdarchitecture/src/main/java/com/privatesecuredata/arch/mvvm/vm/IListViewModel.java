@@ -23,7 +23,9 @@ public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChan
     M remove(int location);
     boolean removeAll(Collection<?> arg0);
     int size();
+    int dirtySize();
     VM getViewModel(int pos);
+    boolean hasViewModel(int pos);
     <T extends ComplexViewModel> T getParentViewModel();
     void clear();
 

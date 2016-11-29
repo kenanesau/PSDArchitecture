@@ -163,10 +163,22 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     }
 
     @Override
+    public int dirtySize() {
+        return size();
+    }
+
+    @Override
     public VM getViewModel(int pos) {
         Pair<IListViewModel<M, VM>, Integer> pair = getLocalPos(pos);
 
         return (pair != null ? pair.first.getViewModel(pair.second) : null);
+    }
+
+    @Override
+    public boolean hasViewModel(int pos) {
+        Pair<IListViewModel<M, VM>, Integer> pair = getLocalPos(pos);
+
+        return (pair != null ? pair.first.hasViewModel(pair.second) : false);
     }
 
     @Override

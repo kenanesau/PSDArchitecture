@@ -284,6 +284,11 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	}
 
 	@Override
+	public int dirtySize() {
+		return size();
+	}
+
+	@Override
 	public List<M> subList(int start, int end) {
 		return getItems().subList(start, end);
 	}
@@ -351,7 +356,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		VM vm = null;
 		
 		try {
-			if (positionToViewModel.containsKey(pos))
+			if (hasViewModel(pos))
 				return positionToViewModel.get(pos);
 			else
 			{
@@ -373,7 +378,12 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		return vm;
 	}
 
-	@Override
+    @Override
+    public boolean hasViewModel(int pos) {
+        return positionToViewModel.containsKey(pos);
+    }
+
+    @Override
 	public IDbBackedListViewModel db() {
 		return null;
 	}

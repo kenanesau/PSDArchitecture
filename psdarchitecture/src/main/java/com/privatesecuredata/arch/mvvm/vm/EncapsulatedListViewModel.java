@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import android.util.SparseArray;
 import android.widget.Filter;
 import android.widget.Filterable;
 
@@ -54,6 +55,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		void commitFinished();
 		void remove(M item);
 		void save(Collection<M> items);
+        void save(SparseArray<M> items);
 		
 		List<M> getList();
         Filter getFilter();
@@ -77,6 +79,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
     protected ArrayList<VM> newVMs = null;
+    protected SparseArray<M> dirtyItems = new SparseArray<M>();
 	private Class<?> referencingType;
     private Class<M> referencedType;
 	private Class<VM> vmType;
@@ -253,7 +256,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
 	public M get(int pos) {
         load();
-		return listCB.get(pos);
+        M ret = dirtyItems.get(pos);
+        if (null == ret)
+		    ret = listCB.get(pos);
+
+        return ret;
 	}
 
     @Override
@@ -293,6 +300,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
             deletedItems.add(listCB.get(i));
         }
         newItems.clear();
+        dirtyItems.clear();
         notifyViewModelDirty();
     }
 
@@ -402,6 +410,10 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
             listCB.save(newItems);
             newItems.clear();
         }
+        if (dirtyItems.size() > 0) {
+            listCB.save(dirtyItems);
+            dirtyItems.clear();
+        }
 
         listCB.commitFinished();
     }
@@ -417,7 +429,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		VM vm = null;
 		
 		try {
-			if (positionToViewModel.containsKey(pos))
+			if (hasViewModel(pos))
 				return positionToViewModel.get(pos);
 			else
 			{
@@ -442,6 +454,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	}
 
     @Override
+    public boolean hasViewModel(int pos) {
+        return positionToViewModel.containsKey(pos);
+    }
+
+    @Override
     public IDbBackedListViewModel db() {
         return this;
     }
@@ -457,8 +474,8 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     }
 
     @Override
-    public void notifyModelChanged(IViewModel<?> changedVM, IViewModel<?> originator) {
-        Object model = changedVM.getModel();
+    public void notifyModelChanged(IViewModel<?> changedViewModel, IViewModel<?> originator) {
+        Object model = changedViewModel.getModel();
         /**
          * If the originator is an EncapsulatedListViewModel this is the load()-operation
          */
@@ -477,7 +494,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                 positionToViewModel.clear();
             }
         }
-        super.notifyModelChanged(changedVM, originator);
+        super.notifyModelChanged(changedViewModel, originator);
     }
 
     public String getFilteredColumn()
