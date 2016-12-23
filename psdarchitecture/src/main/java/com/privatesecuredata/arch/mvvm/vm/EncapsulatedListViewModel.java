@@ -373,13 +373,9 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         if (null != newVMs) {
             for (IViewModel<?> vm : newVMs) {
                 if (vm instanceof ComplexViewModel) {
-                    // Disable global notify since the children of a list are saved to DB when the
-                    // whole list is saved
-                    ((ComplexViewModel) vm).disableGlobalNotify();
                     vm.commit();
                     if (vmType.isInstance(vm))
                         newItems.add((M) vm.getModel());
-                    ((ComplexViewModel) vm).enableGlobalNotify();
                 }
             }
             newVMs.clear();
