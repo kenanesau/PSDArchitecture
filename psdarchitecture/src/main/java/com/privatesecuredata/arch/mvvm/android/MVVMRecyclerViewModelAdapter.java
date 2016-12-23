@@ -76,19 +76,13 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             this.parentView = parent;
         }
 
-        /**
-         * Override this if you do not like an empty space to be displayed on lists with
-         * no data
-         *
-         * @return Returns the ressource-Id for an emtpy list
-         */
-        public int getEmtpyViewRessourceId() {
-            return R.layout.psdarch_empty_frame;
+        public boolean showEmptyView() {
+            return true;
         }
 
         public void updateViews(MVVMRecyclerViewModelAdapter adapter, V model) {
             View v = getRowView();
-            v.setVisibility(adapter.isEmpty() ? View.GONE : View.VISIBLE);
+            getRowView().setVisibility(adapter.isEmpty() && showEmptyView() ? View.GONE : View.VISIBLE);
 
             if (!adapter.isEmpty()) {
                 if (emptyView != null)
@@ -97,15 +91,6 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
                     boolean activated = adapter.isItemChecked(getAdapterPosition());
                     v.setActivated(activated);
                 }
-            }
-            else {
-                if (emptyView == null) {
-                    emptyView = LayoutInflater.from(parentView.getContext()).inflate(
-                            getEmtpyViewRessourceId(),
-                            parentView, false);
-
-                }
-                emptyView.setVisibility(View.VISIBLE);
             }
         };
 
@@ -159,6 +144,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 	{
 		this.ctx = ctx;
         this.recyclerStrategy = strategy;
+        setEmpty(true);
 	}
 
 	public MVVMRecyclerViewModelAdapter(Activity ctx, IListViewModel<M, COMPLEXVM> lstVMs, IViewHolderFactory strategy)
@@ -258,15 +244,16 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 
     /**
-     * Returns the number of items (If the list has no data 1 is returned to be
-     * able to display one item with some info that the list is empty).
+     * Returns the number of items
+     * If the list has no data and you want to display a special "empty item" overwrite this and
+     * return 1 although the list is empty.
      *
-     * If the list contains data or not pleas use isEmpty()
+     * If the list contains data or not please use isEmpty()
      * @return the number of (displayed) items
      * @sa isEmpty()
      */
     public int getItemCount() {
-        int ret = 1;
+        int ret = 0;
 
         if ( (data == null) || (data.size() == 0) )
         {
@@ -297,15 +284,15 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     {
         if (empty != isEmpty) {
             /// TODO: Make this optional via setting in adapter otherwise empty row-View would be obsolete
-            if (null != this.view) {
-                final RecyclerView v = this.view;
-                ctx.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        v.setVisibility(empty ? View.GONE : View.VISIBLE);
+
+            ctx.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (null != MVVMRecyclerViewModelAdapter.this.view) {
+                        //MVVMRecyclerViewModelAdapter.this.view.setVisibility(empty ? View.GONE : View.VISIBLE);
                     }
-                });
-            }
+                }
+            });
         }
 
         this.isEmpty = empty;
@@ -334,17 +321,14 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         M model = null;
 
         if (!isEmpty())
-            model = data.get(position);
+            model = position < data.size() ? data.get(position) : null;
 
-        if (null != model) {
-            holder.updateViews(this, model);
+        holder.updateViews(this, model);
 
-            /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
-            for (ViewManipulator manipulator : getManipulators()) {
-                manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
-            }
+        /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
+        for (ViewManipulator manipulator : getManipulators()) {
+            manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
         }
-
     }
 
     /**
@@ -500,7 +484,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
         this.view = recyclerView;
-        this.view.setVisibility(isEmpty() ? View.GONE : View.VISIBLE);
+        //this.view.setVisibility(isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     @Override

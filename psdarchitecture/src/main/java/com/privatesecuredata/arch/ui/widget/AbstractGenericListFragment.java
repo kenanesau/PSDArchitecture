@@ -39,7 +39,7 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         adapter =  createAdapter();
-		configureAdapter(adapter, savedInstanceState);
+        configureAdapter(adapter, savedInstanceState);
 
         if (null != items)
             adapter.setData(items);

@@ -127,7 +127,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
             if (query != null)
                 throw new DBException(String.format("Error loading data from cursor with SQL-statement \"%s\"", query.getSqlStatement()), e);
             else
-                throw new DBException(String.format("Error loading data from cursor", query.getSqlStatement()), e);
+                throw new DBException("Error loading data from cursor", e);
         }
 	}
     public long getPosition(DbId dbId) {
