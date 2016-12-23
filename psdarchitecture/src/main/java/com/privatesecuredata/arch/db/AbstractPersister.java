@@ -90,7 +90,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
     private Hashtable<Field, SQLiteStatement> _foreignListCountUpdateStatements;
 
 
-	public String getSelectAllStatement() { return getSelectAllStatement(null); }
+	public String getSelectAllStatement() { return getSelectAllStatement((OrderByTerm[]) null); }
     public String getSelectAllStatement(OrderByTerm... terms) { return String.format(SELECTALLSQLSTATEMENT, getTableName()); }
     public String getDelSqlString() { return String.format(DELSQLSTATEMENT, getTableName()); }
     public String getSelectSingleSqlString() { return String.format(SELECTSINGLESQLSTATEMENT, getTableName()); }

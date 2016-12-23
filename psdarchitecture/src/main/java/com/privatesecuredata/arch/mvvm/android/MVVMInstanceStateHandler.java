@@ -101,8 +101,8 @@ public class MVVMInstanceStateHandler {
         String[] keys = (keyList != null) ? keyList.split(";") : null;
 
         if (null != keys) {
-            Log.d(getClass().getSimpleName(), String.format("restoring Instance State for %s", keys));
             for (String key : keys) {
+                Log.d(getClass().getSimpleName(), String.format("restoring Instance State for %s", key));
                 ViewModelState state = savedInstanceState.getParcelable(key);
 
                 rememberedInstances.put(state.getKey(), state);

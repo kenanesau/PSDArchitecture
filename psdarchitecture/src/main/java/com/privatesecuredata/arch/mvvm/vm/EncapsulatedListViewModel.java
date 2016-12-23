@@ -106,7 +106,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                                      IModelListCallback<M> listCB
                                      )
     {
-        this(ctx, referencedType, vmType, listCB,  null);
+        this(ctx, referencedType, vmType, listCB, (OrderBy[]) null);
     }
 
     /**

@@ -219,7 +219,7 @@ public class QueryBuilder<T> {
             sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
                     desc.getTableName(),
                     desc.getTableFields(),
-                    null));
+                    (OrderByTerm[]) null));
 
             if (null != joins) {
                 for (Pair<Class, String> join : joins.keySet()) {

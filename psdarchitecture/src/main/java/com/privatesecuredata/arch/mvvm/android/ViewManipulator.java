@@ -10,9 +10,11 @@ public class ViewManipulator<T, VM> {
     private VM vm;
     private ViewGroup parent;
 
-    private Integer viewId;
-    private IManipulationCommand<T, VM> cmd;
+    protected Integer viewId;
+    protected IManipulationCommand<T, VM> cmd;
     private int pos = -1;
+
+    protected ViewManipulator() {}
 
     public interface IManipulationCommand<T, VM> {
         void execute(int position, T data, VM vm, View view, ViewGroup parent);

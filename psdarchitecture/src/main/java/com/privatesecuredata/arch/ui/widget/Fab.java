@@ -62,18 +62,19 @@ public class Fab extends FrameLayout
             _disableOutline = a.getBoolean(R.styleable.psdarch_fab_disable_outline, false);
 
             a.recycle();
-            setDefaultDrawable(getDefaultImageView(), _defaultDrawable);
+            setDefaultDrawable(_defaultDrawable);
         }
 
         setAlpha(1.0f);
 	}
 
-    protected void setDefaultDrawable(View v, Drawable drawable) {
-        ImageView imgView = (ImageView)v;
+    public void setDefaultDrawable(Drawable drawable) {
+        ImageView imgView = getDefaultImageView();
         imgView.setImageDrawable(drawable);
         imgView.setColorFilter(_color, PorterDuff.Mode.DST);
         getDefaultAnimator().setTarget(imgView);
     }
+
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public Fab(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {

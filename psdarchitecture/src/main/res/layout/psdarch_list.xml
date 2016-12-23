@@ -14,4 +14,18 @@
         app:layoutManager="android.support.v7.widget.LinearLayoutManager"
      />
 
+    <com.privatesecuredata.arch.ui.widget.Fab
+        android:id="@+id/psdarch_list_fab"
+        android:layout_width="@dimen/small_fab"
+        android:layout_height="@dimen/small_fab"
+        android:layout_gravity="bottom|end"
+        android:visibility="gone"
+        android:layout_marginEnd="@dimen/keyline1"
+        android:layout_marginRight="@dimen/keyline1"
+        android:layout_marginBottom="@dimen/keyline1"
+        android:elevation="@dimen/elevation"
+        android:stateListAnimator="@animator/animate_elevation"
+        android:background="@drawable/fab_ripple_background_off"
+        />
+
 </FrameLayout>

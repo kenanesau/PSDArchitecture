@@ -59,7 +59,7 @@ public class ConversionManager {
             try {
                 Constructor constructor = objConverterType.getConstructor((Class[]) null);
                 try {
-                    BaseObjectConverter converter = (BaseObjectConverter) constructor.newInstance((Class[]) null);
+                    BaseObjectConverter converter = (BaseObjectConverter) constructor.newInstance((Object) null);
                     converter.setConversionManager(this);
                     registerObjectConverter(newType, converter);
                 } catch (InstantiationException e) {

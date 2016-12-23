@@ -70,7 +70,7 @@ public class IdCursorLoader implements ICursorLoader {
         this._foreignKeyColumn = foreignKeyColumn;
         this._fields = fields;
 
-        StringBuilder sbSelectAll = AbstractPersister.createSelectAllStatement(_tableName, fields, null);
+        StringBuilder sbSelectAll = AbstractPersister.createSelectAllStatement(_tableName, fields, (OrderByTerm[])null);
         StringBuilder sbSelectId = new StringBuilder(sbSelectAll.toString());
 
         sbSelectAll.append(" WHERE ")
