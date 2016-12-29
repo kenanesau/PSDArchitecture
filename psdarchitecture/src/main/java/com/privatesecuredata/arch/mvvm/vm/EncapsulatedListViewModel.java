@@ -324,7 +324,9 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	}
 
     public int dirtySize() {
-        return listCB.size() + newItems.size() - deletedItems.size();
+        int ret = listCB.size() + newItems.size() - deletedItems.size();
+
+        return (newVMs != null) ? ret + newVMs.size() : ret;
     }
 
 	@Override
