@@ -193,6 +193,13 @@ public class QueryBuilder<T> {
         predefinedparams.get(paraId).setValue(DbNameHelper.getDbTypeName(value));
     }
 
+    /**
+     * Join the table associated with the type t to the rest of the query
+     *
+     * @param t Type / Table to join with
+     * @param foreignType Type / Table which contains the reference to t (can be null if unique)
+     * @param fieldName Name of Field wich contains the reference to t
+     */
     public void join(Class t, Class foreignType, String fieldName) {
         if (null == joins)
             joins = new LinkedHashMap<>();
@@ -200,13 +207,25 @@ public class QueryBuilder<T> {
         joins.put(new Pair(foreignType, fieldName), t);
     }
 
+    /**
+     * Join the table associated with the type t to the rest of the query
+     *
+     * @param t Type / Table to join with
+     * @param fieldName Name of Field wich contains the reference to t
+     */
     public void join(Class t, String fieldName) {
         join(t, null, fieldName);
     }
 
-    public void unjoin(Class t) {
+    /**
+     * Remove join
+     *
+     * @param foreignType
+     * @param fieldName
+     */
+    public void unjoin(Class foreignType, String fieldName) {
         if (null != joins)
-            joins.remove(t);
+            joins.remove(new Pair(foreignType, fieldName));
     }
 
     public Query createQuery(PersistanceManager pm) {

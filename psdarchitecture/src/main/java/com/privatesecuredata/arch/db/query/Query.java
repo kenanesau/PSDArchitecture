@@ -79,6 +79,11 @@ public class Query<T> {
         setParameter(paraId, value.getId());
     }
 
+    public void setForeignKeyParameter(Class foreignKeyType, IPersistable val)
+    {
+        setForeignKeyParameter(DbNameHelper.getForeignKeyFieldName(foreignKeyType), val);
+    }
+
     public void setForeignKeyParameter(IPersistable value) {
         if (value == null)
             throw new ArgumentException("Parameter 'value' must not be null");

@@ -924,8 +924,10 @@ public class PersistanceManager {
 
             classObj = containerDst.getType();
             persister = getPersister(classObj);
-            persister.updateCollectionProxySize(containerSrc, fld, oldSrcSize - itemIds.size());
-            persister.updateCollectionProxySize(containerDst, fld, oldDstSize + itemIds.size());
+            if (null != fld) {
+                persister.updateCollectionProxySize(containerSrc, fld, oldSrcSize - itemIds.size());
+                persister.updateCollectionProxySize(containerDst, fld, oldDstSize + itemIds.size());
+            }
             db.setTransactionSuccessful();
         }
         finally {
@@ -1430,6 +1432,14 @@ public class PersistanceManager {
                         id));
         else
             this.queries.put(qb.id(), qb);
+    }
+
+    public <T extends QueryBuilder> T getQueryBuilder(String queryId) {
+        T qb = (T)this.queries.get(queryId);
+        if (null == qb)
+            throw new ArgumentException(String.format("Could not find query with id '%s'", queryId));
+
+        return qb;
     }
 
     public Query getQuery(String queryId) {
