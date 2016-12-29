@@ -88,12 +88,32 @@ public class ItemMoverFragment extends MVVMFragment {
         return this.vm;
     }
 
+    public boolean checkMove()
+    {
+        if (null != this.vm)
+            return this.vm.checkMove();
+        else
+            return false;
+    }
+
     public boolean checkMove(ComplexViewModel dstVM)
     {
         if (null != this.vm)
             return this.vm.checkMove(dstVM);
         else
             return false;
+    }
+
+    public <T> void move()
+    {
+        this.getItemMover().move();
+        getActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .remove(this)
+                .disallowAddToBackStack()
+                .commit();
+        this.getItemMover().clear();
+        this.setItemMoverVM(null);
     }
 
     public <T> void move(ComplexViewModel dstVM)

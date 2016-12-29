@@ -25,7 +25,7 @@ import java.util.List;
  * The containers have to have a ViewModel which is derived from
  * ComplexViewModel
  */
-public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
+public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> extends ComplexViewModel<SRC> {
 
     @Override
     protected void doMappings(HashMap<String, IViewModel<?>> childVMs) {}
@@ -53,6 +53,7 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
     public static final String TAG_PSDARCH_ITEMMOVER = "psdarch_itemmover";
     private DbId srcContainerId;
     private ComplexViewModel srcContainerVM;
+    private ComplexViewModel dstConainerVM;
     private SparseArray<DbId> items = new SparseArray<>();
     private SimpleValueVM<Integer> itemCount = new SimpleValueVM<Integer>(Integer.class, 0);
     private SimpleValueVM<Boolean> actionValid = new SimpleValueVM<Boolean>(false);
@@ -67,7 +68,7 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
     private CheckMoveCommand checkMoveCommand = new CheckMoveCommand() {
         @Override
         public boolean checkMove(ComplexViewModel dst) {
-            if (dst.getModel().getClass().isAssignableFrom(srcContainerVM.getModel().getClass()))
+            if ( (srcContainerVM == null) || (dst.getModel().getClass().isAssignableFrom(srcContainerVM.getModel().getClass())) )
                 return true;
             else
                 return false;
@@ -82,18 +83,21 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
      * @param getListCommand A command which returns the list of items of the src/dst-Container
      *                       where the items should be removed / added.
      */
-    public ItemMoverVM(PersistanceManager pm, ComplexViewModel<V> srcContainer, IGetListVMCommand getListCommand)
+    public ItemMoverVM(PersistanceManager pm, ComplexViewModel<SRC> srcContainer, IGetListVMCommand getListCommand)
     {
         super(pm.createMVVM());
         registerChildVM(itemCount);
         registerChildVM(actionValid);
-        this.setModel(srcContainer.getModel());
+        this.setModel(srcContainer != null ? srcContainer.getModel() : null);
+        this.registerChildVM(srcContainer);
         itemsCountTxt = new StringFormatVM("%d %s", itemCount,
                 new SimpleValueVM(getResources().getString(R.string.psdarch_fragment_action_move_number_of_items)));
         registerChildVM(itemsCountTxt);
         this.pm = pm;
-        srcContainerId = srcContainer.getModel().getDbId();
-        srcContainerVM = srcContainer;
+        if (null != srcContainer) {
+            srcContainerId = srcContainer.getModel().getDbId();
+            srcContainerVM = srcContainer;
+        }
         this.getListCommand = getListCommand;
     }
 
@@ -124,7 +128,7 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
         return items;
     }
 
-    public boolean hasItem(V model) {
+    public boolean hasItem(SRC model) {
         DbId needle = model.getDbId();
 
         if (null == needle)
@@ -187,6 +191,21 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
         return false;
     }
 
+    public <T extends ComplexViewModel> boolean move(T srcVM, T dstVM)
+    {
+        if (null != srcVM) {
+            srcContainerId = ((IPersistable)srcVM.getModel()).getDbId();
+            srcContainerVM = srcVM;
+        }
+
+        return move(dstVM);
+    }
+
+    public <T extends ComplexViewModel> boolean move() {
+        return move(dstConainerVM);
+    }
+
+
     /**
      * Triggers the ceck of the move-operation an updates the Flag for the validity of the operation
      *
@@ -199,12 +218,20 @@ public class ItemMoverVM<V extends IPersistable> extends ComplexViewModel<V> {
         return ret;
     }
 
+    public boolean checkMove() {
+        return checkMove(dstConainerVM);
+    }
+
     /**
-     * returns a reference to the source-containr
+     * returns a reference to the source-container
      * @return the source-container
      */
     public ComplexViewModel getSource() {
         return srcContainerVM;
+    }
+
+    public void setDestination(ComplexViewModel dst) {
+        dstConainerVM = dst;
     }
 
     public void clear() {

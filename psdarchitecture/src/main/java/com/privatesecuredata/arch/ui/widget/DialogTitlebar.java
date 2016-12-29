@@ -66,12 +66,13 @@ public class DialogTitlebar extends FrameLayout {
 
     protected void init(Context context, AttributeSet attrs, int defStyleAttr)
     {
-        LayoutInflater.from(context).inflate(getLayoutId(), this, true);
+        if (!isInEditMode())
+            LayoutInflater.from(context).inflate(getLayoutId(), this, true);
         _defaultCancelIcon = (ImageView)findViewById(getCancelId());
         _txtTitle = (TextView)findViewById(getTitleId());
         _txtActionOk = (TextView)findViewById(getOkId());
 
-        if (attrs != null) {
+        if ( (attrs != null) && (!isInEditMode()) ) {
             Resources res = context.getResources();
 
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_dialog_titlebar, 0, 0);
