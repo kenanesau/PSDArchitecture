@@ -84,6 +84,13 @@ public class QueryBuilder<T> {
         }
     }
 
+    /**
+     * Add a condition for a joined type. Conditions for fields of joined types must be added
+     * via this method.
+     *
+     * @param persistableType joined type
+     * @param fldName field name
+     */
     public void addCondition(Class persistableType, String fldName) {
         QueryCondition cond = new QueryCondition(fldName);
         cond.setPersistableType(persistableType);
@@ -152,6 +159,38 @@ public class QueryBuilder<T> {
     public void addForeignKeyCondition(Class foreignKeyType)
     {
         addForeignKeyCondition(DbNameHelper.getForeignKeyFieldName(foreignKeyType), foreignKeyType);
+    }
+
+    /**
+     * Add a condition that the same object has to be referenced
+     *
+     * Type and db-id must match
+     *
+     * @param type Type of a joined table
+     * @param fldName Field name
+     */
+    public void addMatchinObjRefCondition(Class type, String fldName) {
+        QueryCondition typeNameCond = new QueryCondition(DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_REFERENCE));
+        typeNameCond.setDirectFieldnameCondition();
+        if (null != type)
+            typeNameCond.setPersistableType(type);
+        QueryCondition idCond = new QueryCondition(DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_NAME));
+        idCond.setDirectFieldnameCondition();
+        if (null != type)
+            idCond.setPersistableType(type);
+        QueryConditionContainer andContainer = new QueryConditionContainer(fldName + "_obj_ref_cnt", typeNameCond, idCond);
+        addCondition(andContainer);
+    }
+
+    /**
+     * Add a condition that the same object has to be referenced
+     *
+     * Type and db-id must match
+     *
+     * @param fldName Field name
+     */
+    public void addMatchinObjRefCondition(String fldName) {
+        addMatchinObjRefCondition(null, fldName);
     }
 
     public void appendOrderByTerm(OrderByTerm term) {

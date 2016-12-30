@@ -105,6 +105,15 @@ public class Query<T> {
         setForeignKeyParameter(DbNameHelper.getForeignKeyFieldName(value.getType()), value);
     }
 
+    public void setMatchinObjRefParameter(String fldName, IPersistable obj) {
+        setParameter(
+                DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_REFERENCE),
+                obj.getDbId().getId());
+        setParameter(
+                DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_NAME),
+                DbNameHelper.getDbTypeName(obj.getDbId().getType()));
+    }
+
     /**
      * @param pm
      * @param sql
@@ -174,6 +183,5 @@ public class Query<T> {
 
         return sb.toString();
     }
-
 
 }

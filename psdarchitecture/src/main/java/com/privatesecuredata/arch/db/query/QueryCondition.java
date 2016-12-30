@@ -38,7 +38,8 @@ public class QueryCondition implements IQueryCondition {
         VALUE(1),
         TYPE(2),
         DBID(3),
-        FOREIGNKEY(4);
+        FOREIGNKEY(4),
+        DIRECTFIELDNAME(5); //No field name mangling through DBName-Helper
 
         private int value;
 
@@ -112,6 +113,8 @@ public class QueryCondition implements IQueryCondition {
     public boolean isDbIdCondition() { return this.type == ConditionType.DBID; }
     public void setTypeCondition() { this.type = ConditionType.TYPE; }
     public boolean isTypeCondition() { return this.type == ConditionType.TYPE; }
+    public void setDirectFieldnameCondition() { this.type = ConditionType.DIRECTFIELDNAME; }
+    public boolean isDirectFieldnameCondition() { return this.type == ConditionType.DIRECTFIELDNAME; }
     public void setForeignKeyCondition() { this.type = ConditionType.FOREIGNKEY; }
     public boolean isForeignKeyCondition() { return this.type == ConditionType.FOREIGNKEY; }
 
@@ -157,6 +160,9 @@ public class QueryCondition implements IQueryCondition {
         }
         else if (isForeignKeyCondition()) {
             sqlFieldName = DbNameHelper.getForeignKeyFieldName(params[0].fieldName());
+        }
+        else if (isDirectFieldnameCondition()) {
+            sqlFieldName = params[0].fieldName();
         }
         else
             sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
