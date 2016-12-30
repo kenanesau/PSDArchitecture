@@ -4,11 +4,12 @@ import android.util.SparseArray;
 import android.widget.Filter;
 import android.widget.Filterable;
 
+import com.privatesecuredata.arch.db.CursorToListAdapter;
 import com.privatesecuredata.arch.db.DbId;
+import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.MVVM;
-import com.privatesecuredata.arch.mvvm.android.MVVMActivity;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -89,24 +90,42 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
 	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
 
-    public EncapsulatedListViewModel(MVVMActivity ctx,
+    protected EncapsulatedListViewModel(PersistanceManager pm,
+                                        Class<M> referencedType,
+                                        Class<VM> vmType,
+                                        IModelListCallback<M> cb,
+                                        Query q)
+    {
+        this(pm, referencedType, vmType, cb);
+        cb.setQuery(q);
+    }
+
+    public EncapsulatedListViewModel(PersistanceManager pm,
+                                     Query q,
+                                     Class<M> referencedType,
+                                     Class<VM> vmType)
+    {
+        this(pm, referencedType, vmType, new CursorToListAdapter(pm), q);
+    }
+
+    public EncapsulatedListViewModel(PersistanceManager pm,
                                      Class<M> referencedType,
                                      Class<VM> vmType,
                                      IModelListCallback<M> listCB,
                                      OrderBy... sortOrderTerms)
     {
-        this(ctx.getDefaultPM().createMVVM(), null, referencedType, vmType, listCB);
+        this(pm.createMVVM(), null, referencedType, vmType, listCB);
         if (null != sortOrderTerms)
             setSortOrder(sortOrderTerms);
     }
 
-    public EncapsulatedListViewModel(MVVMActivity ctx,
+    public EncapsulatedListViewModel(PersistanceManager pm,
                                      Class<M> referencedType,
                                      Class<VM> vmType,
-                                     IModelListCallback<M> listCB
+                                     IModelListCallback listCB
                                      )
     {
-        this(ctx, referencedType, vmType, listCB, (OrderBy[]) null);
+        this(pm, referencedType, vmType, listCB, (OrderBy[]) null);
     }
 
     /**
