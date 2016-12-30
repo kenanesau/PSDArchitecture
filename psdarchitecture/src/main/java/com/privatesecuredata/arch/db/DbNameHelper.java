@@ -67,7 +67,14 @@ public class DbNameHelper {
         return sbl.toString();
     }
 
-    public static <T extends IPersistable> String getDbTypeName(Class persistentType) {
+    /**
+     * Convert a type to its DB-string representation
+     *
+     * @param persistentType
+     * @return String-representation of type-name (e.g
+     * FoodStockItemDetails.class -> "com.privatesecuredata.psdstoremanagerentities.FoodStockItemDetails")
+     */
+    public static  String getDbTypeName(Class persistentType) {
         String dbTypeName;
         String typeName = persistentType.getName();
         String[] tokens = typeName.split("[.]");
