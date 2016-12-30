@@ -60,6 +60,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     {
         super();
         this.mvvm = mvvm;
+        this.setHandle(mvvm.getHandle());
     }
 
     /**
