@@ -60,12 +60,20 @@ public class Query<T> {
 
     public void setParameter(String paraId, Object value)
     {
-        params.get(paraId).setValue(value);
+        QueryParameter para = params.get(paraId);
+        if (null == para)
+            throw new ArgumentException(String.format("Query '%s' was not able to find parameter '%s'", id(), paraId));
+
+        para.setValue(value);
     }
 
     public void setParameter(String paraId, Class value)
     {
-        params.get(paraId).setValue(DbNameHelper.getDbTypeName(value));
+        QueryParameter para = params.get(paraId);
+        if (null == para)
+            throw new ArgumentException(String.format("Query '%s' was not able to find parameter '%s'", id(), paraId));
+
+        para.setValue(DbNameHelper.getDbTypeName(value));
     }
 
     public void setForeignKeyParameter(String paraId, IPersistable value)

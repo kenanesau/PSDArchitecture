@@ -9,20 +9,31 @@ public class OrderByTerm {
     private String _sqlFieldStr;
     private String _sqlOrderStr;
 
+    /**
+     * Create an OderByTerm which is ascending by default
+     * Use this constructor if you joined two types/tables and you want to
+     * order by a field of the joined table.
+     *
+     * @param type Type/Table by was joined
+     * @param objectFieldName field in the joined table
+     */
+    public OrderByTerm(Class type, String objectFieldName)
+    {
+        this(type, objectFieldName, true);
+    }
+
+    /**
+     * Create an OderByTerm
+     * Use this constructor if you joined two types/tables and you want to
+     * order by a field of the joined table.
+     * @param type Type/Table by was joined
+     * @param objectFieldName field in the joined table
+     * @param asc if true-> ascending, descending otherwise
+     */
     public OrderByTerm(Class type, String objectFieldName, boolean asc)
     {
         _type = type;
          setSqlOrderStr(DbNameHelper.getTableName(type), DbNameHelper.getSimpleFieldName(objectFieldName), asc);
-    }
-
-    private void setSqlOrderStr(String tableName, String simpleFieldName, boolean asc) {
-        _dbTableName = tableName;
-        _sqlFieldStr = null == tableName ?
-                simpleFieldName :
-                String.format(" %s.%s", _dbTableName, simpleFieldName);
-        _sqlOrderStr = null == tableName ?
-                String.format(" %s %s", _sqlFieldStr, asc ? "ASC" : "DESC") :
-                String.format(" %s.%s %s", tableName, simpleFieldName, asc ? "ASC" : "DESC");
     }
 
     public OrderByTerm(String objectFieldName, boolean asc)
@@ -35,6 +46,16 @@ public class OrderByTerm {
     {
         _sqlFieldStr = dbField.getSqlName();
         _sqlOrderStr = String.format(" %s %s", _sqlFieldStr, asc ? "ASC" : "DESC");
+    }
+
+    private void setSqlOrderStr(String tableName, String simpleFieldName, boolean asc) {
+        _dbTableName = tableName;
+        _sqlFieldStr = null == tableName ?
+                simpleFieldName :
+                String.format(" %s.%s", _dbTableName, simpleFieldName);
+        _sqlOrderStr = null == tableName ?
+                String.format(" %s %s", _sqlFieldStr, asc ? "ASC" : "DESC") :
+                String.format(" %s.%s %s", tableName, simpleFieldName, asc ? "ASC" : "DESC");
     }
 
     @Override
