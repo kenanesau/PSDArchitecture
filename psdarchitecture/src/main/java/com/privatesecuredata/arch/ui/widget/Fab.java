@@ -71,6 +71,7 @@ public class Fab extends FrameLayout
     public void setDefaultDrawable(Drawable drawable) {
         ImageView imgView = getDefaultImageView();
         imgView.setImageDrawable(drawable);
+        imgView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         imgView.setColorFilter(_color, PorterDuff.Mode.DST);
         getDefaultAnimator().setTarget(imgView);
     }
@@ -88,8 +89,6 @@ public class Fab extends FrameLayout
 	
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (!_disableOutline) {
                 setOutlineProvider(new ViewOutlineProvider() {
@@ -104,6 +103,8 @@ public class Fab extends FrameLayout
 
             setClipToOutline(true);
         }
+
+        super.onSizeChanged(w, h, oldw, oldh);
     }
 
     protected void onSizeChangedNoOutline(int w, int h, int oldw, int oldh) {

@@ -36,7 +36,7 @@ public class EditableTitleDialogTitlebar extends DialogTitlebar {
         super.init(context, attrs, defStyleAttr);
         _titleIcon = (ImageView)findViewById(R.id.psdarch_dialog_titlebar_ic_title);
 
-        if (attrs != null) {
+        if ( (attrs != null) && (!isInEditMode()) ) {
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_dialog_editable_title_titlebar, 0, 0);
 
             boolean hideTitleIcon = a.getBoolean(R.styleable.psdarch_dialog_editable_title_titlebar_hide_title_icon, false);

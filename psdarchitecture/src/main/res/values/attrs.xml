@@ -8,7 +8,8 @@
 	    <attr name="icon_out_animation" format="reference" />
 	    <attr name="icon_in_animation" format="reference" />
 	    <attr name="default_animation" format="reference" />
-        <attr name="background_drawable" format="reference" />
+        <attr name="unchecked_bg_drawable" format="reference" />
+        <attr name="checked_bg_drawable" format="reference" />
         <attr name="disable_outline" format="boolean" />
   	</declare-styleable>
     <declare-styleable name="psdarch_number_selector">

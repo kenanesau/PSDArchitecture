@@ -1,25 +1,27 @@
 package com.privatesecuredata.arch.ui.widget;
 
-import com.privatesecuredata.arch.R;
-
 import android.animation.Animator;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Path;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.RippleDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Checkable;
 import android.widget.ImageView;
+
+import com.privatesecuredata.arch.R;
 
 public class CheckableFab extends Fab implements Checkable {
 	private static final String SUPERSTATE="superState";
@@ -31,6 +33,9 @@ public class CheckableFab extends Fab implements Checkable {
 	
 	private Drawable _checkedDrawable;
 	private ImageView _checkedImageView;
+
+    private Drawable _checkedBg;
+    private Drawable _uncheckedBg;
 	
 	private Animator _iconInAnimator;
 	private Animator _iconOutAnimator;
@@ -59,25 +64,37 @@ public class CheckableFab extends Fab implements Checkable {
 //		_view = new View(context);
 //		_view.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 //		addView(_view, 0);
-		
+
+        if (isInEditMode()) {
+            return;
+        }
+
 		Resources res = context.getResources();
 		_checkedImageView = (ImageView)findViewById(R.id.psdarch_checked_fab_icon);
 		
 		if (attrs!=null) {
 			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_fab, 0, 0);
-			
+
 			int checkedDrawableId = a.getResourceId(R.styleable.psdarch_fab_icon_checked, R.drawable.ic_action_done);
-			_checkedDrawable = res.getDrawable(checkedDrawableId);
+			_checkedDrawable = ContextCompat.getDrawable(context, checkedDrawableId);
 			_checkedImageView.setImageDrawable(_checkedDrawable);
+            _checkedImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 			
 			int iconOutAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_in_animation, R.animator.fab_animate_icon_out);
 			_iconOutAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconOutAnimationId);
 			
 			int iconInAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_out_animation, R.animator.fab_animate_icon_in);
 			_iconInAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconInAnimationId);
-			
+
+            int checkedBgDrawableId = a.getResourceId(R.styleable.psdarch_fab_checked_bg_drawable, R.drawable.fab_ripple_background_on);
+            _checkedBg = ContextCompat.getDrawable(context, checkedBgDrawableId);
+
+            int uncheckedBgDrawableId = a.getResourceId(R.styleable.psdarch_fab_unchecked_bg_drawable, R.drawable.fab_ripple_background_off);
+            _uncheckedBg = ContextCompat.getDrawable(context, uncheckedBgDrawableId);
 			a.recycle();
 		}
+
+        setChecked(_checked, false);
 	}
 	
 	@Override
@@ -89,7 +106,8 @@ public class CheckableFab extends Fab implements Checkable {
 	public void setChecked(boolean checked) {
 		setChecked(checked, true);
 	}
-	
+
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	private ObjectAnimator getMoveInAnimFor(ImageView target)
 	{
     	Path path = new Path();
@@ -101,7 +119,8 @@ public class CheckableFab extends Fab implements Checkable {
 		vals[1].setFloatValues(-target.getHeight(), 0.0f);
     	return moveInAnim;
 	}
-	
+
+	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	private ObjectAnimator getMoveOutAnimFor(ImageView target)
 	{
     	Path path = new Path();
@@ -131,51 +150,61 @@ public class CheckableFab extends Fab implements Checkable {
         	
 
             if (_checked) {
-            	_checkedImageView.setVisibility(View.VISIBLE);
-            	_iconOutAnimator.setTarget(getDefaultImageView());
-            	_iconInAnimator.setTarget(_checkedImageView);
-            	ObjectAnimator moveInAnim = getMoveInAnimFor(_checkedImageView);
-            	ObjectAnimator moveOutAnim = getMoveOutAnimFor(getDefaultImageView());
-            	
-            	_iconInAnimator.addListener(new AnimatorListenerAdapter() {
-            		@Override
-            		public void onAnimationEnd(Animator animation) {
-            			setChecked(_checked, false);
-            		}
-            	});
-            	_iconInAnimator.start();
-            	moveInAnim.start();
-            	_iconOutAnimator.start();
-            	moveOutAnim.start();
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    _checkedImageView.setVisibility(View.VISIBLE);
+                    _iconOutAnimator.setTarget(getDefaultImageView());
+                    _iconInAnimator.setTarget(_checkedImageView);
+                    ObjectAnimator moveInAnim = getMoveInAnimFor(_checkedImageView);
+                    ObjectAnimator moveOutAnim = getMoveOutAnimFor(getDefaultImageView());
+
+                    _iconInAnimator.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            setChecked(_checked, false);
+                        }
+                    });
+                    _iconInAnimator.start();
+                    moveInAnim.start();
+                    _iconOutAnimator.start();
+                    moveOutAnim.start();
+                }
+                else {
+                    setChecked(_checked, false);
+                }
+
             	getDefaultImageView().setVisibility(View.GONE);
             }
-            else
-            {
-            	getDefaultImageView().setVisibility(View.VISIBLE);
-            	_iconOutAnimator.setTarget(_checkedImageView);
-            	_iconInAnimator.setTarget(getDefaultImageView());
-            	_iconInAnimator.addListener(new AnimatorListenerAdapter() {
-            		@Override
-            		public void onAnimationEnd(Animator animation) {
-            			setChecked(_checked, false);
-            		}
-            	});
-            	ObjectAnimator moveInAnim = getMoveInAnimFor(getDefaultImageView()); 
-            	ObjectAnimator moveOutAnim = getMoveOutAnimFor(_checkedImageView);
-            	_iconOutAnimator.start();
-            	moveOutAnim.start();
-            	_checkedImageView.setVisibility(View.GONE);
-            	_iconInAnimator.start();
-            	moveInAnim.start();
-            }
+            else {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    getDefaultImageView().setVisibility(View.VISIBLE);
+                    _iconOutAnimator.setTarget(_checkedImageView);
+                    _iconInAnimator.setTarget(getDefaultImageView());
+                    _iconInAnimator.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            setChecked(_checked, false);
+                        }
+                    });
+                    ObjectAnimator moveInAnim = getMoveInAnimFor(getDefaultImageView());
+                    ObjectAnimator moveOutAnim = getMoveOutAnimFor(_checkedImageView);
+                    _iconOutAnimator.start();
+                    moveOutAnim.start();
+                    _iconInAnimator.start();
+                    moveInAnim.start();
+                } else {
+                    setChecked(_checked, false);
+                }
+                _checkedImageView.setVisibility(View.GONE);
 //            _view.setVisibility(View.VISIBLE);
 //            _view.setBackgroundColor(_checked ? Color.WHITE : _color);
-        } else {
+            }
+        }
+        else {
 //            _view.setVisibility(View.GONE);
-            int bgResourceId = (_checked ? R.drawable.fab_ripple_background_on
-                    					 : R.drawable.fab_ripple_background_off);
-            RippleDrawable newBackground = (RippleDrawable) getResources().getDrawable(bgResourceId);
-            setBackground(newBackground);
+            Drawable bg = (_checked ? _checkedBg : _uncheckedBg);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                setBackground(bg);
+            }
             //TODO: Build Logic to be certain that ALL animations ended...
             if (_checked) {
             	getDefaultImageView().setVisibility(View.GONE);
