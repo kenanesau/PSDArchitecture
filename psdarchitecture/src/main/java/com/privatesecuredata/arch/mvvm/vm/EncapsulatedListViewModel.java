@@ -481,6 +481,11 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     }
 
     @Override
+    public void dispose() {
+        this.getModelListCallback().dispose();
+    }
+
+    @Override
     public Filter getFilter() {
         return listCB.getFilter();
     }

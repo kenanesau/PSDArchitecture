@@ -27,6 +27,7 @@ public interface IViewModel<MODEL> extends IViewModelChangedListener, IModelChan
 	void notifyViewModelDirty();
     void notifyModelChanged(IViewModel<?> changedModel, IViewModel<?> originator);
     void notifyModelChanged();
+	void dispose();
 
 	boolean isDirty();
 

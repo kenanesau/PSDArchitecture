@@ -159,6 +159,8 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	{
 		return (Class<SimpleValueVM<T>>) this.getClass();
 	}
+
+	public void dispose() {}
 	
 	@Override
 	public int hashCode() {

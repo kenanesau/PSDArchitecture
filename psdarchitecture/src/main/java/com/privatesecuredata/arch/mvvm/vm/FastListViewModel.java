@@ -395,6 +395,10 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	}
 
 	@Override
+	public void dispose() {
+	}
+
+	@Override
     public ComplexViewModel<?> getParentViewModel() {
         return this.parentVM;
     }

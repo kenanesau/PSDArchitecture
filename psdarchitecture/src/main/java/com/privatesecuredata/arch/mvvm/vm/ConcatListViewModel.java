@@ -241,8 +241,12 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
         for(IListViewModel vm : data) {
             vm.delModelListener(vm);
             unregisterChildVM(vm);
+
+            ///DO NOT DISPOSE THE CHILD-LIST-VMs -- they might be still attached to some VM in use...
+            ///vm.dispose();
         }
 
+        ///Throw out all references to the child ListViewModels
         data.clear();
     }
 

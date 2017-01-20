@@ -693,5 +693,13 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
     public Resources getResources() { return this.mvvm.getResources();}
     public Context getContext() { return this.mvvm.getContext();}
+
+    public void dispose() {
+        List<IViewModel<?>> lst = getChildrenOrdered();
+        for (IViewModel vm : lst)
+        {
+            vm.dispose();
+        }
+    };
 }
  
