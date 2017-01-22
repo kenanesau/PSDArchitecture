@@ -54,7 +54,13 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
 	private ComplexViewModel<?> parentVM;
 
-	public FastListViewModel(MVVM mvvm, ComplexViewModel<?> parentVM, Class<M> modelClazz, Class<VM> vmClazz, ArrayList<M> data)
+	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class<VM> vmClazz, List<M> data)
+	{
+		this(mvvm, null, modelClazz, vmClazz);
+		init(data);
+	}
+
+	public FastListViewModel(MVVM mvvm, ComplexViewModel<?> parentVM, Class<M> modelClazz, Class<VM> vmClazz, List<M> data)
 	{
         this(mvvm, parentVM, modelClazz, vmClazz);
         init(data);

@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -78,7 +79,7 @@ public class DialogTitlebar extends FrameLayout {
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_dialog_titlebar, 0, 0);
 
             int cancelDrawableId = a.getResourceId(R.styleable.psdarch_dialog_titlebar_icon_cancel, R.drawable.ic_cancel);
-            Drawable cancelDrawable = res.getDrawable(cancelDrawableId);
+            Drawable cancelDrawable = ContextCompat.getDrawable(context, cancelDrawableId);
             _defaultCancelIcon.setImageDrawable(cancelDrawable);
 
             int txtTitleId = a.getResourceId(R.styleable.psdarch_dialog_titlebar_txt_title, R.string.psdarch_dialog_titlebar_title);
