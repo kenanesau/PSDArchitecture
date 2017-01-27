@@ -163,7 +163,6 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 
     public void onClick(View v, int pos) {
         if (actionMode != null) {
-            v.setBackgroundResource(R.drawable.activated_selector_no_press);
             setItemChecked(pos, !isItemChecked(pos));
 
             if (null != onLongClickCb) {
@@ -173,7 +172,6 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             }
         }
         else {
-            v.setBackgroundResource(R.drawable.activated_selector);
             if (null != onClickCb) {
                 onClickCb.onClick(v, pos);
                 notifyItemChanged(pos);
@@ -184,14 +182,10 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     public boolean onLongClick(View v, int pos) {
         boolean ret = false;
         if ( (actionModeCb != null) && (actionMode == null) ) {
-            v.setBackgroundResource(R.drawable.activated_selector_no_press);
             setItemChecked(pos, !isItemChecked(pos));
 
             ctx.startActionMode(getActionModeCb());
             ret = true;
-        }
-        else {
-            v.setBackgroundResource(R.drawable.activated_selector);
         }
 
         /**

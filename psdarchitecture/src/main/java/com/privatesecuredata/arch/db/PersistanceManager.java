@@ -687,7 +687,8 @@ public class PersistanceManager {
 	public <T extends IPersistable> T load(DbId<?> fathersId, Class<T> classObj, long id) throws DBException
 	{
 		IPersistable persistable = load(classObj, id);
-		fathersId.addChild(persistable.getDbId());
+        if (null != persistable)
+		    fathersId.addChild(persistable.getDbId());
 		return (T) persistable;
 	}
 
