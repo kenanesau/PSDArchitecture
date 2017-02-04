@@ -3,7 +3,7 @@ package com.privatesecuredata.arch.mvvm.vm;
 import android.content.Context;
 import android.content.res.Resources;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
@@ -608,9 +608,9 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
+		return MoreObjects.toStringHelper(this)
 				.add("isDirty", this.isDirty())
-				.add("children", this.children.size())
+				.add("children", this.children != null ? this.children.size() : "0")
 				.toString();
 	}
 

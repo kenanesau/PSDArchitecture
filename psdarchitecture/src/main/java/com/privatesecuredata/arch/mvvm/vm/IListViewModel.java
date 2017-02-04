@@ -14,6 +14,7 @@ public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChan
     void init(ComplexViewModel<?> parentVM, Field modelField);
     boolean add(VM vm);
     boolean add(M object);
+    boolean addAll(IListViewModel<M, VM> list);
     boolean addAll(Collection<? extends  M> arg0);
     boolean addAll(int arg0, Collection<? extends M> arg1);
     M get(int pos);

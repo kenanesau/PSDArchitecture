@@ -34,7 +34,18 @@ import java.util.ListIterator;
  */
 public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>> implements List<M>, IListViewModel<M, VM>
 {
-	
+    private boolean clearAll = false;
+
+    public static <MODEL, VIEWMODEL extends IViewModel> boolean addAllListVM(IListViewModel<MODEL, VIEWMODEL> src, IListViewModel<MODEL, VIEWMODEL> dst)
+	{
+		for (int n=0; n<src.size(); n++) {
+			MODEL m = src.get(n);
+			dst.add(m);
+		}
+
+		return true;
+	}
+
 	public interface ICommitItemCallback<M>
 	{
 		void removeItem(IViewModel<?> parent, M item);
@@ -42,7 +53,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		void updateItem(IViewModel<?> parent, M item); 
 	}
 	
-	private ArrayList<M> items = new ArrayList<M>();
+	//private ArrayList<M> items = new ArrayList<M>();
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
 	private Class<M> modelClass;
@@ -53,6 +64,16 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 
 	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
 	private ComplexViewModel<?> parentVM;
+
+	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class<VM> vmClazz, IListViewModel<M, ?> data)
+	{
+		this(mvvm, null, modelClazz, vmClazz);
+		List<M> lst = new ArrayList<M>(data.size());
+		for (int i=0; i<data.size(); i++)
+			lst.add(data.get(i));
+
+		init(lst);
+	}
 
 	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class<VM> vmClazz, List<M> data)
 	{
@@ -111,7 +132,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		setModel(modelItems);
 		if (!Proxy.isProxyClass(modelItems.getClass()))
 		{
-			this.items = new ArrayList<M>(modelItems);
+			//this.items = new ArrayList<M>(modelItems);
 			initialized = true;
 		}
 	}
@@ -149,28 +170,28 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
     public boolean add(VM viewModel) {
         return this.add(viewModel.getModel());
     }
-	
+
+	@Override
+	public boolean addAll(IListViewModel<M, VM> list) {
+		return addAllListVM(list, this);
+	}
+
 	@Override
 	public void add(int location, M object) {
 		newItems.add(location, object);
-		getItems().add(location, object);
 		this.notifyViewModelDirty();
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends M> arg0) {
-		newItems.addAll(arg0);
-		boolean ret = getItems().addAll(arg0);
+		boolean ret = newItems.addAll(arg0);
 		this.notifyViewModelDirty();
-		
 		return ret;
 	}
 
 	@Override
 	public boolean addAll(int arg0, Collection<? extends M> arg1) {
-		newItems.addAll(arg1);
-		boolean ret = getItems().addAll(arg0, arg1);
-		
+		boolean ret = newItems.addAll(arg1);
 		this.notifyViewModelDirty();
 		return ret;
 	}
@@ -179,8 +200,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	public void clear() {
 		deletedItems.addAll(getItems());
 		newItems.clear();
-		getItems().clear();
-		
+		clearAll = true;
 		this.notifyViewModelDirty();
 	}
 
@@ -236,7 +256,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 
 	@Override
 	public M remove(int location) {
-		M item = getItems().remove(location);
+		M item = get(location);
 		deletedItems.add(item);
 		notifyViewModelDirty();
 		return item;
@@ -244,7 +264,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 
     @Override
 	public boolean remove(Object object) {
-		boolean ret = getItems().remove(object);
+		boolean ret = true;
 		if (ret == true)
 		{
 			deletedItems.add((M) object);
@@ -255,7 +275,6 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 
 	@Override
 	public boolean removeAll(Collection<?> arg0) {
-		boolean ret = getItems().removeAll(arg0);
 		Iterator<?> it = arg0.iterator();
 		
 		while(it.hasNext())
@@ -265,7 +284,7 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		}
 		
 		notifyViewModelDirty();
-		return ret;
+		return true;
 	}
 
 	@Override
@@ -292,7 +311,8 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 
 	@Override
 	public int size() {
-		return getItems().size();
+        List<M> items = getItems();
+		return items != null ? items.size() : 0;
 	}
 
 	@Override
@@ -322,6 +342,11 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		super.commitData();
 				
 		List<M> model = getModel();
+        if (clearAll)
+        {
+            getItems().clear();
+            clearAll = true;
+        }
 		for (Iterator<M> iterator = deletedItems.iterator(); iterator.hasNext();) {
 			M item = iterator.next();
 			ret = model.remove(item);
@@ -409,11 +434,8 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
         return this.parentVM;
     }
 
-  	private ArrayList<M> getItems() {
-		if (!initialized)
-			getModel();
-		
-		return items;
+  	private List<M> getItems() {
+		return getModel();
 	}
 
 }

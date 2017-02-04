@@ -256,7 +256,12 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 		return ret;
 	}
 
-	public void add(int location, M object) {
+    @Override
+    public boolean addAll(IListViewModel<M, VM> list) {
+        return FastListViewModel.addAllListVM(list, this);
+    }
+
+    public void add(int location, M object) {
 		newItems.add(location, object);
         notifyViewModelDirty();
 	}

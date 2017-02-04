@@ -91,6 +91,11 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     }
 
     @Override
+    public boolean addAll(IListViewModel<M, VM> list) {
+        return false;
+    }
+
+    @Override
     public boolean addAll(Collection<? extends M> arg0) {
         return false;
     }
