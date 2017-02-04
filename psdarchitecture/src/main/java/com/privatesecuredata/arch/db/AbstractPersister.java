@@ -264,7 +264,9 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
             if (fieldCount > 0)
                 sql.append(", ");
 
-            sql.append(fld.getSqlName());
+            sql.append(tableName)
+                    .append(".")
+                    .append(fld.getSqlName());
             if (fld.getSqlType()== SqlDataField.SqlFieldType.OBJECT_REFERENCE)
                 references.put(fld.getObjectField().getType(), fld);
 
@@ -285,7 +287,9 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
                     if (fieldCount > 0)
                         sql.append(", ");
 
-                    sql.append(term.getSqlFieldName());
+                    sql.append(table)
+                            .append(".")
+                            .append(term.getSqlFieldName());
 
                     fieldCount++;
 
@@ -310,6 +314,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
                         sql.append(otherTable)
                                 .append(" ON ")
+                                .append(otherTable).append(".")
                                 .append(referenceFld.getSqlName())
                                 .append("=").append(otherTable).append("._id ");
                     }

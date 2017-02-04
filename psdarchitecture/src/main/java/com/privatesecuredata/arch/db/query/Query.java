@@ -89,7 +89,12 @@ public class Query<T> {
 
     public void setForeignKeyParameter(Class foreignKeyType, IPersistable val)
     {
-        setForeignKeyParameter(DbNameHelper.getForeignKeyFieldName(foreignKeyType), val);
+        setForeignKeyParameter(DbNameHelper.getForeignKeyFieldName(foreignKeyType, val.getClass()), val);
+    }
+
+    public void setForeignKeyParameter(Class otherType, Class foreignKeyType, IPersistable val)
+    {
+        setForeignKeyParameter(DbNameHelper.getForeignKeyFieldName(otherType, foreignKeyType), val);
     }
 
     public void setForeignKeyParameter(IPersistable value) {

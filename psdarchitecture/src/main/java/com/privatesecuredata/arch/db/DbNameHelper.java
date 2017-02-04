@@ -58,6 +58,11 @@ public class DbNameHelper {
 		return getForeignKeyFieldName(getTableName(persistableType));
 	}
 
+    public static String getForeignKeyFieldName(Class otherType, Class<?> persistableType)
+    {
+        return String.format("%s.%s", getTableName(otherType) ,getForeignKeyFieldName(getTableName(persistableType)));
+    }
+
     public static String getForeignKeyFieldName(String tableName)
     {
         StringBuilder sbl = new StringBuilder("fld_")

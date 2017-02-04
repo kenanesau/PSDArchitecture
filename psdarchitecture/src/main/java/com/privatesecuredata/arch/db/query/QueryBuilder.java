@@ -48,7 +48,7 @@ public class QueryBuilder<T> {
 
     private String queryId;
     /* <foreignType, (object)-fieldname> -> Type */
-    private LinkedHashMap<Pair<Class, String>, Class> joins;
+    private LinkedHashMap<IJoin, Class> joins;
 
 
     /**
@@ -151,14 +151,34 @@ public class QueryBuilder<T> {
         addCondition(cond);
     }
 
+    public void addForeignKeyCondition(Class otherType, String condId, String paraId, Class foreignKeyType)
+    {
+        QueryCondition cond = new QueryCondition(condId, paraId, foreignKeyType);
+        cond.setForeignKeyCondition();
+        cond.setPersistableType(otherType);
+        addCondition(cond);
+    }
+
     public void addForeignKeyCondition(String condId, Class foreignKeyType)
     {
         addForeignKeyCondition(condId, condId, foreignKeyType);
     }
 
+    public void addForeignKeyCondition(Class otherType, String condId, Class foreignKeyType)
+    {
+        addForeignKeyCondition(otherType, condId, condId, foreignKeyType);
+    }
+
     public void addForeignKeyCondition(Class foreignKeyType)
     {
         addForeignKeyCondition(DbNameHelper.getForeignKeyFieldName(foreignKeyType), foreignKeyType);
+    }
+
+    public void addForeignKeyCondition(Class otherType, Class foreignKeyType)
+    {
+        addForeignKeyCondition(otherType,
+                DbNameHelper.getForeignKeyFieldName(otherType, foreignKeyType),
+                foreignKeyType);
     }
 
     /**
@@ -236,14 +256,14 @@ public class QueryBuilder<T> {
      * Join the table associated with the type t to the rest of the query
      *
      * @param t Type / Table to join with
-     * @param foreignType Type / Table which contains the reference to t (can be null if unique)
+     * @param joinedType Type / Table which was already joined with this query(can be null if unique)
      * @param fieldName Name of Field wich contains the reference to t
      */
-    public void join(Class t, Class foreignType, String fieldName) {
+    public void join(Class t, Class joinedType, String fieldName) {
         if (null == joins)
             joins = new LinkedHashMap<>();
 
-        joins.put(new Pair(foreignType, fieldName), t);
+        joins.put(new JoinReference(t, joinedType, fieldName), t);
     }
 
     /**
@@ -254,6 +274,33 @@ public class QueryBuilder<T> {
      */
     public void join(Class t, String fieldName) {
         join(t, null, fieldName);
+    }
+
+    /**
+     * Join with the table associated with foreigntype which is also referencing the type
+     * associated with this query
+     *
+     * @param foreignType Type to join with
+     */
+    public void joinByForeingkey(Class foreignType) {
+        if (null == joins)
+            joins = new LinkedHashMap<>();
+
+        joins.put(new JoinForeignKey(foreignType), foreignType);
+    }
+
+    /**
+     * Join with the table associated with foreigntype which is also referencing the type
+     * associated with this query
+     *
+     * @param joinedType Joined type
+     * @param foreignType Type to join with
+     */
+    public void joinByForeingkey(Class joinedType, Class foreignType) {
+        if (null == joins)
+            joins = new LinkedHashMap<>();
+
+        joins.put(new JoinForeignKey(joinedType, foreignType), foreignType);
     }
 
     /**
@@ -280,17 +327,20 @@ public class QueryBuilder<T> {
                     (OrderByTerm[]) null));
 
             if (null != joins) {
-                for (Pair<Class, String> join : joins.keySet()) {
-                    Class type = joins.get(join);
-                    String otherTable = DbNameHelper.getTableName(type);
+                for (IJoin join : joins.keySet()) {
+                    String otherTable = DbNameHelper.getTableName(join.getJoinedType());
                     sb.append(" JOIN ")
                             .append(otherTable)
                             .append(" ON ")
-                            .append(join.first == null ? "" : DbNameHelper.getTableName(join.first))
-                            .append(join.first == null ? "" : ".")
-                            .append(DbNameHelper.getFieldName(join.second, SqlDataField.SqlFieldType.OBJECT_REFERENCE))
+                            .append(join.getLocalType() == null ?
+                                    desc.getTableName() :
+                                    DbNameHelper.getTableName(join.getLocalType()))
+                            .append(".")
+                            .append(join.getLocalFieldName())
                             .append("==")
-                            .append(otherTable).append("._id");
+                            .append(otherTable)
+                            .append(".")
+                            .append(join.getJoinedFieldName());
                 }
             }
 

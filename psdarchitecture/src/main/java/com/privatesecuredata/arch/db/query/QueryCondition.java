@@ -138,6 +138,26 @@ public class QueryCondition implements IQueryCondition {
         return DbNameHelper.getDbTypeName(persistableType);
     }
 
+    protected SqlDataField findField(PersisterDescription desc, String sqlFieldName)
+    {
+        SqlDataField sqlField = null;
+
+        if (isForeignKeyCondition()) {
+            /**
+             * Foreign-Key
+             */
+            Class foreignKeyType = ((ForeignKeyParameter)params[0]).getForeignKeyType();
+            sqlField = desc.getForeignKeyField(foreignKeyType);
+        } else {
+            /**
+             * Non-Foreign-Key-field
+             */
+            sqlField = desc.getTableField(sqlFieldName);
+        }
+
+        return sqlField;
+    }
+
     /**
      * Append condition to an SQL-Query
      *
@@ -158,40 +178,27 @@ public class QueryCondition implements IQueryCondition {
             sqlFieldName = params[0].fieldName();
             fields.put("_id", new SqlDataField("_id", SqlDataField.SqlFieldType.LONG));
         }
-        else if (isForeignKeyCondition()) {
-            sqlFieldName = DbNameHelper.getForeignKeyFieldName(params[0].fieldName());
-        }
-        else if (isDirectFieldnameCondition()) {
+        else if (isForeignKeyCondition() || isDirectFieldnameCondition()) {
             sqlFieldName = params[0].fieldName();
         }
         else
             sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
 
         if (getPersistableType() == null) {
-            /**
-             * "Non-Join"-case
-             */
-            if (isForeignKeyCondition()) {
-                /**
-                 * Foreign-Key
-                 */
-                Class foreignKeyType = ((ForeignKeyParameter)params[0]).getForeignKeyType();
-                sqlField = desc.getForeignKeyField(foreignKeyType);
-            } else {
-                /**
-                 * Non-Foreign-Key-field
-                 */
-                sqlField = fields.get(sqlFieldName);
-            }
+            sqlField = findField(desc, sqlFieldName);
+
             if (null == sqlField)
                 throw new DBException(String.format("Could not find sqlField with name \"%s\" in description for type \"%s\"",  params[0].fieldName(), desc.getDbTypeName()));
+
+            sb.append(desc.getTableName())
+                    .append(".");
         }
         else {
             /**
              * Join-case
              */
             PersisterDescription joinedDesc = pm.getPersister(getPersistableType()).getDescription();
-            sqlField = joinedDesc.getTableField(sqlFieldName);
+            sqlField = findField(joinedDesc, sqlFieldName);
             if (null == sqlField)
                 throw new DBException(String.format("Unable to create query: Could not find sqlField of joined type \"%s\" with name \"%s\"",
                         getPersistableType().getName(),
