@@ -40,6 +40,10 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	{
 		for (int n=0; n<src.size(); n++) {
 			MODEL m = src.get(n);
+
+            ///HACK!!! Need a proper solution for items being transferred from on List-VM to another
+			if (m instanceof IPersistable)
+				((IPersistable) m).getDbId().setDirty();
 			dst.add(m);
 		}
 
