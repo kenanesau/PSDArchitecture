@@ -174,7 +174,8 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
 	@Override
 	public void remove(M item) {
-		pm.delete(item);
+        pm.delete(item);
+        item.setDbId(null);
 	}
 
 	@Override

@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -718,10 +719,7 @@ public class PersistanceManager {
     {
         Class<T> type = null;
 
-        if (!persistables.isEmpty()) {
-            T persistable = persistables.iterator().next();
-            type = (Class<T>)persistable.getClass();
-        }
+        type = persister.getDescription().getType();
 
         for (T persistable : persistables) {
 
@@ -1077,6 +1075,24 @@ public class PersistanceManager {
 					String.format("Error deleting an object of type=%s",
 							persistable.getClass().getName()), ex);
 		}
+        finally {
+            db.endTransaction();
+        }
+    }
+
+    public <T extends IPersistable> void delete(Collection<T> persistables) throws DBException
+    {
+        try {
+            db.beginTransaction();
+
+            Iterator<T> it = persistables.iterator();
+            for(IPersistable persistable = it.next(); it.hasNext();)
+            {
+                delete(persistable);
+            }
+
+            db.setTransactionSuccessful();
+        }
         finally {
             db.endTransaction();
         }

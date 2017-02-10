@@ -50,12 +50,10 @@ public class OrderByTerm {
 
     private void setSqlOrderStr(String tableName, String simpleFieldName, boolean asc) {
         _dbTableName = tableName;
-        _sqlFieldStr = null == tableName ?
-                simpleFieldName :
-                String.format(" %s.%s", _dbTableName, simpleFieldName);
+        _sqlFieldStr = simpleFieldName;
         _sqlOrderStr = null == tableName ?
-                String.format(" %s %s", _sqlFieldStr, asc ? "ASC" : "DESC") :
-                String.format(" %s.%s %s", tableName, simpleFieldName, asc ? "ASC" : "DESC");
+                String.format(" %s %s", getSqlFieldName(), asc ? "ASC" : "DESC") :
+                String.format(" %s.%s %s", getSqlTableName(), getSqlFieldName(), asc ? "ASC" : "DESC");
     }
 
     @Override

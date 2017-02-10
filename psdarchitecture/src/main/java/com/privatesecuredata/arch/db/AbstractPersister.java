@@ -314,7 +314,7 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
 
                         sql.append(otherTable)
                                 .append(" ON ")
-                                .append(otherTable).append(".")
+                                .append(tableName).append(".")
                                 .append(referenceFld.getSqlName())
                                 .append("=").append(otherTable).append("._id ");
                     }
