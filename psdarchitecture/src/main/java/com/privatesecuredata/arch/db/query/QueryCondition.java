@@ -170,14 +170,9 @@ public class QueryCondition implements IQueryCondition {
     public StringBuilder append(PersistanceManager pm, PersisterDescription desc, StringBuilder sb) {
         String sqlFieldName = null;
         SqlDataField sqlField = null;
-        Map<String, SqlDataField> fields = desc.getFieldMap();
 
         if (isTypeCondition())
             sqlFieldName = DbNameHelper.getFieldName(params[0].fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
-        else if (isDbIdCondition()) {
-            sqlFieldName = params[0].fieldName();
-            fields.put("_id", new SqlDataField("_id", SqlDataField.SqlFieldType.LONG));
-        }
         else if (isForeignKeyCondition() || isDirectFieldnameCondition()) {
             sqlFieldName = params[0].fieldName();
         }
@@ -185,7 +180,9 @@ public class QueryCondition implements IQueryCondition {
             sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
 
         if (getPersistableType() == null) {
-            sqlField = findField(desc, sqlFieldName);
+            sqlField = isDbIdCondition() ?
+                    new SqlDataField("_id", SqlDataField.SqlFieldType.LONG) :
+                    findField(desc, sqlFieldName);
 
             if (null == sqlField)
                 throw new DBException(String.format("Could not find sqlField with name \"%s\" in description for type \"%s\"",  params[0].fieldName(), desc.getDbTypeName()));
