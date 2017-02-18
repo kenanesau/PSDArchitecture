@@ -119,7 +119,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     private int selectedCnt = 0;
 
 	private final Activity ctx;
-	private IListViewModel<M, COMPLEXVM> data;
+	private IListViewModel<M> data;
     private List<ViewManipulator> manipulators = new ArrayList<>();
     private ArrayList<IViewModel> updatingVMs = new ArrayList<>();
     private IViewHolderFactory<M> recyclerStrategy;
@@ -147,7 +147,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         setEmpty(true);
 	}
 
-	public MVVMRecyclerViewModelAdapter(Activity ctx, IListViewModel<M, COMPLEXVM> lstVMs, IViewHolderFactory strategy)
+	public MVVMRecyclerViewModelAdapter(Activity ctx, IListViewModel<M> lstVMs, IViewHolderFactory strategy)
 	{
 		this(ctx, strategy);
 		setData(lstVMs);
@@ -208,7 +208,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 	/*
 	 * This method discards the old VM and register a new one
 	 */
-	public void setData(IListViewModel<M, COMPLEXVM> newData)
+	public void setData(IListViewModel<M> newData)
 	{
         if (newData == this.data)
             return;
@@ -232,7 +232,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         redrawViews();
 	}
 
-    public IListViewModel<M, COMPLEXVM> getData()
+    public IListViewModel<M> getData()
     {
         return this.data;
     }

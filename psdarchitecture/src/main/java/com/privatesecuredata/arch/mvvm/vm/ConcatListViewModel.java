@@ -18,11 +18,11 @@ import java.util.List;
  * can concatenate N other IListViewModels. The contents of those ListViewModels are not intermixed
  * but shown in a "concatenated" manner
  */
-public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
-        implements IListViewModel<M, VM>, IDbBackedListViewModel,
+public class ConcatListViewModel<M> extends ComplexViewModel<List<M>>
+        implements IListViewModel<M>, IDbBackedListViewModel,
         Filterable
 {
-    ArrayList<IListViewModel<M, VM>> data;
+    ArrayList<IListViewModel<M>> data;
 
     /**
      *
@@ -55,8 +55,8 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
      * @param globalPosition
      * @return
      */
-    protected Pair<IListViewModel<M, VM>, Integer> getLocalPos(int globalPosition) {
-        Pair<IListViewModel<M, VM>, Integer> ret = null;
+    protected Pair<IListViewModel<M>, Integer> getLocalPos(int globalPosition) {
+        Pair<IListViewModel<M>, Integer> ret = null;
         int posCurrent = 0;
         int lastIterationListSize = 0;
         for (int i=0; i < data.size(); i++) {
@@ -81,7 +81,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     }
 
     @Override
-    public boolean add(VM vm) {
+    public <VM extends IViewModel> boolean add(VM vm) {
         return false;
     }
 
@@ -91,7 +91,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     }
 
     @Override
-    public boolean addAll(IListViewModel<M, VM> list) {
+    public boolean addAll(IListViewModel<M> list) {
         return false;
     }
 
@@ -107,7 +107,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
     @Override
     public M get(int pos) {
-        Pair <IListViewModel<M, VM>, Integer> pair = getLocalPos(pos);
+        Pair <IListViewModel<M>, Integer> pair = getLocalPos(pos);
 
         return (pair != null ? pair.first.get(pair.second) : null);
     }
@@ -143,7 +143,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
     @Override
     public M remove(int location) {
-        Pair <IListViewModel<M, VM>, Integer> pair = getLocalPos(location);
+        Pair <IListViewModel<M>, Integer> pair = getLocalPos(location);
 
         return (pair != null ? pair.first.remove(pair.second) : null);
     }
@@ -173,15 +173,15 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
     }
 
     @Override
-    public VM getViewModel(int pos) {
-        Pair<IListViewModel<M, VM>, Integer> pair = getLocalPos(pos);
+    public <VM extends IViewModel> VM getViewModel(int pos) {
+        Pair<IListViewModel<M>, Integer> pair = getLocalPos(pos);
 
         return (pair != null ? pair.first.getViewModel(pair.second) : null);
     }
 
     @Override
     public boolean hasViewModel(int pos) {
-        Pair<IListViewModel<M, VM>, Integer> pair = getLocalPos(pos);
+        Pair<IListViewModel<M>, Integer> pair = getLocalPos(pos);
 
         return (pair != null ? pair.first.hasViewModel(pair.second) : false);
     }
@@ -193,7 +193,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
     @Override
     public void setSortOrder(OrderBy... sortOrderTerms) {
-        for (IListViewModel<M, VM> vm : data) {
+        for (IListViewModel<M> vm : data) {
             if (vm instanceof IDbBackedListViewModel)
                 ((IDbBackedListViewModel)vm).setSortOrder(sortOrderTerms);
         }
@@ -201,7 +201,7 @@ public class ConcatListViewModel<M, VM extends IViewModel<M>> extends ComplexVie
 
     @Override
     public void setFilterParamId(String filterParamId) {
-        for (IListViewModel<M, VM> vm : data)
+        for (IListViewModel<M> vm : data)
             if (vm instanceof IDbBackedListViewModel)
                 ((IDbBackedListViewModel)vm).setFilterParamId(filterParamId);
     }

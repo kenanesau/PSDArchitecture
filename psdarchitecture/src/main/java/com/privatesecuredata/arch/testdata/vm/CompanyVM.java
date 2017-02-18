@@ -22,7 +22,7 @@ public class CompanyVM extends ComplexViewModel<Company>
     };
     
 	private SimpleValueVM<String> nameVM;
-	IListViewModel<Person, PersonVM> employeesVM;
+	IListViewModel<Person> employeesVM;
 	private ComplexViewModel<Person> bossVM;
 
 	public CompanyVM(MVVM mvvm, Company model)
@@ -33,14 +33,14 @@ public class CompanyVM extends ComplexViewModel<Company>
     @Override
     protected void doMappings(HashMap<String, IViewModel<?>> childVMs) {
         nameVM = ((SimpleValueVM<String>) childVMs.get("name"));
-        employeesVM = (IListViewModel<Person, PersonVM>) childVMs.get("employees");
+        employeesVM = (IListViewModel<Person>) childVMs.get("employees");
         bossVM = ((ComplexViewModel<Person>) childVMs.get("boss"));
     }
 
     public String getName() { return nameVM.get(); }
 	public void setName(String name) { this.nameVM.set(name); }
 	
-	public IListViewModel<Person, PersonVM> getEmployees() { return employeesVM; }
+	public IListViewModel<Person> getEmployees() { return employeesVM; }
 
 	public ComplexViewModel<Person> getBossVM() {
 		return bossVM;

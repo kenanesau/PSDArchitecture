@@ -27,16 +27,15 @@ import java.util.ListIterator;
  * @author kenan
  *
  * @param <M> Type of Model
- * @param <VM> Type of ViewModel encapsulating a single Model-object instance
  * @see ViewModel
  * @see com.privatesecuredata.arch.mvvm.vm.SimpleValueVM<>
  * @see IViewModel <>
  */
-public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>> implements List<M>, IListViewModel<M, VM>
+public class FastListViewModel<M> extends ComplexViewModel<List<M>> implements List<M>, IListViewModel<M>
 {
     private boolean clearAll = false;
 
-    public static <MODEL, VIEWMODEL extends IViewModel> boolean addAllListVM(IListViewModel<MODEL, VIEWMODEL> src, IListViewModel<MODEL, VIEWMODEL> dst)
+    public static <MODEL, VIEWMODEL extends IViewModel> boolean addAllListVM(IListViewModel<MODEL> src, IListViewModel<MODEL> dst)
 	{
 		for (int n=0; n<src.size(); n++) {
 			MODEL m = src.get(n);
@@ -57,19 +56,18 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		void updateItem(IViewModel<?> parent, M item); 
 	}
 	
-	//private ArrayList<M> items = new ArrayList<M>();
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
 	private Class<M> modelClass;
-	private Class<VM> viewModelClass;
-	private Constructor<VM> vmConstructor;
+	private Class viewModelClass;
+	private Constructor vmConstructor;
 	private ICommitItemCallback<M> itemCB;
 	private boolean initialized = false;
 
-	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
+	private HashMap<Integer, ComplexViewModel> positionToViewModel = new HashMap<Integer, ComplexViewModel>();
 	private ComplexViewModel<?> parentVM;
 
-	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class<VM> vmClazz, IListViewModel<M, ?> data)
+	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class vmClazz, IListViewModel<M> data)
 	{
 		this(mvvm, null, modelClazz, vmClazz);
 		List<M> lst = new ArrayList<M>(data.size());
@@ -79,25 +77,25 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		init(lst);
 	}
 
-	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class<VM> vmClazz, List<M> data)
+	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class vmClazz, List<M> data)
 	{
 		this(mvvm, null, modelClazz, vmClazz);
 		init(data);
 	}
 
-	public FastListViewModel(MVVM mvvm, ComplexViewModel<?> parentVM, Class<M> modelClazz, Class<VM> vmClazz, List<M> data)
+	public FastListViewModel(MVVM mvvm, ComplexViewModel<?> parentVM, Class<M> modelClazz, Class vmClazz, List<M> data)
 	{
         this(mvvm, parentVM, modelClazz, vmClazz);
         init(data);
 	}
 
-	public FastListViewModel(MVVM mvvm, ComplexViewModel<?> parentVM, Class<M> modelClazz, Class<VM> vmClazz)
+	public FastListViewModel(MVVM mvvm, ComplexViewModel<?> parentVM, Class<M> modelClazz, Class vmClazz)
 	{
 		this(mvvm, modelClazz, vmClazz);
 		this.parentVM = parentVM;
 	}
 	
-	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class<VM> vmClazz)
+	public FastListViewModel(MVVM mvvm, Class<M> modelClazz, Class vmClazz)
 	{
         super(mvvm);
 		this.modelClass = modelClazz;
@@ -170,13 +168,12 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		return ret;
 	}
 
-    @Override
-    public boolean add(VM viewModel) {
+    public <VM extends IViewModel> boolean add(VM viewModel) {
         return this.add(viewModel.getModel());
     }
 
-	@Override
-	public boolean addAll(IListViewModel<M, VM> list) {
+    @Override
+	public boolean addAll(IListViewModel<M> list) {
 		return addAllListVM(list, this);
 	}
 
@@ -342,8 +339,10 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	@Override
 	public void commit() {
 		boolean ret = false;
-		
-		super.commitData();
+		boolean wasDirty = this.isDirty();
+
+		if (wasDirty)
+			super.commitData();
 				
 		List<M> model = getModel();
         if (clearAll)
@@ -367,7 +366,11 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 		}
 		newItems.clear();
 
-        MVVM.getMVVM(this).notifyCommit(this);
+		if ( (wasDirty) && (isGlobalNotifyEnabled()) )
+			getMVVM().notifyCommit(this);
+
+		if (wasDirty)
+			notifyModelChanged();
 	}
 
 	public void unregisterItemCallback() {
@@ -392,20 +395,20 @@ public class FastListViewModel<M, VM extends IViewModel<M>> extends ComplexViewM
 	 * @param pos
 	 * @return ViewModel
 	 */
-	public VM getViewModel(int pos)
+	public <VM extends IViewModel> VM getViewModel(int pos)
 	{
 		VM vm = null;
 		
 		try {
 			if (hasViewModel(pos))
-				return positionToViewModel.get(pos);
+				return (VM)positionToViewModel.get(pos);
 			else
 			{
 				M model = get(pos);
 				if (null != model) {
-					vm = vmConstructor.newInstance(getMVVM(), model);
+					vm = (VM)vmConstructor.newInstance(getMVVM(), model);
 					registerChildVM(vm);
-					positionToViewModel.put(pos, vm);
+					positionToViewModel.put(pos, (ComplexViewModel)vm);
 				}
 				else
 					throw new ArgumentException("Could not find object at position");

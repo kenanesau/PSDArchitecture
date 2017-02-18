@@ -20,11 +20,11 @@ public class ListViewModelFactory implements IListViewModelFactory{
 
     public ListViewModelFactory() {}
 
-    public IListViewModel<?, ?> createListVM(ComplexViewModel<?> parentVM, final Field modelField, ListVmMapping listAnno) throws IllegalAccessException {
+    public IListViewModel<?> createListVM(ComplexViewModel<?> parentVM, final Field modelField, ListVmMapping listAnno) throws IllegalAccessException {
         Class<?> viewModelType = listAnno.vmType();
         final Class<?> modelType = listAnno.modelType();
 
-        IListViewModel<?, ?> listVM;
+        IListViewModel<?> listVM;
         listVM = new FastListViewModel(parentVM.getMVVM(), parentVM, modelType, viewModelType);
         return listVM;
     }

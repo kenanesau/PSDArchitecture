@@ -42,7 +42,7 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 {
 	Class<COMPLEXVM> viewModelType;
 	private final Context ctx;
-	private IListViewModel<M, COMPLEXVM> data;
+	private IListViewModel<M> data;
 	private IModelReaderStrategy<M> modelReaderStrategy;
     private List<ViewManipulator> manipulators = new ArrayList<>();
     private List<IViewHolder> viewHolders = new LinkedList<>();
@@ -69,7 +69,7 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
 		this.ctx = ctx;
 	}
 
-	public MVVMListViewModelAdapter(Class<COMPLEXVM> vmClass, Context ctx, IListViewModel<M, COMPLEXVM> lstVMs)
+	public MVVMListViewModelAdapter(Class<COMPLEXVM> vmClass, Context ctx, IListViewModel<M> lstVMs)
 	{
 		this(vmClass, ctx);
 		setData(lstVMs);
@@ -78,7 +78,7 @@ public class MVVMListViewModelAdapter<M, COMPLEXVM extends IViewModel> extends B
     /*
 	 * This method discards the old VM and register a new one
 	 */
-	public void setData(IListViewModel<M, COMPLEXVM> data)
+	public void setData(IListViewModel<M> data)
 	{
 		if (null != this.data)
 			this.data.delModelListener(this);

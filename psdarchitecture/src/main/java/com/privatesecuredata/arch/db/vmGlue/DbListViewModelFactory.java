@@ -57,11 +57,11 @@ public class DbListViewModelFactory implements IListViewModelFactory {
 
     IModelListCbGetter getter;
 
-    public IListViewModel<?, ?> createListVM(ComplexViewModel<?> parentVM, final Field modelField, ListVmMapping listAnno) throws IllegalAccessException {
+    public IListViewModel<?> createListVM(ComplexViewModel<?> parentVM, final Field modelField, ListVmMapping listAnno) throws IllegalAccessException {
         Class<?> viewModelType = listAnno.vmType();
         final Class<?> modelType = listAnno.modelType();
         final Class<?> parentModelType = listAnno.parentType();
-        IListViewModel<?, ?> listVM;
+        IListViewModel<?> listVM;
         final IPersistable model = (IPersistable)parentVM.getModel();
         if (null == model) {
             listVM = null;

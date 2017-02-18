@@ -33,7 +33,7 @@ public class SkuListFragment extends MVVMFragment
     private Activity attachedActivity;
     private ViewModelListAdapter adapter;
     private AbsListView lstView;
-    private IListViewModel<SkuDetails, SkuDetailsVM> listVM;
+    private IListViewModel<SkuDetails> listVM;
     private PlayStoreVM playStoreVM;
 
     public class SkuListRowAdapterTemplate extends MVVMComplexVmAdapterTemplate<SkuDetailsVM>

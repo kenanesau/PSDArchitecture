@@ -10,11 +10,11 @@ import java.util.List;
 /**
  * Created by kenan on 12/17/14.
  */
-public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChangedListener, IModelChangedListener, IViewModel<List<M>> {
+public interface IListViewModel<M>  extends IViewModelChangedListener, IModelChangedListener, IViewModel<List<M>> {
     void init(ComplexViewModel<?> parentVM, Field modelField);
-    boolean add(VM vm);
+    <VM extends IViewModel> boolean add(VM vm);
     boolean add(M object);
-    boolean addAll(IListViewModel<M, VM> list);
+    boolean addAll(IListViewModel<M> list);
     boolean addAll(Collection<? extends  M> arg0);
     boolean addAll(int arg0, Collection<? extends M> arg1);
     M get(int pos);
@@ -25,7 +25,7 @@ public interface IListViewModel<M, VM extends IViewModel> extends IViewModelChan
     boolean removeAll(Collection<?> arg0);
     int size();
     int dirtySize();
-    VM getViewModel(int pos);
+    <VM extends IViewModel> VM getViewModel(int pos);
     boolean hasViewModel(int pos);
     <T extends ComplexViewModel> T getParentViewModel();
     void clear();

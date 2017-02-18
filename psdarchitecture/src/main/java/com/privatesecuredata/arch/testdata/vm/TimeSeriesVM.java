@@ -20,7 +20,7 @@ public class TimeSeriesVM extends ComplexViewModel<TimeSeries> {
     }
 	
 	private SimpleValueVM<String> nameVM;
-	private FastListViewModel<TimeSeries, TimeSeriesVM> dataVM;
+	private FastListViewModel<TimeSeries> dataVM;
 	
 	public TimeSeriesVM(MVVM mvvm, TimeSeries ts)
 	{
@@ -28,7 +28,7 @@ public class TimeSeriesVM extends ComplexViewModel<TimeSeries> {
 		HashMap<String, IViewModel<?>> childModels = getNameViewModelMapping();
 		
 		nameVM = ((SimpleValueVM<String>) childModels.get("name"));
-		dataVM = ((FastListViewModel<TimeSeries, TimeSeriesVM>) childModels.get("data"));
+		dataVM = ((FastListViewModel<TimeSeries>) childModels.get("data"));
 	}
 
 	public String getName() {
@@ -39,7 +39,7 @@ public class TimeSeriesVM extends ComplexViewModel<TimeSeries> {
 		this.nameVM.set(name);
 	}
 
-	public FastListViewModel<TimeSeries, TimeSeriesVM> getData() {
+	public FastListViewModel<TimeSeries> getData() {
 		return dataVM;
 	}
 

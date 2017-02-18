@@ -26,14 +26,13 @@ import java.util.List;
  * @author kenan
  *
  * @param <M> Type of Model
- * @param <VM> Type of ViewModel encapsulating a single Model-object instance
- * 
+ *
  * @see ViewModel
  * @see SimpleValueVM<>
  * @see IViewModel<>
  */
-public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends ComplexViewModel<List<M>>
-                                                                    implements IListViewModel<M, VM>,
+public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
+                                                                    implements IListViewModel<M>,
                                                                     IDbBackedListViewModel,
                                                                     Filterable
 {
@@ -79,20 +78,20 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	
 	protected ArrayList<M> deletedItems = new ArrayList<M>();
 	protected ArrayList<M> newItems = new ArrayList<M>();
-    protected ArrayList<VM> newVMs = null;
+    protected ArrayList<ComplexViewModel> newVMs = null;
     protected SparseArray<M> dirtyItems = new SparseArray<M>();
 	private Class<?> referencingType;
     private Class<M> referencedType;
-	private Class<VM> vmType;
-	private Constructor<VM> vmConstructor;
+	private Class<?> vmType;
+	private Constructor vmConstructor;
 	private IModelListCallback<M> listCB;
     private boolean dataLoaded = false;
 
-	private HashMap<Integer, VM> positionToViewModel = new HashMap<Integer, VM>();
+	private HashMap<Integer, ComplexViewModel<M>> positionToViewModel = new HashMap<Integer, ComplexViewModel<M>>();
 
     protected EncapsulatedListViewModel(PersistanceManager pm,
                                         Class<M> referencedType,
-                                        Class<VM> vmType,
+                                        Class vmType,
                                         IModelListCallback<M> cb,
                                         Query q)
     {
@@ -103,14 +102,14 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
     public EncapsulatedListViewModel(PersistanceManager pm,
                                      Query q,
                                      Class<M> referencedType,
-                                     Class<VM> vmType)
+                                     Class vmType)
     {
         this(pm, referencedType, vmType, new CursorToListAdapter(pm), q);
     }
 
     public EncapsulatedListViewModel(PersistanceManager pm,
                                      Class<M> referencedType,
-                                     Class<VM> vmType,
+                                     Class vmType,
                                      IModelListCallback<M> listCB,
                                      OrderBy... sortOrderTerms)
     {
@@ -121,7 +120,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 
     public EncapsulatedListViewModel(PersistanceManager pm,
                                      Class<M> referencedType,
-                                     Class<VM> vmType,
+                                     Class vmType,
                                      IModelListCallback listCB
                                      )
     {
@@ -138,7 +137,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
      */
     public EncapsulatedListViewModel(MVVM mvvm,
                                      Class<?> referencingType, Class<M> referencedType,
-                                     Class<VM> vmType,
+                                     Class vmType,
                                      IModelListCallback<M> listCB,
                                      OrderBy... sortOrderTerms)
     {
@@ -155,7 +154,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
      */
 	public EncapsulatedListViewModel(MVVM mvvm,
                                      Class<?> referencingType, Class<M> referencedType,
-                                     Class<VM> vmType,
+                                     Class vmType,
                                      IModelListCallback<M> listCB)
 	{
 		super(mvvm);
@@ -239,13 +238,13 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
         }
     }
 
-    public boolean add(VM vm)
+    public <VM extends IViewModel> boolean add(VM vm)
     {
         if (null == newVMs)
-            newVMs = new ArrayList<VM>();
+            newVMs = new ArrayList<ComplexViewModel>();
 
         vm.addViewModelListener(this);
-        this.newVMs.add(vm);
+        this.newVMs.add((ComplexViewModel)vm);
         notifyViewModelDirty();
         return true;
     }
@@ -257,7 +256,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	}
 
     @Override
-    public boolean addAll(IListViewModel<M, VM> list) {
+    public boolean addAll(IListViewModel<M> list) {
         return FastListViewModel.addAllListVM(list, this);
     }
 
@@ -374,13 +373,13 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
          * later the DBViewModelCommitListener calls save() on this List-VM -- then those
          * VMs saved in the changedChildren-list are also saved to the DB...
          */
-		for(IViewModel<M> vm : positionToViewModel.values()) {
+		/*for(IViewModel<M> vm : positionToViewModel.values()) {
 			if(vm.isDirty())
 			{
                 vm.commit();
                 newItems.add(vm.getModel());
 			}
-		}
+		}*/
 
         /**
          * Commit all children
@@ -392,6 +391,12 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                 if (vm instanceof IListViewModel) {
                     listVMs.add((IListViewModel) vm);
                     continue;
+                }
+                else {
+                    if (vm instanceof ComplexViewModel) {
+                        vm.commit();
+                        newItems.add((M)vm.getModel());
+                    }
                 }
             }
         }
@@ -446,13 +451,13 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
 	 * @param pos
 	 * @return ViewModel
 	 */
-	public VM getViewModel(int pos)
+	public <VM extends IViewModel> VM getViewModel(int pos)
 	{
 		VM vm = null;
 		
 		try {
 			if (hasViewModel(pos))
-				return positionToViewModel.get(pos);
+				return (VM)positionToViewModel.get(pos);
 			else
 			{
                 if (pos < this.size() ) {
@@ -461,7 +466,7 @@ public class EncapsulatedListViewModel<M, VM extends IViewModel<M>> extends Comp
                         vm = (VM)getMVVM().createVM(model);
                         registerChildVM(vm);
                         vm.addModelListener(this);
-                        positionToViewModel.put(pos, vm);
+                        positionToViewModel.put(pos, (ComplexViewModel)vm);
                     } else
                         throw new ArgumentException("Could not find object at position");
                 }

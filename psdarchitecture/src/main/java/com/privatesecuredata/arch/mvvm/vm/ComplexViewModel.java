@@ -402,7 +402,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         if (mvvm==null)
             throw new ArgumentException(String.format("ComplexViewModel of type \"%s\" without MVVM!!! Please create VMs only via MVVM.createVM().", this.getClass().getName()));
         IListViewModelFactory fac = mvvm.getListViewModelFactory();
-        IListViewModel<?, ?> vmList = fac.createListVM(this, field, listAnno);
+        IListViewModel<?> vmList = fac.createListVM(this, field, listAnno);
         this.listVMs.add(vmList);
         ComplexViewModel<?> vm = (ComplexViewModel<?>)vmList;
 

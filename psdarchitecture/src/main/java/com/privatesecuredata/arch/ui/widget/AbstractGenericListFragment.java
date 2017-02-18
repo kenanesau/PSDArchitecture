@@ -17,7 +17,7 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> extends MVVMFragment {
 
-	private IListViewModel<T, TVM> items;
+	private IListViewModel<T> items;
 	private MVVMRecyclerViewModelAdapter<T, TVM> adapter;
     private RecyclerView lstView;
 
@@ -83,7 +83,7 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
      *
      * @param newItems New Items
      */
-    public void setItems(IListViewModel<T, TVM> newItems)
+    public void setItems(IListViewModel<T> newItems)
     {
         this.items = newItems;
     }
@@ -93,13 +93,13 @@ public abstract class AbstractGenericListFragment<T, TVM extends IViewModel<T>> 
      *
      * @param newItems
      */
-    public void updateItems(IListViewModel<T, TVM> newItems)
+    public void updateItems(IListViewModel<T> newItems)
     {
         setItems(newItems);
         doViewToVMMapping();
     }
 
-    protected IListViewModel<T, TVM> getItems() { return items; }
+    protected IListViewModel<T> getItems() { return items; }
     protected RecyclerView getListView() {
         return lstView;
     }
