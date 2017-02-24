@@ -59,18 +59,32 @@ public class ConversionManager {
             try {
                 Constructor constructor = objConverterType.getConstructor((Class[]) null);
                 try {
-                    BaseObjectConverter converter = (BaseObjectConverter) constructor.newInstance((Object) null);
+                    BaseObjectConverter converter = (BaseObjectConverter) constructor.newInstance();
                     converter.setConversionManager(this);
                     registerObjectConverter(newType, converter);
-                } catch (InstantiationException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
                 }
+                catch (IllegalArgumentException e) {
+                    throw new DBException(String.format("Error instantiating object of type '%s', incorrect parameters!",
+                            objConverterType.getName()), e);
+                }
+                catch (InstantiationException e) {
+                    throw new DBException(String.format("Error instantiating object of type '%s'!",
+                            objConverterType.getName()), e);
+                } catch (IllegalAccessException e) {
+                    throw new DBException(String.format("Error instantiating object of type '%s', you do not have no access rights!",
+                            objConverterType.getName()), e);
+                } catch (InvocationTargetException e) {
+                    throw new DBException(String.format("Error instantiating object of type '%s', InvocationTargetException!",
+                            objConverterType.getName()), e);
+                }
+                catch (Exception e) {
+                    throw new DBException(String.format("Error using '%s' to convert to new type '%s'",
+                            objConverterType.getName(), newType.getName()), e);
+                }
+
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
+                throw new DBException(String.format("Cannot find constructor with no parameters in type '%s'!",
+                        objConverterType.getName(), newType.getName()), e);
             }
         }
 

@@ -558,7 +558,7 @@ public class PersistanceManager {
 
                     if (conv == null)
                         throw new ArgumentException(
-                                String.format("You have no Conversion for DB \"%s\" Version %d",
+                                String.format("You have no Conversion for DB \"%s\" to Version %d",
                                 oldDescription.getName(), newVersion));
 
                     String msg = String.format("Upgrading DB '%s' Version %d Instance %d",
@@ -591,13 +591,19 @@ public class PersistanceManager {
 
                     try {
                         File filesDir = ctx.getExternalFilesDir(null);
-                        File backupOldDbFile = new File(filesDir, oldDescription.getName());
-                        File dir = backupOldDbFile.getParentFile();
-                        if (!dir.exists())
-                            dir.createNewFile();
-                        File oldDbFile = ctx.getDatabasePath(oldDescription.getName());
 
-                        Files.move(oldDbFile, backupOldDbFile);
+                        if (null == filesDir) {
+                            Log.w(getClass().getName(), "Unable to write DB backup! No external files directory!!!");
+                        }
+                        else {
+                            File backupOldDbFile = new File(filesDir, oldDescription.getName());
+                            File dir = backupOldDbFile.getParentFile();
+                            if (!dir.exists())
+                                dir.createNewFile();
+                            File oldDbFile = ctx.getDatabasePath(oldDescription.getName());
+
+                            Files.move(oldDbFile, backupOldDbFile);
+                        }
                     }
                     catch (IOException ex) {
                         String errMsg = String.format("Error moving db-file '%s' to %s",

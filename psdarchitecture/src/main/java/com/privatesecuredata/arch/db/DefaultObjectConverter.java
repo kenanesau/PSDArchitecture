@@ -106,6 +106,11 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
                 oldData = (IPersistable) oldRel.getField().get(oldObject);
                 if (null != oldData) {
                     Class newType = getConversionManager().getMappedNewType(oldData.getClass());
+                    if (null == newType) {
+                        throw new DBException(
+                                String.format("Unable to find the new corresponding type for old type '%s'",
+                                        oldData.getClass().getName()));
+                    }
                     newData = getConversionManager().__convert(newType, oldData);
                 }
             }
@@ -228,7 +233,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
             }
         }
         catch (Exception ex) {
-            throw new DBException(String.format("Error converting object of type %s field of type %s",
+            throw new DBException(String.format("Error converting object of type '%s', field '%s'",
                     _newDesc.getType().getName(), currentFieldName), ex);
         }
 

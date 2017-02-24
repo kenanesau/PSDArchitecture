@@ -13,6 +13,8 @@ public class BaseObjectConverter<T extends IPersistable> {
     protected Map<String, DefaultObjectConverter.IObjectRelationConverter> _oneToManyConverterMap = new LinkedHashMap<>();
     private ConversionManager _convMan;
 
+    public BaseObjectConverter() {}
+
     public void registerFieldConverter(String key, DefaultObjectConverter.IFieldConverter<T> converter) {
         _fieldConverterMap.put(key, converter);
     }

@@ -46,7 +46,7 @@ public class PersistanceManagerLocator {
         pm.publishStatus(new StatusMessage(PersistanceManager.Status.UPGRADINGDB));
         /** Version -> HashMap (Instance -> dbName) **/
         HashMap<Integer, HashMap<Integer, String>> dbNames = new LinkedHashMap<>();
-        int highestDbVersion = 0;
+        int highestDbVersionFound = 0;
 
         String[] allDbs = ctx.databaseList();
         ArrayList<String> currentDbs = new ArrayList<>();
@@ -79,8 +79,8 @@ public class PersistanceManagerLocator {
                         tok = tok.replace("V", "");
                         tok = tok.replace(".db", "");
                         foundVersion = Integer.decode(tok);
-                        if (foundVersion > highestDbVersion)
-                            highestDbVersion = foundVersion;
+                        if (foundVersion > highestDbVersionFound)
+                            highestDbVersionFound = foundVersion;
                     }
                     else {
                         Log.w(this.getClass().getName(),
@@ -117,19 +117,19 @@ public class PersistanceManagerLocator {
         }
 
         boolean ret = false;
-        if ( (currentDbs.size() > 0) && (highestDbVersion < dbDesc.getVersion()) ) {
+        if ( (currentDbs.size() > 0) && (highestDbVersionFound < dbDesc.getVersion()) ) {
             Log.i(getClass().getName(), String.format("Upgrading DB '%s' V%d I%d to V%d",
-                    dbDesc.getBaseName(), dbDesc.getVersion(), dbDesc.getInstance(), highestDbVersion));
-            pm.onUpgrade(ctx, highestDbVersion, dbDesc.getVersion(), dbNames);
+                    dbDesc.getBaseName(), highestDbVersionFound, dbDesc.getInstance(), dbDesc.getVersion()));
+            pm.onUpgrade(ctx, highestDbVersionFound, dbDesc.getVersion(), dbNames);
             ret = true;
         }
-        else if (highestDbVersion > dbDesc.getVersion())
+        else if (highestDbVersionFound > dbDesc.getVersion())
         {
             Log.w(getClass().getName(), String.format("Opening DB '%s' 'V%d' but newer version 'V%d' is available",
-                    dbDesc.getBaseName(), dbDesc.getVersion(), highestDbVersion));
+                    dbDesc.getBaseName(), dbDesc.getVersion(), highestDbVersionFound));
             /*throw new DBException(
                     String.format("Current DB version 'V%d' is newer than that of the App 'V%d'",
-                            highestDbVersion, dbDesc.getVersion()));*/
+                            highestDbVersionFound, dbDesc.getVersion()));*/
         }
 
         return ret;

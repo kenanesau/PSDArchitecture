@@ -42,6 +42,11 @@ public abstract class AbstractDbDescription implements IDbDescription {
 		}
 	}
 
+	public String createPrefixedBasename(String prefix, String baseName)
+	{
+		return prefix != null ? String.format("%s_%s", prefix, baseName) : baseName;
+	}
+
     public String getName() {
         return String.format("%s_I%d_V%d.db", getBaseName(), getInstance(), getVersion());
     }
