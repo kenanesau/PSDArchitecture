@@ -121,10 +121,10 @@ public class Query<T> {
     public void setMatchinObjRefParameter(String fldName, IPersistable obj) {
         setParameter(
                 DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_REFERENCE),
-                obj.getDbId().getId());
+                obj != null ? obj.getDbId().getId() : null);
         setParameter(
                 DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_NAME),
-                DbNameHelper.getDbTypeName(obj.getDbId().getType()));
+                obj != null ? DbNameHelper.getDbTypeName(obj.getDbId().getType()) : null);
     }
 
     /**

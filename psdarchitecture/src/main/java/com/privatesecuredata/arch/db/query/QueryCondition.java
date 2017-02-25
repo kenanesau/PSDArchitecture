@@ -24,7 +24,9 @@ public class QueryCondition implements IQueryCondition {
         GREATER(4),
         SMALLEROREQUAL(5),
         GREATEROREQUAL(6),
-        LIKE(7);
+        LIKE(7),
+        NULL(8),
+        NOTNULL(9);
 
         private int value;
 
@@ -230,9 +232,21 @@ public class QueryCondition implements IQueryCondition {
             case LIKE:
                 sb.append(" LIKE ");
                 break;
+            case NULL:
+                sb.append(" IS NULL ");
+                params = null;
+                break;
+            case NOTNULL:
+                sb.append(" IS NOT NULL ");
+                params = null;
+                break;
         }
 
-        sb.append("? ");
+        if ( (op != Operation.NULL) && (op != Operation.NOTNULL) ) {
+            sb.append("? ");
+            if (params == null)
+                params = new QueryParameter[1];
+        }
 
         return sb;
     }
@@ -262,19 +276,23 @@ public class QueryCondition implements IQueryCondition {
 
     @Override
     public QueryParameter[] parameters() {
-        return params;
+        return params != null ? params : new QueryParameter[0];
     }
 
     @Override
     public IQueryCondition clone() {
         QueryCondition newCond = new QueryCondition();
 
-        QueryParameter[] newParams = new QueryParameter[params.length];
-        for(int i = 0; i < params.length; i++)
-        {
-            newParams[i] = params[i].clone();
+        if (null != params) {
+            QueryParameter[] newParams = new QueryParameter[params.length];
+            for (int i = 0; i < params.length; i++) {
+                newParams[i] = params[i].clone();
+            }
+            newCond.params = newParams;
         }
-        newCond.params = newParams;
+        else {
+            newCond.params = null;
+        }
         newCond.condId = this.condId;
         newCond.op = this.op;
         newCond.type = this.type;

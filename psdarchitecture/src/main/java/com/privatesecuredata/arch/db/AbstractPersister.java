@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractPersister<T extends IPersistable> implements IPersister<T> {
@@ -248,6 +249,64 @@ public abstract class AbstractPersister<T extends IPersistable> implements IPers
         sb.append(constraint.toString());
         sb.append("%'");
         return sb;
+    }
+
+    public static StringBuilder createSelectAllFirstPart(StringBuilder sql, String tableName, Collection<SqlDataField> fields, Hashtable<Class, SqlDataField> references ) {
+        int fieldCount = 0;
+
+        sql.append(tableName).append("._id ");
+
+        if (fields.size() > 0)
+            sql.append(", ");
+        for (SqlDataField fld : fields) {
+            if (fieldCount > 0)
+                sql.append(", ");
+
+            sql.append(tableName)
+                    .append(".")
+                    .append(fld.getSqlName());
+            if (fld.getSqlType() == SqlDataField.SqlFieldType.OBJECT_REFERENCE)
+                references.put(fld.getObjectField().getType(), fld);
+
+            fieldCount++;
+        }
+
+
+        return sql;
+    }
+
+    public static StringBuilder createSelectAllStatement(List<PersisterDescription> persisterDescriptions) {
+        StringBuilder sql = new StringBuilder("SELECT ");
+        int fieldCount = 0;
+        Hashtable<Class, SqlDataField> references = new Hashtable<>();
+
+        Iterator<PersisterDescription> it = persisterDescriptions.iterator();
+        while (it.hasNext()) {
+            PersisterDescription desc = it.next();
+            String tableName = desc.getTableName();
+            Collection<SqlDataField> fields = desc.getTableFields();
+
+            sql = createSelectAllFirstPart(sql, tableName, fields, references);
+            fieldCount+=fields.size();
+
+            if (it.hasNext())
+                sql.append(", ");
+        }
+
+
+        Hashtable<String, OrderByTerm> tables = null;
+
+        sql.append(" FROM ");
+        it = persisterDescriptions.iterator();
+        for (;it.hasNext();) {
+            PersisterDescription desc = it.next();
+            String tableName = desc.getTableName();
+            sql.append(tableName);
+            if (it.hasNext())
+                sql.append(", ");
+        }
+
+        return sql;
     }
 
     public static StringBuilder createSelectAllStatement(String tableName, Collection<SqlDataField> fields, OrderByTerm... terms)

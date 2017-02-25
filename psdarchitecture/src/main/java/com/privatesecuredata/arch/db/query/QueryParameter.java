@@ -74,5 +74,4 @@ public class QueryParameter {
      * @sa IQueryParamValueFilter
      */
     public void setValueFilter(IQueryParamValueFilter filter) { this.filter = filter; }
-
 }

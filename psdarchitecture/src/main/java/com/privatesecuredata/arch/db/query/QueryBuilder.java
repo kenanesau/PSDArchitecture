@@ -13,6 +13,7 @@ import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,6 +50,7 @@ public class QueryBuilder<T> {
     private String queryId;
     /* <foreignType, (object)-fieldname> -> Type */
     private LinkedHashMap<IJoin, Class> joins;
+    private List<Class> froms = new LinkedList<>();
 
 
     /**
@@ -314,6 +316,10 @@ public class QueryBuilder<T> {
             joins.remove(new Pair(foreignType, fieldName));
     }
 
+    public void from(Class otherType) {
+        froms.add(otherType);
+    }
+
     public Query createQuery(PersistanceManager pm) {
         try {
             Query query = new Query(id());
@@ -321,10 +327,21 @@ public class QueryBuilder<T> {
 
             StringBuilder sb;
 
-            sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
-                    desc.getTableName(),
-                    desc.getTableFields(),
-                    (OrderByTerm[]) null));
+            if (froms.size() > 0) {
+                List<PersisterDescription> descriptions = new LinkedList<PersisterDescription>();
+
+                descriptions.add(desc);
+                for(Class otherType : froms)
+                    descriptions.add(pm.getPersister(otherType).getDescription());
+
+                sb = new StringBuilder(AbstractPersister.createSelectAllStatement(descriptions));
+            }
+            else {
+                sb = new StringBuilder(AbstractPersister.createSelectAllStatement(
+                        desc.getTableName(),
+                        desc.getTableFields(),
+                        (OrderByTerm[]) null));
+            }
 
             if (null != joins) {
                 for (IJoin join : joins.keySet()) {
