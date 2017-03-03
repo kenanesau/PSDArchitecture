@@ -66,7 +66,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
             if (null != thisToOneAnno) {
                 field.setAccessible(true);
-                ObjectRelation objRel = new ObjectRelation(field, getPersistentType(), thisToOneAnno.deleteChildren());
+                ObjectRelation objRel = new ObjectRelation(field, getPersistentType(), thisToOneAnno);
                 getDescription().addOneToOneRelation(objRel);
 
                 // At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
@@ -83,7 +83,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
             if (null != oneToManyAnno) {
                 field.setAccessible(true);
-                ObjectRelation objRel = new ObjectRelation(field, oneToManyAnno.referencedType(), getPersistentType(), oneToManyAnno.deleteChildren(), oneToManyAnno.queryId());
+                ObjectRelation objRel = new ObjectRelation(field, oneToManyAnno.referencedType(), getPersistentType(), oneToManyAnno.deleteChildren(), false, oneToManyAnno.queryId());
                 getDescription().addOneToManyRelation(objRel);
 
                 Class referencedType = oneToManyAnno.referencedType();
@@ -518,7 +518,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
 		try {
 			obj = createPersistable();
-			csr.moveToPosition(pos);
+
+            csr.moveToPosition(pos);
             getPM().assignDbId(obj, csr.getLong(0));
 
             //Iterate over the first _tableFields.size() columns -> All further columns are foreign-key-fields
@@ -529,8 +530,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
                 Field fld = field.getObjectField();
                 fld.setAccessible(true);
-                switch(field.getSqlType())
-                {
+                switch (field.getSqlType()) {
                     case DATE:
                         String dateStr = csr.getString(colIndex);
                         java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
@@ -543,7 +543,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                         fld.set(obj, csr.getString(colIndex));
                         break;
                     case BOOLEAN:
-                        fld.set(obj, csr.getInt(colIndex)==1 ? true : false);
+                        fld.set(obj, csr.getInt(colIndex) == 1 ? true : false);
                         break;
                     case DOUBLE:
                         fld.set(obj, csr.getDouble(colIndex));
@@ -563,16 +563,28 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                         break;
                     case OBJECT_NAME:
                         String objectName = csr.getString(colIndex);
+                        IPersistable referencedObj = null;
                         if (null != objectName) {
                             if ((referencedObjectId > -1) && (referencedObjectField != null)) {
                                 Class clazz = getPM().getPersistentType(objectName);
-                                IPersistable referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
+                                referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
+
                                 referencedObjectField.set(obj, referencedObj);
                             }
                         }
 
-                        referencedObjectId = -1;
-                        referencedObjectField = null;
+
+                        /**
+                         * If the referenced object could not be loaded and the relation says it is mandatory
+                         * -> This object cannot exist -> delete it and return null
+                         */
+                        if (referencedObj == null) {
+                            ObjectRelation rel = getDescription().getOneToOneRelation(field.getObjectField().getName());
+                            if (rel.isMandatory()) {
+                                deleteObjectsWithObsoleteDataref(getPersistentType(), field, referencedObjectField);
+                                obj = null;
+                            }
+                        }
 
                         break;
                     case COLLECTION_REFERENCE:
@@ -587,11 +599,10 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                         ICursorLoader loader;
                         if (null != q) {
                             loader = new QueryCursorLoader(q);
-                        }
-                        else {
+                        } else {
                             loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
                         }
-                        Collection lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class)field.getReferencedType(), obj, collSize, loader);
+                        Collection lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class) field.getReferencedType(), obj, collSize, loader);
 
                         fld.set(obj, lstItems);
                         break;
@@ -602,12 +613,15 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
                 colIndex++;
 
-                if (colIndex ==  getDescription().getTableFields().size() + 1)
+                if (colIndex == getDescription().getTableFields().size() + 1)
                     break;
 
-			}
+                if (obj == null)
+                    break;
+            }
 
-            onActionsLoad(obj);
+            if (null != obj)
+                onActionsLoad(obj);
         } catch (Exception e) {
 			if (currentField != null) {
 				throw new DBException(
@@ -624,6 +638,46 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
 		return obj;
 	}
+
+    /**
+     * Delete all data-rows in table for persistentType which are not in the table for
+     * type field.getReferencedType.
+     *
+     * This is for example in a List of items where each item has a one-to-one-reference
+     * to another type. And some of those object which were referenced are deleted...
+     *
+     * @param persistentType
+     * @param field
+     */
+    private void deleteObjectsWithObsoleteDataref(Class<T> persistentType, SqlDataField field, Field refObjField) {
+        String tblOther = DbNameHelper.getTableName(field.getObjectField().getType());
+        String tblName = DbNameHelper.getTableName(persistentType);
+        String fldName = String.format("%s.%s", tblName,
+                DbNameHelper.getFieldName(refObjField, SqlDataField.SqlFieldType.OBJECT_REFERENCE));
+
+        StringBuilder sql = new StringBuilder("DELETE FROM ");
+        sql.append(tblName)
+                .append(" WHERE ")
+                .append(fldName)
+                .append(" IN (SELECT ")
+                .append(fldName).append(" FROM ")
+                .append(tblName)
+                .append(" LEFT JOIN ")
+                .append(tblOther).append(" ON ").append(tblOther)
+                .append("._id = ").append(fldName).append(" WHERE ")
+                .append(tblOther).append("._id IS NULL)");
+
+
+        SQLiteStatement del = getDb().compileStatement(sql.toString());
+        del.executeUpdateDelete();
+
+        /**
+         DELETE FROM tbl_expireditem WHERE tbl_expireditem.fld_expiredstockitem_id IN
+         (SELECT tbl_expireditem.fld_expiredstockitem_id FROM tbl_expireditem
+         LEFT JOIN tbl_stockitem ON tbl_stockitem._id = tbl_expireditem.fld_expiredstockitem_id
+         WHERE tbl_stockitem._id IS NULL)
+         */
+    }
 
     @Override
     public T createPersistable() {

@@ -39,6 +39,11 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     private String filteredParamId;
     private OrderByTerm[] sortOrderTerms;
 
+    /**
+     * Counter for object which failed to load...
+     */
+    private int failedObjects = 0;
+
     public CursorToListAdapter(PersistanceManager _pm, ICursorChangedListener listener) {
 		this(_pm);
 		addCursorChangedListener(listener);
@@ -120,7 +125,35 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     @Override
 	public M get(int pos) {
         try {
-            return (csr == null) ? null : pm.load(persister, csr, pos);
+            if (csr == null) return null;
+            boolean failed = false;
+            M obj;
+            do {
+                obj = pm.load(persister, csr, pos);
+
+                if (obj == null) {
+                    failedObjects++;
+                    if (pos < csr.getCount()) {
+                        failed = true;
+                        pos++;
+                    }
+                }
+                else
+                    failed = false;
+            }
+            while (failed);
+
+            /**
+             * If an object failed to load -> reload the cursor
+             *
+             * Worst case: This can happen one time for every type the referencing object references.
+             */
+            if (failed) {
+                updateCursor();
+                failedObjects = 0;
+            }
+
+            return obj;
         }
         catch (Exception e)
         {
@@ -161,7 +194,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
 	public int size() {
-		return csr != null ? csr.getCount() : 0;
+		return csr != null ? csr.getCount() - failedObjects : 0;
 	}
 
 	@Override

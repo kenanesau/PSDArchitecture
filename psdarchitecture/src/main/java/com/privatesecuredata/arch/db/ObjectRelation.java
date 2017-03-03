@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.db;
 
+import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.db.query.Query;
 
 import java.lang.reflect.Field;
@@ -17,6 +18,7 @@ public class ObjectRelation {
     private Class<?> _referencingType;
     private Class<?> _referencedListType;
     private boolean _deleteChildren;
+    private boolean _isMandatory;
     private String _queryId;
     private Query _cachedQuery;
 
@@ -27,20 +29,26 @@ public class ObjectRelation {
      * @param referencedListType
      * @param referencingType
      * @param deleteChildren
+     * @param isMandatory
      * @param queryId
      */
-    public ObjectRelation(Field fld, Class<?> referencedListType,  Class<?> referencingType, boolean deleteChildren, String queryId)
+    public ObjectRelation(Field fld, Class<?> referencedListType, Class<?> referencingType, boolean deleteChildren, boolean isMandatory, String queryId)
     {
         _fld = fld;
         _referencedListType = referencedListType;
         _referencingType = referencingType;
         _deleteChildren = deleteChildren;
+        _isMandatory = isMandatory;
         if ( (null != queryId) && (queryId.compareTo("") == 0) ) {
             _queryId = null;
         }
         else {
             _queryId = queryId;
         }
+    }
+
+    public ObjectRelation(Field fld, Class<?> referencedListType, Class<?> referencingType, DbThisToOne thisToOneAnno, String queryId) {
+        this(fld, referencedListType, referencingType, thisToOneAnno.deleteChildren(), thisToOneAnno.isMandatory(), queryId);
     }
 
     /**
@@ -52,9 +60,14 @@ public class ObjectRelation {
      */
 	public ObjectRelation(Field fld, Class<?> referencedType, boolean deleteChildren)
 	{
-		this(fld, null, referencedType, deleteChildren, null);
+		this(fld, null, referencedType, deleteChildren, true, null);
 	}
-	
+
+    public ObjectRelation(Field fld, Class<?> referencedType, DbThisToOne thisToOne)
+    {
+        this(fld, null, referencedType, thisToOne, null);
+    }
+
 	public Field getField() { return _fld; }
 	public Class getReferencingType() { return _referencingType; }
     public Class getReferencedListType() { return _referencedListType; }
@@ -66,6 +79,7 @@ public class ObjectRelation {
 		return _persister;
 	}
     public boolean deleteChildren() { return _deleteChildren; }
+    public boolean isMandatory() { return  _isMandatory; }
     public String getQueryId() { return _queryId; }
     public Query getAndCacheQuery(PersistanceManager pm) {
         if (null != this._cachedQuery)

@@ -672,6 +672,9 @@ public class PersistanceManager {
     {
         T persistable = persister.rowToObject(pos, cursor);
 
+        if (persistable == null)
+            return null;
+
         DbId<T> dbId = persistable.getDbId();
         if (dbId != null)
             dbId.setClean();
