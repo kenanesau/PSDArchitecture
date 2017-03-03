@@ -133,15 +133,15 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
                 if (obj == null) {
                     failedObjects++;
-                    if (pos < csr.getCount()) {
+                    pos++;
+
+                    if (pos < csr.getCount())
                         failed = true;
-                        pos++;
-                    }
                 }
                 else
                     failed = false;
             }
-            while (failed);
+            while(failed);
 
             /**
              * If an object failed to load -> reload the cursor
