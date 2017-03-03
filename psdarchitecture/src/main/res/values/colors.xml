@@ -16,5 +16,7 @@
     <color name="light_text_primary">#ffffffff</color>
     <color name="light_text_secondary">#b3ffffff</color>
     <color name="light_text_hint">#4bffffff</color>
-    <color name="test">?android:colorControlActivated</color>
+    <color name="dark_text_primary">#ff000000</color>
+    <color name="dark_text_secondary">#b3000000</color>
+    <color name="dark_text_hint">#4b000000</color>
 </resources>
