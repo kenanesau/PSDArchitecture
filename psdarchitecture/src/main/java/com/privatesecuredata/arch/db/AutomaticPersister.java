@@ -564,10 +564,12 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     case OBJECT_NAME:
                         String objectName = csr.getString(colIndex);
                         IPersistable referencedObj = null;
+                        boolean failedLoad = false;
                         if (null != objectName) {
                             if ((referencedObjectId > -1) && (referencedObjectField != null)) {
                                 Class clazz = getPM().getPersistentType(objectName);
                                 referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
+                                failedLoad = (referencedObj == null);
 
                                 referencedObjectField.set(obj, referencedObj);
                             }
@@ -578,11 +580,18 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                          * If the referenced object could not be loaded and the relation says it is mandatory
                          * -> This object cannot exist -> delete it and return null
                          */
-                        if (referencedObj == null) {
+                        if (failedLoad) {
                             ObjectRelation rel = getDescription().getOneToOneRelation(field.getObjectField().getName());
                             if (rel.isMandatory()) {
                                 deleteObjectsWithObsoleteDataref(getPersistentType(), field, referencedObjectField);
                                 obj = null;
+                            }
+                            else {
+                                /**
+                                 * Mark this object for saving, so the non-existing referenced
+                                 * object-reference is updated
+                                 */
+                                obj.getDbId().setDirty();
                             }
                         }
 
@@ -620,8 +629,15 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     break;
             }
 
-            if (null != obj)
+            if (null != obj) {
+                /**
+                 * Save Object if we changed it while loading (non-existing referenced object / not mandatory)
+                 */
+                if (obj.getDbId().getDirty())
+                    getPM().save(obj);
+
                 onActionsLoad(obj);
+            }
         } catch (Exception e) {
 			if (currentField != null) {
 				throw new DBException(
