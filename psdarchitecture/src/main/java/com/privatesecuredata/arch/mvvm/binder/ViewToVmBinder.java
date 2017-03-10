@@ -126,8 +126,6 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 						@Override
 						public T get(View view) {
                             String strVal = ((TextView) view).getText().toString();
-//							if ((null == strVal)  || strVal.isEmpty())
-//								throw new MVVMException("String value is null or empty");
 
 							try {
                                 if ( (strVal!= null) && (!strVal.isEmpty()) ) {
@@ -146,14 +144,17 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                                     if (dataType == Double.class) {
                                         return dataType.cast(Double.parseDouble(strVal));
                                     }
+                                    else {
+										throw new MVVMException("Unable to convert view-value for the viewmodel! Datatype not supported!");
+									}
                                 }
-
-                                throw new MVVMException("Unable to convert view-value for the viewmodel! Datatype not supported!");
 							}
 							catch (Exception ex)
 							{
 								throw new MVVMException(String.format("Error converting string '%s'-value!", dataType.getSimpleName()), ex);
 							}
+
+							return null;
 						}
 					};
 					
@@ -288,7 +289,9 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 
 	private void viewValueToViewModel(View view, SimpleValueVM<T> vm) {
 		try {
-			vm.set(getReadViewCommand().get(view), this);
+            T val = getReadViewCommand().get(view);
+            if (null != val)
+			    vm.set(val, this);
 		}
 		catch(MVVMException ex)
 		{
