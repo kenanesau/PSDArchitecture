@@ -15,7 +15,7 @@ import com.privatesecuredata.arch.R;
  */
 public class ShopActivity extends MVVMActivity implements SkuListFragment.OnSkuClickedListener {
     boolean canceled = false;
-    public static final int REQUESTCODE_SHOP = 0xFF123;
+    public static final int REQUESTCODE_SHOP = 0xF123;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
