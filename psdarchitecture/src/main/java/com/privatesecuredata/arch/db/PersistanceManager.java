@@ -127,6 +127,16 @@ public class PersistanceManager {
         init(dbDesc);
     }
 
+    private void deInit() {
+        db = null;
+        initializedDb = false;
+        persisterMap.clear();
+        classNameMap.clear();
+        cursorLoaderMap.clear();
+        cursorLoaderFactories.clear();
+        queries.clear();
+    }
+
     private void init(IDbDescription dbDesc)
     {
         this.dbDesc = dbDesc;
@@ -253,7 +263,6 @@ public class PersistanceManager {
 	 */
 	public void initializeDb(Context ctx, boolean duringUpgrade) throws DBException
 	{
-        int version = -1;
         this.appCtx = ctx.getApplicationContext() == null ? ctx : ctx.getApplicationContext();
 
 		try {
@@ -576,7 +585,9 @@ public class PersistanceManager {
                     db.close();
                     File newDbFile = getDbFile(ctx);
                     Files.move(getUpgradingDbFile(ctx), newDbFile);
-                    db = SQLiteDatabase.openOrCreateDatabase(newDbFile, null);
+                    deInit();
+                    init(this.dbDesc);
+                    initializeDb(this.appCtx, false);
                 }
                 catch (Exception ex) {
                     String errMsg = String.format("Error converting '%s' to new Version '%d' Instance '%d'",
