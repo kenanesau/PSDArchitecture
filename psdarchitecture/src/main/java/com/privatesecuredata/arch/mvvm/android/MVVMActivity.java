@@ -101,7 +101,8 @@ public class MVVMActivity extends AppCompatActivity
 
         if (savedInstanceState != null) {
 			String uuid = savedInstanceState.getString(MVVMActivity.TAG_PERSISTANCE_MANAGER);
-			setDefaultPM(uuid);
+			if (null != uuid)
+				setDefaultPM(uuid);
             instanceStateHandler.restoreInstanceState(savedInstanceState);
         }
 

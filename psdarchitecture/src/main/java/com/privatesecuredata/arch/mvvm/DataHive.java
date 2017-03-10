@@ -48,7 +48,7 @@ public class DataHive
 	}
 	public <T> T get(String key)
 	{
-		return get(UUID.fromString(key));		
+		return key != null ? get(UUID.fromString(key)) : null;
 	}
 
 	public <T> T get(UUID key)
