@@ -129,6 +129,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     private ILongClickListener onLongClickCb;
     private RecyclerView view;
     private boolean isEmpty = true;
+    private boolean isBinding = false;
 
     private QueryParameterCache queryParaCache = new QueryParameterCache();
 
@@ -313,6 +314,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
 
     public void onBindViewHolder(MVVMRecyclerViewModelAdapter.ViewHolder holder, int position) {
         M model = null;
+        isBinding = true;
 
         if (!isEmpty())
             model = position < data.size() ? data.get(position) : null;
@@ -323,6 +325,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         for (ViewManipulator manipulator : getManipulators()) {
             manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
         }
+        isBinding = false;
     }
 
     /**
@@ -350,14 +353,16 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 
     protected void redrawViews() {
-        ctx.runOnUiThread(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                      MVVMRecyclerViewModelAdapter.this.notifyDataSetChanged();
+        if (!isBinding) {
+            ctx.runOnUiThread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            MVVMRecyclerViewModelAdapter.this.notifyDataSetChanged();
+                        }
                     }
-                }
-        );
+            );
+        }
     }
 
     @Override
@@ -447,13 +452,16 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             setCheckedItemCount(getCheckedItemCount() + 1);
         else
             setCheckedItemCount(getCheckedItemCount() - 1);
-        ctx.runOnUiThread(new Runnable() {
-                              @Override
-                              public void run() {
-                                  notifyItemChanged(position);
+
+        if (!isBinding) {
+            ctx.runOnUiThread(new Runnable() {
+                                  @Override
+                                  public void run() {
+                                      notifyItemChanged(position);
+                                  }
                               }
-                          }
-        );
+            );
+        }
     }
 
     public boolean isItemChecked(int position) {
