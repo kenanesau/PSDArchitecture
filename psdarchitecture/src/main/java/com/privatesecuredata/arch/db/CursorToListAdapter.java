@@ -126,7 +126,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	public M get(int pos) {
         try {
             if (csr == null) return null;
-            boolean failed = false;
+            boolean retry = false;
             M obj;
             do {
                 obj = pm.load(persister, csr, pos);
@@ -136,19 +136,21 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
                     pos++;
 
                     if (pos < csr.getCount())
-                        failed = true;
+                        retry = true;
+                    else
+                        retry = false;
                 }
                 else
-                    failed = false;
+                    retry = false;
             }
-            while(failed);
+            while(retry);
 
             /**
-             * If an object failed to load -> reload the cursor
+             * If an object retry to load -> reload the cursor
              *
              * Worst case: This can happen one time for every type the referencing object references.
              */
-            if (failed) {
+            if (retry) {
                 updateCursor();
                 failedObjects = 0;
             }

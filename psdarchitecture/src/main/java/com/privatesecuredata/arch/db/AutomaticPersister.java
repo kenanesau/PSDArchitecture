@@ -483,9 +483,9 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 updateForeignKey.bindLong(2, persistableId.getId());
 
                 int ret = updateForeignKey.executeUpdateDelete();
-                if (ret == 0)
+                /*if (ret == 0)
                     throw new DBException(String.format("Updating Foreign-key-relation to type \"%s\" in type \"%s\" failed!",
-                            foreignType.getName(), getPersistentType().getName()));
+                            foreignType.getName(), getPersistentType().getName()));*/
             } else {
                 throw new DBException(String.format("Could not find Foreign-key-relation to type \"%s\" in type \"%s\"",
                         foreignType.getName(), getPersistentType().getName()));
