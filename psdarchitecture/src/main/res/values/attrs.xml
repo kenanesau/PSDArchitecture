@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<declare-styleable name="psdarch_fab">
-	    <attr name="accent" format="color" />
-	    <attr name="accent_light" format="color" />
+	    <attr name="bgcolor" format="color" />
+        <attr name="checked_bgcolor" format="color" />
 	    <attr name="icon_checked" format="reference" />
 	    <attr name="icon_default" format="reference" />
 	    <attr name="icon_out_animation" format="reference" />
 	    <attr name="icon_in_animation" format="reference" />
 	    <attr name="default_animation" format="reference" />
-        <attr name="unchecked_bg_drawable" format="reference" />
-        <attr name="checked_bg_drawable" format="reference" />
         <attr name="disable_outline" format="boolean" />
   	</declare-styleable>
     <declare-styleable name="psdarch_number_selector">

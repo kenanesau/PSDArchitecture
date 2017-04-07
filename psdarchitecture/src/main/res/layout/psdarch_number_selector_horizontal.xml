@@ -20,6 +20,7 @@
             android:background="@drawable/left_rounded_button"
             app:icon_default="@drawable/ic_arrow_left"
             app:disable_outline="true"
+            app:bgcolor="@color/primary"
             android:onClick="onButtonClick"
             android:layout_marginRight="@dimen/raster2"
             android:layout_marginEnd="@dimen/raster2"
@@ -49,6 +50,7 @@
             android:background="@drawable/right_rounded_button"
             app:icon_default="@drawable/ic_arrow_right"
             app:disable_outline="true"
+            app:bgcolor="@color/primary"
             android:onClick="onButtonClick"
             android:layout_marginBottom="@dimen/raster2"
             />

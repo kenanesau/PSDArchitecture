@@ -7,6 +7,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Path;
@@ -14,7 +15,9 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,13 +32,13 @@ public class CheckableFab extends Fab implements Checkable {
 	
 	private float _touchX;
 	private float _touchY;
-	//private View _view;
-	
+
 	private Drawable _checkedDrawable;
 	private ImageView _checkedImageView;
 
-    private Drawable _checkedBg;
-    private Drawable _uncheckedBg;
+    private int _checkedColor;
+    //private Drawable _checkedBg;
+    //private Drawable _uncheckedBg;
 	
 	private Animator _iconInAnimator;
 	private Animator _iconOutAnimator;
@@ -61,10 +64,6 @@ public class CheckableFab extends Fab implements Checkable {
 	public CheckableFab(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
 		super(context, attrs, defStyleAttr);
 
-//		_view = new View(context);
-//		_view.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-//		addView(_view, 0);
-
         if (isInEditMode()) {
             return;
         }
@@ -75,22 +74,27 @@ public class CheckableFab extends Fab implements Checkable {
 		if (attrs!=null) {
 			TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_fab, 0, 0);
 
-			int checkedDrawableId = a.getResourceId(R.styleable.psdarch_fab_icon_checked, R.drawable.ic_action_done);
+            int checkedBgColor = a.getResourceId(R.styleable.psdarch_fab_checked_bgcolor, R.color.accent);
+            _checkedColor = ContextCompat.getColor(context, checkedBgColor);
+
+            int checkedDrawableId = a.getResourceId(R.styleable.psdarch_fab_icon_checked, R.drawable.ic_action_done);
 			_checkedDrawable = ContextCompat.getDrawable(context, checkedDrawableId);
 			_checkedImageView.setImageDrawable(_checkedDrawable);
             _checkedImageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-			
-			int iconOutAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_in_animation, R.animator.fab_animate_icon_out);
-			_iconOutAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconOutAnimationId);
-			
-			int iconInAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_out_animation, R.animator.fab_animate_icon_in);
-			_iconInAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconInAnimationId);
 
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+				int iconOutAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_in_animation, R.animator.fab_animate_icon_out);
+				_iconOutAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconOutAnimationId);
+
+				int iconInAnimationId = a.getResourceId(R.styleable.psdarch_fab_icon_out_animation, R.animator.fab_animate_icon_in);
+				_iconInAnimator = (Animator) AnimatorInflater.loadAnimator(context, iconInAnimationId);
+			}
+/*
             int checkedBgDrawableId = a.getResourceId(R.styleable.psdarch_fab_checked_bg_drawable, R.drawable.fab_ripple_background_on);
             _checkedBg = ContextCompat.getDrawable(context, checkedBgDrawableId);
 
             int uncheckedBgDrawableId = a.getResourceId(R.styleable.psdarch_fab_unchecked_bg_drawable, R.drawable.fab_ripple_background_off);
-            _uncheckedBg = ContextCompat.getDrawable(context, uncheckedBgDrawableId);
+            _uncheckedBg = ContextCompat.getDrawable(context, uncheckedBgDrawableId);*/
 			a.recycle();
 		}
 
@@ -138,20 +142,9 @@ public class CheckableFab extends Fab implements Checkable {
 		refreshDrawableState();
         
         if (allowAnimate) {
-//            ValueAnimator animator = ViewAnimationUtils.createCircularReveal(
-//                    _view, (int) _touchX, (int) _touchY, 0, getWidth());
-//            animator.addListener(new AnimatorListenerAdapter() {
-//                @Override
-//                public void onAnimationEnd(Animator animation) {
-//                    setChecked(_checked, false);
-//                }
-//            });
-//            animator.start();
-        	
-
             if (_checked) {
+                _checkedImageView.setVisibility(View.VISIBLE);
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                    _checkedImageView.setVisibility(View.VISIBLE);
                     _iconOutAnimator.setTarget(getDefaultImageView());
                     _iconInAnimator.setTarget(_checkedImageView);
                     ObjectAnimator moveInAnim = getMoveInAnimFor(_checkedImageView);
@@ -175,8 +168,8 @@ public class CheckableFab extends Fab implements Checkable {
             	getDefaultImageView().setVisibility(View.GONE);
             }
             else {
+                getDefaultImageView().setVisibility(View.VISIBLE);
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                    getDefaultImageView().setVisibility(View.VISIBLE);
                     _iconOutAnimator.setTarget(_checkedImageView);
                     _iconInAnimator.setTarget(getDefaultImageView());
                     _iconInAnimator.addListener(new AnimatorListenerAdapter() {
@@ -195,24 +188,14 @@ public class CheckableFab extends Fab implements Checkable {
                     setChecked(_checked, false);
                 }
                 _checkedImageView.setVisibility(View.GONE);
-//            _view.setVisibility(View.VISIBLE);
-//            _view.setBackgroundColor(_checked ? Color.WHITE : _color);
             }
         }
         else {
-//            _view.setVisibility(View.GONE);
-            Drawable bg = (_checked ? _checkedBg : _uncheckedBg);
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                setBackground(bg);
-            }
-            //TODO: Build Logic to be certain that ALL animations ended...
-            if (_checked) {
-            	getDefaultImageView().setVisibility(View.GONE);
-            }
-            else
-            {
-            	_checkedImageView.setVisibility(View.GONE);
-            }
+            //Drawable bg = (_checked ? _checkedBg : _uncheckedBg);
+            int col = (_checked ? _checkedColor : _color);
+            FloatingActionButton fabView = (FloatingActionButton)findViewById(R.id.psdarch_fab_widget);
+            //ViewCompat.setBackground(fabView, bg);
+            fabView.setBackgroundTintList(new ColorStateList(new int[][]{new int[]{0}}, new int[]{col}));
         }
     }
 
@@ -222,7 +205,7 @@ public class CheckableFab extends Fab implements Checkable {
 	}
 
 	@Override
-	protected int[] onCreateDrawableState(int extraSpace) {
+	public int[] onCreateDrawableState(int extraSpace) {
 		final int[] drawableState = super.onCreateDrawableState(extraSpace + 1);
 		if (isChecked()) {
 			mergeDrawableStates(drawableState, CheckedStateSet);

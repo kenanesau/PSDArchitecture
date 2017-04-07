@@ -19,6 +19,7 @@
             android:background="@drawable/upper_rounded_button"
             fab:icon_default="@drawable/ic_arrow_up"
             fab:disable_outline="true"
+            fab:bgcolor="@color/primary"
             android:onClick="onButtonClick"
             android:layout_marginBottom="@dimen/raster2"
             />
@@ -42,6 +43,7 @@
             android:background="@drawable/lower_rounded_button"
             fab:icon_default="@drawable/ic_arrow_down"
             fab:disable_outline="true"
+            fab:bgcolor="@color/primary"
             android:onClick="onButtonClick"
             android:layout_marginBottom="@dimen/raster2"
             />
