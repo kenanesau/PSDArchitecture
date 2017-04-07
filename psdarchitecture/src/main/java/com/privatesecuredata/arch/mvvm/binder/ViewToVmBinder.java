@@ -1,6 +1,8 @@
 package com.privatesecuredata.arch.mvvm.binder;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -404,6 +406,18 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
         this.writeViewCmd.set(this.view, this.getVM().get());
 	}
 
+	protected Activity getActivity(View view) {
+		Context context = view.getContext();
+		while (context instanceof ContextWrapper) {
+			if (context instanceof Activity) {
+				return (Activity)context;
+			}
+			context = ((ContextWrapper)context).getBaseContext();
+		}
+
+		return null;
+	}
+
 	/**
      * A Model changed and the corresponding View has to be updated...
      */
@@ -411,14 +425,18 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
     public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
         SimpleValueVM<T> simpleVM = getVM();
 
-		((Activity)view.getContext()).runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-                setVMUpdatesView();
-				writeViewCmd.set(ViewToVmBinder.this.view, simpleVM.get());
-                resetVMUpdatesView();
-			}
-		});
+		Activity activity = getActivity(view);
+
+		if (null != activity) {
+			activity.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					setVMUpdatesView();
+					writeViewCmd.set(ViewToVmBinder.this.view, simpleVM.get());
+					resetVMUpdatesView();
+				}
+			});
+		}
     }
 
     public void dispose()
