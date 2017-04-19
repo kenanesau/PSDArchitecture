@@ -7,6 +7,7 @@ import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +20,7 @@ import com.privatesecuredata.arch.R;
 /**
  * Created by kenan on 4/17/15.
  */
-public class DialogTitlebar extends FrameLayout {
+public class DialogTitlebar extends Toolbar {
     private ImageView _defaultCancelIcon;
     private TextView  _txtTitle;
     private TextView  _txtActionOk;
@@ -29,7 +30,7 @@ public class DialogTitlebar extends FrameLayout {
     private int okId = R.id.psdarch_btn_ok;
 
     public DialogTitlebar(Context context) {
-        this(context, null, 0, 0);
+        this(context, null, 0);
     }
 
     public DialogTitlebar(Context context, AttributeSet attrs) {
@@ -38,13 +39,6 @@ public class DialogTitlebar extends FrameLayout {
 
     public DialogTitlebar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-
-        init(context, attrs, defStyleAttr);
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public DialogTitlebar(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
 
         init(context, attrs, defStyleAttr);
     }

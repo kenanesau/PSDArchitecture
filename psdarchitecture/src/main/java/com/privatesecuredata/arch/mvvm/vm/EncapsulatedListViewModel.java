@@ -185,7 +185,6 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
     public void setQueryId(String queryId) { listCB.setQuery(queryId); }
     public void where(String id, Object val) { listCB.where(id, val);}
     public void where(String id, Class val) { listCB.where(id, val);}
-    public void runQuery() { listCB.runQuery(); }
 
     @Override
     public void setSortOrder(OrderBy... sortOrderTerms) {

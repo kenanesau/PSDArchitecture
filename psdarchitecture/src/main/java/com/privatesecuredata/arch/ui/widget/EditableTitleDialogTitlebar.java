@@ -27,10 +27,6 @@ public class EditableTitleDialogTitlebar extends DialogTitlebar {
         super(context, attrs, defStyleAttr);
     }
 
-    public EditableTitleDialogTitlebar(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
-
     @Override
     protected void init(Context context, AttributeSet attrs, int defStyleAttr) {
         super.init(context, attrs, defStyleAttr);
