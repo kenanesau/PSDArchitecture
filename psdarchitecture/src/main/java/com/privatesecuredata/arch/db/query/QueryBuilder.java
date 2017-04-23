@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.db.query;
 
+import android.graphics.Path;
 import android.util.Pair;
 
 import com.privatesecuredata.arch.db.AbstractPersister;
@@ -146,19 +147,36 @@ public class QueryBuilder<T> {
         addLikeCondition(fldNameAndId, fldNameAndId, fldNameAndId);
     }
 
-    public void addForeignKeyCondition(String condId, String paraId, Class foreignKeyType)
+    public void addForeignKeyCondition(String condId, String paraId, Class foreignKeyType, QueryCondition.Operation op)
     {
         QueryCondition cond = new QueryCondition(condId, paraId, foreignKeyType);
         cond.setForeignKeyCondition();
+        cond.setOperation(op);
+        addCondition(cond);
+    }
+
+    public void addForeignKeyCondition(String condId, String paraId, Class foreignKeyType)
+    {
+        addForeignKeyCondition(condId, paraId, foreignKeyType, QueryCondition.Operation.EQUALS);
+    }
+
+    public void addForeignKeyCondition(Class otherType, String condId, String paraId, Class foreignKeyType, QueryCondition.Operation op)
+    {
+        QueryCondition cond = new QueryCondition(condId, paraId, foreignKeyType);
+        cond.setForeignKeyCondition();
+        cond.setPersistableType(otherType);
+        cond.setOperation(op);
         addCondition(cond);
     }
 
     public void addForeignKeyCondition(Class otherType, String condId, String paraId, Class foreignKeyType)
     {
-        QueryCondition cond = new QueryCondition(condId, paraId, foreignKeyType);
-        cond.setForeignKeyCondition();
-        cond.setPersistableType(otherType);
-        addCondition(cond);
+        addForeignKeyCondition(otherType, condId, paraId, foreignKeyType, QueryCondition.Operation.EQUALS);
+    }
+
+    public void addForeignKeyCondition(String condId, Class foreignKeyType, QueryCondition.Operation op)
+    {
+        addForeignKeyCondition(condId, condId, foreignKeyType, op);
     }
 
     public void addForeignKeyCondition(String condId, Class foreignKeyType)
@@ -169,6 +187,10 @@ public class QueryBuilder<T> {
     public void addForeignKeyCondition(Class otherType, String condId, Class foreignKeyType)
     {
         addForeignKeyCondition(otherType, condId, condId, foreignKeyType);
+    }
+
+    public void addForeignKeyCondition(Class foreignKeyType, QueryCondition.Operation op) {
+        addForeignKeyCondition(DbNameHelper.getForeignKeyFieldName(foreignKeyType), foreignKeyType, op);
     }
 
     public void addForeignKeyCondition(Class foreignKeyType)
