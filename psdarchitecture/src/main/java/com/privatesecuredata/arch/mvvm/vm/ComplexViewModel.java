@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.mvvm.vm;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.support.annotation.CallSuper;
 
 import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
@@ -526,17 +527,26 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		this.setClean();
 	}
 
+	@CallSuper
+	protected void startCommit() {}
+
     @Override
     public void commit() {
+        startCommit();
         boolean wasDirty = this.isDirty();
-        if (wasDirty)
+        if (wasDirty) {
             this.commitData();
 
-        if ( (wasDirty) && (isGlobalNotifyEnabled()) )
+            if (isGlobalNotifyEnabled())
                 getMVVM().notifyCommit(this);
 
-        if (wasDirty)
-            notifyModelChanged();
+            finishCommit();
+        }
+    }
+
+    @CallSuper
+    protected void finishCommit() {
+        notifyModelChanged();
     }
 
 	/**

@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Filter;
 import android.widget.Filterable;
@@ -9,6 +10,7 @@ import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
+import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.MVVM;
 
 import java.lang.reflect.Constructor;
@@ -18,6 +20,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Action;
 
 /**
  * A Viewmodel which is capable of encapsulating a List of models. The List itself is encapsulated 
@@ -178,7 +183,7 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 		}
 		catch (NoSuchMethodException ex)
 		{
-			throw new ArgumentException(String.format("Unable to find a valid constructor for the model of type \"%s\"", this.referencedType.getName()), ex);
+			throw new ArgumentException(String.format("Unable to find a valid constructor for the viewmodel of type \"%s\"", this.vmType.getName()), ex);
 		}
 	}
 
@@ -357,71 +362,99 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 	};
 
     @Override
+    public void startCommit() {
+        super.startCommit();
+    }
+
+    @Override
+    protected void finishCommit() {
+
+        /**
+         * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
+         * called from the main-thread...
+         */
+        io.reactivex.Observable.empty()
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .doOnComplete(new Action() {
+                                  @Override
+                                  public void run() throws Exception {
+                                      listCB.commitFinished();
+                                  }
+                              });
+
+        super.finishCommit();
+    }
+
+    @Override
 	public void commitData() {
 		if (!this.isDirty())
 			return;
 
-        /**
-         * It can happen that we have made changes without getting the cursor before
-         * (eg. add without reading before)
-         */
-        load();
+        try {
+            /**
+             * It can happen that we have made changes without getting the cursor before
+             * (eg. add without reading before)
+             */
+            load();
 
-        /**
-         * first commit() is called -- here we have to save all changed child-VMs
-         * later the DBViewModelCommitListener calls save() on this List-VM -- then those
-         * VMs saved in the changedChildren-list are also saved to the DB...
-         */
-		/*for(IViewModel<M> vm : positionToViewModel.values()) {
-			if(vm.isDirty())
-			{
-                vm.commit();
-                newItems.add(vm.getModel());
-			}
-		}*/
-
-        /**
-         * Commit all children
-         */
-        List<IListViewModel> listVMs = new ArrayList<IListViewModel>();
-        List<IViewModel<?>> children = getChildrenOrdered();
-        if (null != children) {
-            for (IViewModel<?> vm : children) {
-                if (vm instanceof IListViewModel) {
-                    listVMs.add((IListViewModel) vm);
-                    continue;
+            /**
+             * first commit() is called -- here we have to save all changed child-VMs
+             * later the DBViewModelCommitListener calls save() on this List-VM -- then those
+             * VMs saved in the changedChildren-list are also saved to the DB...
+             */
+            /*for(IViewModel<M> vm : positionToViewModel.values()) {
+                if(vm.isDirty())
+                {
+                    vm.commit();
+                    newItems.add(vm.getModel());
                 }
-                else {
-                    if (vm instanceof ComplexViewModel) {
-                        vm.commit();
-                        newItems.add((M)vm.getModel());
+            }*/
+
+            /**
+             * Commit all children
+             */
+            List<IListViewModel> listVMs = new ArrayList<IListViewModel>();
+            List<IViewModel<?>> children = getChildrenOrdered();
+            if (null != children) {
+                for (IViewModel<?> vm : children) {
+                    if (vm instanceof IListViewModel) {
+                        listVMs.add((IListViewModel) vm);
+                        continue;
+                    } else {
+                        if (vm instanceof ComplexViewModel) {
+                            vm.commit();
+                            newItems.add((M) vm.getModel());
+                        }
                     }
                 }
             }
-        }
 
-        if (null != newVMs) {
-            for (IViewModel<?> vm : newVMs) {
-                if (vm instanceof ComplexViewModel) {
-                    vm.commit();
-                    if (vmType.isInstance(vm))
-                        newItems.add((M) vm.getModel());
+            if (null != newVMs) {
+                for (IViewModel<?> vm : newVMs) {
+                    if (vm instanceof ComplexViewModel) {
+                        vm.commit();
+                        if (vmType.isInstance(vm))
+                            newItems.add((M) vm.getModel());
+                    }
                 }
+                newVMs.clear();
+                newVMs = null;
             }
-            newVMs.clear();
-            newVMs = null;
-        }
 
-        /**
-         * Commit the lists AFTER everything else since there could be a foreign key relation
-         * in the DB -> Ensure that the rest of the parent-model is already clean.
-         */
-        for(IListViewModel listVM : listVMs) {
-            listVM.commit();
-        }
+            /**
+             * Commit the lists AFTER everything else since there could be a foreign key relation
+             * in the DB -> Ensure that the rest of the parent-model is already clean.
+             */
+            for (IListViewModel listVM : listVMs) {
+                listVM.commit();
+            }
 
-        this.setClean();
-	}
+            this.setClean();
+        }
+        catch (Exception e) {
+            throw new MVVMException("Error committing list!", e);
+        }
+    }
 
     public void save()
     {
@@ -441,7 +474,6 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
             dirtyItems.clear();
         }
 
-        listCB.commitFinished();
     }
 
 	/**

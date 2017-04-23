@@ -7,7 +7,11 @@ import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+
+    /**
  * @author kenan
  *
  * Base for all ViewModel-Classes
@@ -102,9 +106,21 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
     @Override
     public void notifyModelChanged(IViewModel<?> changedViewModel, IViewModel<?> originator)
     {
-        this.setClean();
-        for(IModelChangedListener listener : modelChangeListeners)
-            listener.notifyModelChanged(this, originator);
+        /**
+         * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
+         * called from the main-thread...
+         */
+        Observable.just(originator)
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<IViewModel<?>>() {
+                               @Override
+                               public void accept(IViewModel<?> vm) throws Exception {
+                                   ViewModel.this.setClean();
+                                   for (IModelChangedListener listener : modelChangeListeners)
+                                       listener.notifyModelChanged(ViewModel.this, vm);
+                               }
+                           });
+
     }
 
     /**
