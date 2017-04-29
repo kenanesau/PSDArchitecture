@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
+import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Filter;
 
@@ -14,6 +15,13 @@ import com.privatesecuredata.arch.mvvm.vm.OrderBy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * This implementation of IModelListCallback encapsulates a cursor. It directly writes all changes
@@ -63,37 +71,74 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 		return csrListeners.remove(listener);
 	}
 
-    private void updateCursor() {
-        Cursor oldCursor = csr;
-
+	private Cursor doDbAction() {
+        Cursor newCursor = null;
         if (null == query) {
             if (null == parent) {
-                this.csr = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
+                newCursor = pm.getCursor(parentClazz, childClazz, sortOrderTerms);
             } else {
                 // Only load a cursor if there can be something in the DB
                 // If it is a new object (no DB-ID) -> don't load the cursor
-                if (((IPersistable)parent).getDbId() != null) {
-                    this.csr = pm.getCursor((IPersistable) parent, childClazz, sortOrderTerms);
+                if (((IPersistable) parent).getDbId() != null) {
+                    newCursor = pm.getCursor((IPersistable) parent, childClazz, sortOrderTerms);
                 }
             }
-        }
-        else
-        {
-            this.csr = query.run();
+        } else {
+            newCursor = query.run();
         }
 
+        return newCursor;
+    }
+
+    private void notifyNewCursorChange(Cursor oldCursor, Cursor newCursor) {
+        this.csr = newCursor;
+
         try {
-            for (ICursorChangedListener listener : this.csrListeners) {
+            for (ICursorChangedListener listener : CursorToListAdapter.this.csrListeners) {
                 listener.notifyCursorChanged(csr);
             }
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             throw new DBException("Error notifying cursor changes to listeners", e);
-        }
-        finally {
+        } finally {
             if (null != oldCursor)
                 oldCursor.close();
+            listener.notifyDataChanged();
+            Log.i(CursorToListAdapter.this.getClass().getName(), "updateCursor() finish...");
         }
+    }
+
+    private void updateCursor() {
+        Cursor oldCursor = csr;
+        Cursor newCursor = doDbAction();
+        notifyNewCursorChange(oldCursor, newCursor);
+    }
+
+	private void updateCursorAsync() {
+        Log.i(getClass().getName(), "updateCursor() start...");
+        Cursor oldCursor = csr;
+        if ( (null == query) && (parent != null) && ((IPersistable)parent).getDbId() == null)
+            return;
+
+        Observable.defer(new Callable<ObservableSource<? extends Cursor>>() {
+            @Override
+            public ObservableSource<? extends Cursor> call() throws Exception {
+                Cursor newCursor = doDbAction();
+
+                if (newCursor==null)
+                    throw new Exception();
+
+                return Observable.just(newCursor);
+            }
+        })
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(new Consumer<Cursor>() {
+            @Override
+            public void accept(Cursor newCursor) throws Exception {
+                CursorToListAdapter.this.notifyNewCursorChange(oldCursor, newCursor);
+            }
+        });
+
     }
 
 	public Cursor getCursor() { return this.csr; }
@@ -125,6 +170,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     @Override
 	public M get(int pos) {
         try {
+            Log.i(getClass().getName(), "get() started...");
             if (csr == null) return null;
             boolean retry = false;
             M obj;
@@ -164,7 +210,10 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
             else
                 throw new DBException("Error loading data from cursor", e);
         }
-	}
+        finally {
+            Log.i(getClass().getName(), "get() finished...");
+        }
+    }
     public long getPosition(DbId dbId) {
         if (csr == null)
             return -1;
@@ -199,12 +248,17 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 		return csr != null ? csr.getCount() - failedObjects : 0;
 	}
 
-	@Override
+    @Override
+    public Observable<IModelListCallback<M>> loadModel() {
+        return null;
+    }
+
+    @Override
 	public void commitFinished() {
         /**
-         * init() changes the cursor -> send the new cursor to all listeners
+         * change the cursor -> send the new cursor to all listeners
          */
-		init(this.parentClazz, this.parent, this.childClazz);
+		updateCursorAsync();
     }
 
 	@Override

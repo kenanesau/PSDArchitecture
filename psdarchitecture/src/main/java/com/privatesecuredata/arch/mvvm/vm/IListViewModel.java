@@ -7,6 +7,8 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 
+import io.reactivex.Observable;
+
 /**
  * Created by kenan on 12/17/14.
  */
@@ -30,5 +32,5 @@ public interface IListViewModel<M>  extends IViewModelChangedListener, IModelCha
     <T extends ComplexViewModel> T getParentViewModel();
     void clear();
 
-    IDbBackedListViewModel db();
+    IDbBackedListViewModel<M> db();
 }

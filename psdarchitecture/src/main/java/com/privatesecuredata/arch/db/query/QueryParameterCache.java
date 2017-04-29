@@ -4,10 +4,13 @@ import android.widget.Filter;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.vm.IDbBackedListViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.OrderBy;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import io.reactivex.Observable;
 
 /**
  * Caches all parameters which can be needed by a query.
@@ -90,6 +93,15 @@ public class QueryParameterCache implements IDbBackedListViewModel {
     @Override
     public void where(String id, Class val) {
         whereParams.add(new Pair(id, val));
+    }
+
+    @Override
+    public void loadData() {
+    }
+
+    @Override
+    public Observable<IListViewModel> loadDataAsync() {
+        return null;
     }
 
     /**

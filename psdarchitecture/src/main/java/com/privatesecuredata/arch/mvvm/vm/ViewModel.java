@@ -154,7 +154,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	}
 	
 	/**
-	 * (re)load all data from the Model to the ViewModel 
+	 * (re)load all data from the Model to the ViewModel
 	 */
 	public abstract void reload(); 
 	@Override

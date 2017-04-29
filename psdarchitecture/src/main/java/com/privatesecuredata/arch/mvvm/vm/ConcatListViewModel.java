@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import io.reactivex.Observable;
+import io.reactivex.functions.Function;
+
 /**
  * Simple ListViewModel which is kind of readonly (you can not add but you can delete) and
  * can concatenate N other IListViewModels. The contents of those ListViewModels are not intermixed
@@ -240,6 +243,30 @@ public class ConcatListViewModel<M> extends ComplexViewModel<List<M>>
     public void clear() {
         for(IListViewModel vm : data)
             vm.clear();
+    }
+
+    @Override
+    public void loadData() {
+        for (IListViewModel<M> vm : data)
+            if (null != vm.db())
+                vm.db().loadData();
+    }
+
+    @Override
+    public Observable<IListViewModel<M>> loadDataAsync() {
+        List<Observable<IListViewModel<M>>> obs = new ArrayList<>();
+
+        for (IListViewModel<M> vm : data)
+            if (null != vm.db())
+                obs.add(vm.db().loadDataAsync());
+
+        return Observable.concat(obs)
+                .map(new Function<IListViewModel<M>, IListViewModel<M>>() {
+                    @Override
+                    public IListViewModel<M> apply(IListViewModel<M> lst) throws Exception {
+                        return ConcatListViewModel.this;
+                    }
+                });
     }
 
     public void dispose() {

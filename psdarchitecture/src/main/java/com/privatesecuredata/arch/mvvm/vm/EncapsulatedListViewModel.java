@@ -1,6 +1,5 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
-import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Filter;
 import android.widget.Filterable;
@@ -20,9 +19,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Action;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * A Viewmodel which is capable of encapsulating a List of models. The List itself is encapsulated 
@@ -57,7 +61,8 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
         DbId getDbId(int pos);
 		int size();
 		
-		void commitFinished();
+		Observable<IModelListCallback<M>> loadModel();
+        void commitFinished();
 		void remove(M item);
 		void save(Collection<M> items);
         void save(SparseArray<M> items);
@@ -169,6 +174,7 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
             @Override
             public void notifyDataChanged() {
                 /** Tell the ListAdapter to update the View **/
+                dataLoaded = true;
                 EncapsulatedListViewModel.this.notifyModelChanged();
             }
         });
@@ -200,8 +206,8 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
             ComplexViewModel vm = getParentViewModel();
             Field fld = getModelField();
 
-            if ( (vm != null) && (fld != null) )
-                init(getParentViewModel(), getModelField());
+            /*if ( (vm != null) && (fld != null) )
+                init(getParentViewModel(), getModelField());*/
         }
     }
 
@@ -231,15 +237,52 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
     }
 
     /**
-     * get the cursor from the database (with CursorToListAdapter)
+     * Inherited from ComplexVM: load the lazily loaded data...
      */
     @Override
     public void load()
     {
-        if (!dataLoaded) {
-            listCB.init(referencingType, getParentModel(), referencedType);
-            dataLoaded = true;
-        }
+        if (!dataLoaded)
+            loadData();
+    }
+
+    /**
+     * load the cursor from the database (with CursorToListAdapter)
+     *
+     * When the data was not loaded yet, each operation on this List-VM will trigger
+     * this function (e.g. calling size(), get(), ...)
+     */
+    @Override
+    public void loadData()
+    {
+        listCB.init(referencingType, getParentModel(), referencedType);
+
+        ///dataLoaded is set to true in notifyDataChanged()
+        //dataLoaded = true;
+    }
+
+    /**
+     * triggers loading of the DB-cursor on the io-thread and returns an observable of
+     * IListViewModel if you subscribe to the observable
+     *
+     * @return
+     */
+    @Override
+    public Observable<IListViewModel<M>> loadDataAsync() {
+        return Observable.defer(new Callable<ObservableSource<? extends IListViewModel<M>>>() {
+            @Override
+            public ObservableSource<? extends IListViewModel<M>> call() throws Exception {
+                return Observable.just((IListViewModel<M>) EncapsulatedListViewModel.this);
+            }
+        })
+        .subscribeOn(Schedulers.io())
+        .map(new Function<IListViewModel<M>, IListViewModel<M>>() {
+            @Override
+            public IListViewModel<M> apply(IListViewModel<M> list) throws Exception {
+                list.db().loadData();
+                return list;
+            }
+        });
     }
 
     public <VM extends IViewModel> boolean add(VM vm)
@@ -331,7 +374,7 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
         notifyViewModelDirty();
     }
 
-	public boolean removeAll(Collection<?> arg0) {
+    public boolean removeAll(Collection<?> arg0) {
         load();
 		Iterator<?> it = arg0.iterator();
 		boolean ret = false;
@@ -373,14 +416,7 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
          * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
          * called from the main-thread...
          */
-        io.reactivex.Observable.empty()
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .doOnComplete(new Action() {
-                                  @Override
-                                  public void run() throws Exception {
-                                      listCB.commitFinished();
-                                  }
-                              });
+        listCB.commitFinished();
 
         super.finishCommit();
     }

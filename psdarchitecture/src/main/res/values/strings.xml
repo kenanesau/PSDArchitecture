@@ -13,4 +13,5 @@
     <string name="psdarch_ok">OK</string>
     <string name="psdarch_cancel">Cancel</string>
     <string name="psdarch_moving">moving…</string>
+    <string name="psdarch_searching">Searching…</string>
 </resources>

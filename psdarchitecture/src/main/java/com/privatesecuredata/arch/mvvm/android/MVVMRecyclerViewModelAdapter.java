@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.mvvm.android;
 
 import android.app.Activity;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -16,6 +17,7 @@ import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.db.query.QueryParameterCache;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.binder.TransientViewToVmBinder;
+import com.privatesecuredata.arch.mvvm.vm.EncapsulatedListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IDbBackedListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
@@ -26,6 +28,8 @@ import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+
+import io.reactivex.Observable;
 
 /**
  * ListAdapter to enable the display of ListViewModels based on a database cursor in an Android ListView
@@ -313,6 +317,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 
     public void onBindViewHolder(MVVMRecyclerViewModelAdapter.ViewHolder holder, int position) {
+        Log.i(getClass().getName(), "onBindViewHolder() start...");
         M model = null;
         isBinding = true;
 
@@ -326,6 +331,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
             manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
         }
         isBinding = false;
+        Log.i(getClass().getName(), "onBindViewHolder() finish...");
     }
 
     /**
@@ -358,6 +364,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
                     new Runnable() {
                         @Override
                         public void run() {
+                            Log.i(MVVMRecyclerViewModelAdapter.this.getClass().getName(), String.format(" redrawViews on: %s", Thread.currentThread().getName()));
                             MVVMRecyclerViewModelAdapter.this.notifyDataSetChanged();
                         }
                     }
@@ -402,6 +409,17 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         }
     }
 
+    @Override
+    public void loadData() {
+        if (null != this.data.db())
+            this.data.db().loadData();
+    }
+
+    @Override
+    public Observable<IListViewModel<M>> loadDataAsync() {
+        return (null != this.data.db()) ? this.data.db().loadDataAsync() : Observable.empty();
+    }
+
     public void setFilterParamId(String objFieldName)
     {
         this.queryParaCache.setFilterParamId(objFieldName);
@@ -429,7 +447,7 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 
     public void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator) {
-        redrawViews();
+        // do nothing in lists -- list-changes have to be comitted before the UI is redrawn
     }
 
     /**
