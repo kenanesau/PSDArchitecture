@@ -170,7 +170,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 			}
 			catch(Exception ex)
 			{
-				throw new MVVMException("Unable to load model (see inner exception for details)", ex); 
+				throw new MVVMException("Unable to load model (see inner exception for details)", ex);
 			}
 		}
 	}
@@ -550,7 +550,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     }
 
 	/**
-	 * (re)load all data from the Model to the ViewModel 
+	 * (re)load all data from the Model to the ViewModel
 	 */
 	public void reload() 
 	{
