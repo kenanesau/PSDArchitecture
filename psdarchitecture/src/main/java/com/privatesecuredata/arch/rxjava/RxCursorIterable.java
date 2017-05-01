@@ -48,7 +48,7 @@ public class RxCursorIterable<T extends IPersistable> implements Iterable<T> {
 
         @Override
         public boolean hasNext() {
-            return !_csr.isClosed() && !_csr.isLast();
+            return !_csr.isClosed() && !_csr.isLast() && _csr.getCount() > 0;
         }
 
         @Override

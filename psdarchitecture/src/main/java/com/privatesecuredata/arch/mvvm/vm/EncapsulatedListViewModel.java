@@ -227,6 +227,12 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
         load();
     }
 
+    @Override
+    public void reload() {
+        super.reload();
+        loadData();
+    }
+
     protected void setModelAccess(ComplexViewModel<?> model, Field modelField)
     {
         setModelGetter(model, modelField);

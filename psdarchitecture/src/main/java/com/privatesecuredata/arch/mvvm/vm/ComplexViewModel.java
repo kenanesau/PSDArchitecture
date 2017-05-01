@@ -537,8 +537,14 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         if (wasDirty) {
             this.commitData();
 
-            if (isGlobalNotifyEnabled())
-                getMVVM().notifyCommit(this);
+            if (isGlobalNotifyEnabled()) {
+                MVVM mvvm = getMVVM();
+                /** MVVM can be null if we have a VM which created otherwise
+                 * (e.g. CalculateReach-Dialog).
+                 */
+                if (null != mvvm)
+                    mvvm.notifyCommit(this);
+            }
 
             finishCommit();
         }
