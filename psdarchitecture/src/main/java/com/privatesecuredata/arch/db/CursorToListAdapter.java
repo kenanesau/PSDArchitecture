@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
@@ -46,6 +47,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     private CursorToListAdapterFilter filter;
     private String filteredParamId;
     private OrderByTerm[] sortOrderTerms;
+    private ReentrantLock lock = new ReentrantLock();
 
     /**
      * Counter for object which failed to load...
@@ -102,15 +104,18 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         } finally {
             if (null != oldCursor)
                 oldCursor.close();
-            listener.notifyDataChanged();
-            Log.i(CursorToListAdapter.this.getClass().getName(), "updateCursor() finish...");
+            //listener.notifyDataChanged();
         }
     }
 
     private void updateCursor() {
+        Log.i(getClass().getName(), "updateCursor started...");
+        lock.lock();
         Cursor oldCursor = csr;
         Cursor newCursor = doDbAction();
         notifyNewCursorChange(oldCursor, newCursor);
+        lock.unlock();
+        Log.i(getClass().getName(), "updateCursor finished...");
     }
 
 	private void updateCursorAsync() {
@@ -171,6 +176,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	public M get(int pos) {
         try {
             Log.i(getClass().getName(), "get() started...");
+            lock.lock();
             if (csr == null) return null;
             boolean retry = false;
             M obj;
@@ -211,6 +217,7 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
                 throw new DBException("Error loading data from cursor", e);
         }
         finally {
+            lock.unlock();
             Log.i(getClass().getName(), "get() finished...");
         }
     }
@@ -245,8 +252,14 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
 	public int size() {
-		return csr != null ? csr.getCount() - failedObjects : 0;
-	}
+        try {
+            lock.lock();
+            return csr != null ? csr.getCount() - failedObjects : 0;
+        }
+        finally {
+            lock.unlock();
+        }
+    }
 
     @Override
     public Observable<IModelListCallback<M>> loadModel() {
@@ -258,7 +271,8 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         /**
          * change the cursor -> send the new cursor to all listeners
          */
-		updateCursorAsync();
+
+        updateCursor();
     }
 
 	@Override
@@ -301,8 +315,14 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
 	public List<M> getList() {
-		return csr == null ? new ArrayList<M>() : pm.loadCursor(childClazz, csr);
-	}
+        try {
+            lock.lock();
+            return csr == null ? new ArrayList<M>() : pm.loadCursor(childClazz, csr);
+        }
+        finally {
+            lock.unlock();
+        }
+    }
 
     @Override
     public Filter getFilter() {

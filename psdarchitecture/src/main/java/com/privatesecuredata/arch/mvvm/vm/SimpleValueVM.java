@@ -11,6 +11,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
+
 /**
  * Class to encapsulate primitive values. All ComplexViewModels are composed of SimpleValueVMs
  * (+ other VMs)
@@ -161,7 +163,7 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	}
 
 	public void dispose() {}
-	
+
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(this.data); 

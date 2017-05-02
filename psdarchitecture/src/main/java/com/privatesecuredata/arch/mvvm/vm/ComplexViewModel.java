@@ -550,11 +550,6 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         }
     }
 
-    @CallSuper
-    protected void finishCommit() {
-        notifyModelChanged();
-    }
-
 	/**
 	 * (re)load all data from the Model to the ViewModel
 	 */

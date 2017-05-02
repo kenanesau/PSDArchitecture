@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.mvvm.android;
 
 import android.app.Activity;
+import android.os.Looper;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -324,11 +325,13 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         if (!isEmpty())
             model = position < data.size() ? data.get(position) : null;
 
-        holder.updateViews(this, model);
+        if (null != model) {
+            holder.updateViews(this, model);
 
-        /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
-        for (ViewManipulator manipulator : getManipulators()) {
-            manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
+            /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
+            for (ViewManipulator manipulator : getManipulators()) {
+                manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
+            }
         }
         isBinding = false;
         Log.i(getClass().getName(), "onBindViewHolder() finish...");
@@ -358,17 +361,25 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
         redrawViews();
     }
 
+    private void doUiUpdate() {
+        MVVMRecyclerViewModelAdapter.this.notifyDataSetChanged();
+    }
+
+
     protected void redrawViews() {
         if (!isBinding) {
-            ctx.runOnUiThread(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            Log.i(MVVMRecyclerViewModelAdapter.this.getClass().getName(), String.format(" redrawViews on: %s", Thread.currentThread().getName()));
-                            MVVMRecyclerViewModelAdapter.this.notifyDataSetChanged();
+            if (Looper.myLooper() == Looper.getMainLooper())
+                doUiUpdate();
+            else {
+                ctx.runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                doUiUpdate();
+                            }
                         }
-                    }
-            );
+                );
+            }
         }
     }
 

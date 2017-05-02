@@ -6,10 +6,15 @@ import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.Callable;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.ObservableTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
     /**
  * @author kenan
@@ -24,6 +29,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	private Collection<IModelChangedListener> modelChangeListeners = new ArrayList<IModelChangedListener>();
 	private boolean isDirty = false;
 	private MODEL model;
+    private String name;
 
     /**
 	 * Sets the model
@@ -110,6 +116,11 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
          * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
          * called from the main-thread...
          */
+
+        ViewModel.this.setClean();
+        for (IModelChangedListener listener : modelChangeListeners)
+            listener.notifyModelChanged(ViewModel.this, originator);
+        /**
         Observable.just(originator)
                 .subscribeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<IViewModel<?>>() {
@@ -120,7 +131,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
                                        listener.notifyModelChanged(ViewModel.this, vm);
                                }
                            });
-
+        */
     }
 
     /**
@@ -148,9 +159,54 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	public void commit() 
 	{
         if (this.isDirty()) {
+            this.startCommit();
             this.commitData();
-            this.notifyModelChanged();
+            this.finishCommit();
         }
+	}
+
+    public <M extends IViewModel<MODEL>> ObservableTransformer<M, M> applyCommit() {
+        return new ObservableTransformer<M, M> () {
+
+            @Override
+            public ObservableSource<M> apply(Observable<M> upstream) {
+                return upstream.map(new Function<M, M>() {
+                    @Override
+                    public M apply(M vm) throws Exception {
+                        if (vm.isDirty()) {
+                            ((ViewModel)vm).startCommit();
+                            ((ViewModel)vm).commitData();
+                        }
+                        return vm;
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Function<M, M>() {
+                    @Override
+                    public M apply(M vm) throws Exception {
+                        ((ViewModel)vm).finishCommit();
+                        return vm;
+                    }
+                });
+            }
+        };
+    }
+
+    protected void startCommit() {}
+    protected void finishCommit() {
+        notifyModelChanged();
+    }
+
+	@Override
+	public <M extends IViewModel<MODEL>> Observable<M> commitAsync() {
+		return Observable.defer(new Callable<ObservableSource<M>>() {
+            @Override
+            public ObservableSource<M> call() throws Exception {
+                return Observable.just((M)ViewModel.this);
+            }
+        })
+        .compose(applyCommit());
 	}
 	
 	/**
@@ -163,4 +219,8 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	public abstract boolean equals(Object o);
 	@Override
 	public abstract String toString();
+
+    public String getName() {
+        return this.model != null ? model.getClass().getName() : "";
+    }
 }

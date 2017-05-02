@@ -3,6 +3,9 @@ package com.privatesecuredata.arch.mvvm.vm;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
+
 /**
  * Interface, implemented by all ViewModels
  * 
@@ -36,6 +39,8 @@ public interface IViewModel<MODEL> extends IViewModelChangedListener, IModelChan
 	 * and the VM are guaranteed to be the same
 	 */
 	void commit();
+    <M extends IViewModel<MODEL>> ObservableTransformer<M, M> applyCommit();
+    <M extends IViewModel<MODEL>> Observable<M> commitAsync();
 	
 	/**
 	 * reload data from Model to ViewModel

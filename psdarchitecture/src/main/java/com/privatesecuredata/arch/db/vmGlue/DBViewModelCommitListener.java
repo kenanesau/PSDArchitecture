@@ -19,18 +19,7 @@ public class DBViewModelCommitListener implements IViewModelCommitListener {
 	public void notifyCommit(IViewModel<?> vm) {
 
         if (vm instanceof IListViewModel) {
-            if (vm instanceof EncapsulatedListViewModel) {
-                EncapsulatedListViewModel listVM = (EncapsulatedListViewModel)vm;
-
-                /**
-                 *
-                 * The Parent-VM of the listVM does not need to be dirty because
-                 * it is sufficient if the listVM is dirty -> this will save all changed
-                 * of the list and then the state of the parent will be updated too.
-                 **/
-
-                listVM.save();
-            }
+            /** DO nothing -> is done in list-CB **/
         } else if (vm instanceof ComplexViewModel) {
             Object obj = vm.getModel();
             PersistanceManager pm = MVVM.getCfgObj(((ComplexViewModel)vm).getMVVM());

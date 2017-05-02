@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
@@ -96,6 +97,7 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 	private Constructor vmConstructor;
 	private IModelListCallback<M> listCB;
     private boolean dataLoaded = false;
+    private ReentrantLock mtx = new ReentrantLock();
 
 	private HashMap<Integer, ComplexViewModel<M>> positionToViewModel = new HashMap<Integer, ComplexViewModel<M>>();
 
@@ -173,9 +175,10 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
         this.listCB.registerForDataChange(new IDataChangedListener() {
             @Override
             public void notifyDataChanged() {
-                /** Tell the ListAdapter to update the View **/
                 dataLoaded = true;
-                EncapsulatedListViewModel.this.notifyModelChanged();
+                //
+                /** Tell the ListAdapter to update the View **/
+                //EncapsulatedListViewModel.this.notifyModelChanged();
             }
         });
 		this.referencedType = referencedType;
@@ -416,23 +419,13 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
     }
 
     @Override
-    protected void finishCommit() {
-
-        /**
-         * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
-         * called from the main-thread...
-         */
-        listCB.commitFinished();
-
-        super.finishCommit();
-    }
-
-    @Override
 	public void commitData() {
 		if (!this.isDirty())
 			return;
 
         try {
+            try {
+                mtx.lock();
             /**
              * It can happen that we have made changes without getting the cursor before
              * (eg. add without reading before)
@@ -492,6 +485,17 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
             }
 
             this.setClean();
+
+            /**
+             * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
+             * called from the main-thread...
+             */
+                save();
+                listCB.commitFinished();
+            }
+            finally {
+                mtx.unlock();
+            }
         }
         catch (Exception e) {
             throw new MVVMException("Error committing list!", e);
@@ -580,26 +584,31 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 
     @Override
     public void notifyModelChanged(IViewModel<?> changedViewModel, IViewModel<?> originator) {
-        Object model = changedViewModel.getModel();
-        /**
-         * If the originator is an EncapsulatedListViewModel this is the load()-operation
-         */
-        if ( (null != model) && !(originator instanceof EncapsulatedListViewModel) )
-        {
-            if (model.getClass().equals(referencedType))
-            {
-                /**
-                 * childVM-was comitted -> reload the cursor...
-                 */
-                listCB.init(referencingType, getParentModel(), referencedType);
 
-                /**
-                 * Clear the list since the postition might have changed
-                 */
-                positionToViewModel.clear();
+        try {
+            mtx.lock();
+            Object model = changedViewModel.getModel();
+            /**
+             * If the originator is an EncapsulatedListViewModel this is the load()-operation
+             */
+            if ((null != model) && !(originator instanceof EncapsulatedListViewModel)) {
+                if (model.getClass().equals(referencedType)) {
+                    /**
+                     * childVM-was comitted -> reload the cursor...
+                     */
+                    listCB.init(referencingType, getParentModel(), referencedType);
+
+                    /**
+                     * Clear the list since the postition might have changed
+                     */
+                    positionToViewModel.clear();
+                }
             }
+            super.notifyModelChanged(changedViewModel, originator);
         }
-        super.notifyModelChanged(changedViewModel, originator);
+        finally {
+            mtx.unlock();
+        }
     }
 
     public String getFilteredColumn()
