@@ -5,6 +5,7 @@ import android.content.res.Resources;
 import android.support.annotation.CallSuper;
 
 import com.google.common.base.MoreObjects;
+import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
@@ -374,6 +375,11 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             }
         }
 
+        if (m instanceof IPersistable)
+        {
+            if (((IPersistable) m).getDbId() == null)
+                setDirty();
+        }
         doMappings(childViewModels);
 		return childViewModels;
 	}

@@ -7,6 +7,7 @@ import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
@@ -30,6 +31,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	private boolean isDirty = false;
 	private MODEL model;
     private String name;
+    private ReentrantLock vmLock = new ReentrantLock();
 
     /**
 	 * Sets the model
@@ -42,34 +44,58 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 
 	@Override
 	public void addViewModelListener(IViewModelChangedListener listener) {
-        if (listener == this)
-            throw new ArgumentException("Cannot register viewmodel-listener with itself!!!");
+        try {
+            vmLock.lock();
+            if (listener == this)
+                throw new ArgumentException("Cannot register viewmodel-listener with itself!!!");
 
-		if (null != listener)
-			this.viewModelChangeListeners.add(listener);
-	}
+            if (null != listener)
+                this.viewModelChangeListeners.add(listener);
+        }
+        finally {
+            vmLock.unlock();
+        }
+    }
 
 	@Override
 	public void delViewModelListener(IViewModelChangedListener listener)
 	{
-		this.viewModelChangeListeners.remove(listener);
-	}
+        try {
+            vmLock.lock();
+            this.viewModelChangeListeners.remove(listener);
+        }
+        finally {
+            vmLock.unlock();
+        }
+    }
 
 	@Override
 	public void addModelListener(IModelChangedListener listener) {
-        if (listener == this)
-            throw new ArgumentException("Cannot register model-listener with itself!!!");
+        try {
+            vmLock.lock();
+            if (listener == this)
+                throw new ArgumentException("Cannot register model-listener with itself!!!");
 
-		if (null != listener)
-			this.modelChangeListeners.add(listener);
+            if (null != listener)
+                this.modelChangeListeners.add(listener);
+        }
+        finally {
+            vmLock.unlock();
+        }
 	}
 
 	@Override
 	public void delModelListener(IModelChangedListener listener)
 	{
-		if (null != listener)
-			this.modelChangeListeners.remove(listener);
-	}
+        try {
+            vmLock.lock();
+            if (null != listener)
+                this.modelChangeListeners.remove(listener);
+        }
+        finally {
+            vmLock.unlock();
+        }
+    }
 
 	@Override
 	public void addListeners(IViewModelChangedListener vmListener, IModelChangedListener modelListener)
@@ -87,10 +113,16 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 
 	protected void notifyChangeListeners(IViewModel<?> vm, IViewModelChangedListener originator)
 	{
-		this.setDirty();
-		for(IViewModelChangedListener listener : viewModelChangeListeners)
-			if (originator != listener) listener.notifyViewModelDirty(this, originator);
-	}
+        try {
+            vmLock.lock();
+            this.setDirty();
+            for (IViewModelChangedListener listener : viewModelChangeListeners)
+                if (originator != listener) listener.notifyViewModelDirty(this, originator);
+        }
+        finally {
+            vmLock.unlock();
+        }
+    }
 
     @Override
     public void notifyViewModelDirty(IViewModel<?> changedViewModel, IViewModelChangedListener originator)
@@ -112,26 +144,32 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
     @Override
     public void notifyModelChanged(IViewModel<?> changedViewModel, IViewModel<?> originator)
     {
-        /**
-         * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
-         * called from the main-thread...
-         */
+        try {
+            vmLock.lock();
+            /**
+             * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
+             * called from the main-thread...
+             */
 
-        ViewModel.this.setClean();
-        for (IModelChangedListener listener : modelChangeListeners)
-            listener.notifyModelChanged(ViewModel.this, originator);
-        /**
-        Observable.just(originator)
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<IViewModel<?>>() {
-                               @Override
-                               public void accept(IViewModel<?> vm) throws Exception {
-                                   ViewModel.this.setClean();
-                                   for (IModelChangedListener listener : modelChangeListeners)
-                                       listener.notifyModelChanged(ViewModel.this, vm);
-                               }
-                           });
-        */
+            ViewModel.this.setClean();
+            for (IModelChangedListener listener : modelChangeListeners)
+                listener.notifyModelChanged(ViewModel.this, originator);
+            /**
+            Observable.just(originator)
+                    .subscribeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<IViewModel<?>>() {
+                                   @Override
+                                   public void accept(IViewModel<?> vm) throws Exception {
+                                       ViewModel.this.setClean();
+                                       for (IModelChangedListener listener : modelChangeListeners)
+                                           listener.notifyModelChanged(ViewModel.this, vm);
+                                   }
+                               });
+            */
+        }
+        finally {
+            vmLock.unlock();
+        }
     }
 
     /**

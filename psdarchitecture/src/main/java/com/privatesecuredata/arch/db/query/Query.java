@@ -15,6 +15,7 @@ import com.privatesecuredata.arch.exceptions.ArgumentException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by kenan on 1/29/16.
@@ -30,6 +31,7 @@ public class Query<T> {
     private OrderByTerm[] orderByTerms;
     private IPersistable foreignKeyPersistable;
     private String foreignKeyParaId;
+    private ReentrantLock mtx = new ReentrantLock();
 
     public Query(String id) {
         this.queryId = id;
@@ -98,19 +100,23 @@ public class Query<T> {
     }
 
     public void setForeignKeyParameter(IPersistable value) {
-        if (value == null)
-            throw new ArgumentException("Parameter 'value' must not be null");
+        try {
+            mtx.lock();
+            if (value == null)
+                throw new ArgumentException("Parameter 'value' must not be null");
 
-        if (value.getDbId() != null) {
-            setForeignKeyParameter(value.getDbId());
-            foreignKeyPersistable = null;
-        }
-        else {
-            this.foreignKeyPersistable = value;
-            if (foreignKeyParaId != null) {
-                params.get(foreignKeyParaId).setValue(-1);
-                foreignKeyParaId = null;
+            if (value.getDbId() != null) {
+                setForeignKeyParameter(value.getDbId());
+                foreignKeyPersistable = null;
+            } else {
+                this.foreignKeyPersistable = value;
+                if (foreignKeyParaId != null) {
+                    params.get(foreignKeyParaId).setValue(-1);
+                    foreignKeyParaId = null;
+                }
             }
+        } finally {
+            mtx.unlock();
         }
     }
 
@@ -151,28 +157,34 @@ public class Query<T> {
      * @return Cursor with results
      */
     public Cursor run(OrderByTerm[] order) {
-        String[] args = new String[params.size()];
-        int i=0;
-        StringBuilder sb = new StringBuilder(this.sql);
+        try {
+            mtx.lock();
 
-        sb = AbstractPersister.appendOrderByString(sb, order);
+            String[] args = new String[params.size()];
+            int i = 0;
+            StringBuilder sb = new StringBuilder(this.sql);
 
-        if (foreignKeyPersistable != null) {
+            sb = AbstractPersister.appendOrderByString(sb, order);
+
+            if (foreignKeyPersistable != null) {
             /* If the fk-persistable is not saved to the DB yet */
-            if (foreignKeyPersistable.getDbId() == null)
-                return null;
-        }
+                if (foreignKeyPersistable.getDbId() == null)
+                    return null;
+            }
 
-        for(QueryParameter para : params.values())
-        {
-            if (null == para.value())
-                throw new ArgumentException(String.format(
-                        "Running query \"%s\" Parameter with ID \"%s\" has no value. SQL: '%s'",
-                        id(), para.id(), sb.toString()));
+            for (QueryParameter para : params.values()) {
+                if (null == para.value())
+                    throw new ArgumentException(String.format(
+                            "Running query \"%s\" Parameter with ID \"%s\" has no value. SQL: '%s'",
+                            id(), para.id(), sb.toString()));
 
-            args[i++] = para.getDbString();
+                args[i++] = para.getDbString();
+            }
+            return this.db.rawQuery(sb.toString(), args);
         }
-        return this.db.rawQuery(sb.toString(), args);
+        finally {
+            mtx.unlock();
+        }
     }
 
     /**
