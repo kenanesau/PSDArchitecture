@@ -27,6 +27,10 @@ import com.privatesecuredata.arch.mvvm.vm.IWidgetValueAccessor;
 import com.privatesecuredata.arch.mvvm.vm.IWidgetValueReceiver;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+
 /**
  * Objects of this type can be used to establish a binding between a View and a corresponding
  * SimpleViewModel.
@@ -390,10 +394,21 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 
             vmUpdatesView = true;
             if (null != vm)
-                this.writeViewCmd.set(this.view, this.getVM().get());
+                writeDataToView();
             vmUpdatesView=false;
         }
 	}
+
+	private void writeDataToView() {
+        Observable.just(this)
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<ViewToVmBinder<T>>() {
+                    @Override
+                    public void accept(ViewToVmBinder<T> binder) throws Exception {
+                        ViewToVmBinder.this.writeViewCmd.set(binder.view, binder.getVM().get());
+                    }
+                });
+    }
 
     public void updateVM()
     {
@@ -403,7 +418,7 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 	@Override
 	public void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator)
 	{
-        this.writeViewCmd.set(this.view, this.getVM().get());
+		writeDataToView();
 	}
 
 	protected Activity getActivity(View view) {
