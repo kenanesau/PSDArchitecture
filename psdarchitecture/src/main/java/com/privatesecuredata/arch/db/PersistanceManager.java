@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Environment;
 import android.util.Log;
 import android.util.Pair;
 
@@ -601,10 +602,11 @@ public class PersistanceManager {
                        oldPm.close();
 
                     try {
-                        File filesDir = ctx.getExternalFilesDir(null);
+                        File filesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                        //File filesDir = ctx.getFilesDir(); //getExternalFilesDir(null);
 
                         if (null == filesDir) {
-                            Log.w(getClass().getName(), "Unable to write DB backup! No external files directory!!!");
+                            Log.w(getClass().getName(), "Unable to write DB backup! No Documents directory!!!");
                         }
                         else {
                             File backupOldDbFile = new File(filesDir, oldDescription.getName());
