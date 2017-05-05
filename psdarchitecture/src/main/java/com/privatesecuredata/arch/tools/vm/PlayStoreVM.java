@@ -48,6 +48,7 @@ public class PlayStoreVM extends ComplexViewModel {
                     _lstSkuDetails.put(sku, vm);
                     registerChildVM(vm);
                 }
+                notifyModelChanged();
             }
         }
     };

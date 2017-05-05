@@ -1,11 +1,14 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import android.database.Cursor;
 import android.util.SparseArray;
 import android.widget.Filter;
 import android.widget.Filterable;
 
 import com.privatesecuredata.arch.db.CursorToListAdapter;
 import com.privatesecuredata.arch.db.DbId;
+import com.privatesecuredata.arch.db.ICursorChangedListener;
+import com.privatesecuredata.arch.db.ICursorChangedProvider;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
@@ -26,6 +29,7 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
@@ -44,9 +48,8 @@ import io.reactivex.schedulers.Schedulers;
 public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
                                                                     implements IListViewModel<M>,
                                                                     IDbBackedListViewModel,
-                                                                    Filterable
+                                                                    Filterable, ICursorChangedListener
 {
-
     /**
 	 * Interface which encapsulates the list representation (eg. a DB-Cursor)
 	 * 
@@ -72,6 +75,8 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
         Filter getFilter();
         String getFilteredParamId();
         void setFilterParamId(String filteredColumn);
+
+        void registerForDataChange(IDataChangedListener provider);
 
         void setQuery(String queryId);
         void setQuery(Query query);
@@ -170,6 +175,15 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 		super(mvvm);
         this.referencingType = referencingType;
 		this.listCB = listCB;
+        this.listCB.registerForDataChange(new IDataChangedListener() {
+            @Override
+            public void notifyDataChanged() {
+                dataLoaded = true;
+
+                /** Tell the ListAdapter to update the View **/
+                EncapsulatedListViewModel.this.notifyModelChanged();
+            }
+        });
 		this.referencedType = referencedType;
 		this.vmType = vmType;
 		
@@ -552,6 +566,34 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
         }
         finally {
             mtx.unlock();
+        }
+    }
+
+    /**
+     * Needed when the cursor is changed by someone else (e.g. BG-Search).
+     *
+     * This is not called when EncapsulatedListVM changes the cursor itself
+     * @param csr
+     * @throws IllegalAccessException
+     */
+    @Override
+    public void notifyCursorChanged(Cursor csr) throws IllegalAccessException {
+
+        if (dataLoaded) {
+            Observable.defer(new Callable<ObservableSource<? extends Cursor>>() {
+                @Override
+                public ObservableSource<? extends Cursor> call() throws Exception {
+                    return Observable.just(csr);
+                }
+            })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new Consumer<Cursor>() {
+                @Override
+                public void accept(Cursor cursor) throws Exception {
+                    EncapsulatedListViewModel.this.notifyModelChanged();
+                }
+            });
         }
     }
 

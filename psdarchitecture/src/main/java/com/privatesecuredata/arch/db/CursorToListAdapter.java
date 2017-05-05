@@ -33,11 +33,12 @@ import io.reactivex.schedulers.Schedulers;
  *
  * @param <M>
  */
-public class CursorToListAdapter<M extends IPersistable> implements IModelListCallback<M>, ICursorChangedProvider
+public class CursorToListAdapter<M extends IPersistable> implements IModelListCallback<M>
 {
 	private PersistanceManager pm;
 	private Cursor csr;
     private Query query;
+    private IDataChangedListener listener;
 	private IPersister<M> persister;
 	private Class<?> parentClazz;
 	private IPersistable parent;
@@ -45,9 +46,10 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	private List<ICursorChangedListener> csrListeners = new ArrayList<ICursorChangedListener>();
     private CursorToListAdapterFilter filter;
     private String filteredParamId;
+    private IDataChangedListener externalChangeListener;
     private OrderByTerm[] sortOrderTerms;
-    private ReentrantLock lock = new ReentrantLock();
 
+    private ReentrantLock lock = new ReentrantLock();
     /**
      * Counter for object which failed to load...
      */
@@ -346,19 +348,13 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
             this.csr = newCursor;
 
-            for (ICursorChangedListener listener : this.csrListeners) {
-                listener.notifyCursorChanged(csr);
-            }
-        }
-        catch (Exception e) {
-            throw new DBException("Error changing cursor!", e);
+            notifyNewCursorChange(oldCursor, newCursor);
         } finally {
-            if (null != oldCursor)
-                oldCursor.close();
-
             lock.unlock();
         }
 
+        if (null != externalChangeListener)
+            externalChangeListener.notifyDataChanged();
     }
 
     public String getFilteredParamId() {
@@ -368,6 +364,11 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     public void setFilterParamId(String filteredColumn)
     {
         this.filteredParamId = filteredColumn;
+    }
+
+    @Override
+    public void registerForDataChange(IDataChangedListener listener) {
+        externalChangeListener = listener;
     }
 
     @Override

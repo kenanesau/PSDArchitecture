@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.shop;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,7 +31,7 @@ public class SkuListFragment extends MVVMFragment
 			implements OnItemClickListener, OnItemLongClickListener, OnCreateContextMenuListener
 {
     public static final String TAG_SHOP = "tag_shop_uuid";
-    private Activity attachedActivity;
+    private Context attachedActivity;
     private ViewModelListAdapter adapter;
     private AbsListView lstView;
     private IListViewModel<SkuDetails> listVM;
@@ -86,7 +87,7 @@ public class SkuListFragment extends MVVMFragment
 	}
 
     @Override
-	public void onAttach(Activity activity) {
+	public void onAttach(Context activity) {
 		if (activity instanceof SkuListFragment.OnSkuClickedListener)
 			this.attachedActivity = activity;
 		else
@@ -105,11 +106,8 @@ public class SkuListFragment extends MVVMFragment
                 playStoreVM = DataHive.getInstance().get(uuid);
             }
         }
-        MVVM mvvm = getMVVMActivity().getDefaultPM().createMVVM();
-
         MVVMComplexVmAdapterTemplate mappingTemplate = new SkuListRowAdapterTemplate();
         adapter = new ViewModelListAdapter(mappingTemplate, playStoreVM.getSkuList(), getMVVMActivity());
-
         adapter.setRowViewId(R.layout.psdarch_sku_details_long);
 	}
 
