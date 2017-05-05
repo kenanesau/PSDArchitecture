@@ -73,8 +73,6 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
         String getFilteredParamId();
         void setFilterParamId(String filteredColumn);
 
-        void registerForDataChange(IDataChangedListener provider);
-
         void setQuery(String queryId);
         void setQuery(Query query);
         void where(String id, Object value);
@@ -172,15 +170,6 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 		super(mvvm);
         this.referencingType = referencingType;
 		this.listCB = listCB;
-        this.listCB.registerForDataChange(new IDataChangedListener() {
-            @Override
-            public void notifyDataChanged() {
-                dataLoaded = true;
-                //
-                /** Tell the ListAdapter to update the View **/
-                //EncapsulatedListViewModel.this.notifyModelChanged();
-            }
-        });
 		this.referencedType = referencedType;
 		this.vmType = vmType;
 		
@@ -296,20 +285,32 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 
     public <VM extends IViewModel> boolean add(VM vm)
     {
-        if (null == newVMs)
-            newVMs = new ArrayList<ComplexViewModel>();
+        try {
+            mtx.lock();
+            if (null == newVMs)
+                newVMs = new ArrayList<ComplexViewModel>();
 
-        vm.addViewModelListener(this);
-        this.newVMs.add((ComplexViewModel)vm);
-        notifyViewModelDirty();
-        return true;
+            vm.addViewModelListener(this);
+            this.newVMs.add((ComplexViewModel) vm);
+            notifyViewModelDirty();
+            return true;
+        }
+        finally {
+            mtx.unlock();
+        }
     }
 
 	public boolean add(M object) {
-		boolean ret = newItems.add(object);
-        notifyViewModelDirty();
-		return ret;
-	}
+        try {
+            mtx.lock();
+            boolean ret = newItems.add(object);
+            notifyViewModelDirty();
+            return ret;
+        }
+        finally {
+            mtx.unlock();
+        }
+    }
 
     @Override
     public boolean addAll(IListViewModel<M> list) {
@@ -317,30 +318,54 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
     }
 
     public void add(int location, M object) {
-		newItems.add(location, object);
-        notifyViewModelDirty();
-	}
+        try {
+            mtx.lock();
+            newItems.add(location, object);
+            notifyViewModelDirty();
+        }
+        finally {
+            mtx.unlock();
+        }
+    }
 
 	public boolean addAll(Collection<? extends M> arg0) {
-		boolean ret = newItems.addAll(arg0);
-        notifyViewModelDirty();
-		return ret;
-	}
+        try {
+            mtx.lock();
+            boolean ret = newItems.addAll(arg0);
+            notifyViewModelDirty();
+            return ret;
+        }
+        finally {
+            mtx.unlock();
+        }
+    }
 
 	public boolean addAll(int arg0, Collection<? extends M> arg1) {
-		boolean ret = newItems.addAll(arg1);
-        notifyViewModelDirty();
-		return ret;
-	}
+        try {
+            mtx.lock();
+            boolean ret = newItems.addAll(arg1);
+            notifyViewModelDirty();
+            return ret;
+        }
+        finally {
+            mtx.unlock();
+        }
+    }
 
 	public M get(int pos) {
-        load();
-        M ret = dirtyItems.get(pos);
-        if (null == ret)
-		    ret = listCB.get(pos);
+        try {
+            mtx.lock();
+            load();
+            M ret = dirtyItems.get(pos);
+            if (null == ret)
+                ret = listCB.get(pos);
 
-        return ret;
-	}
+            return ret;
+        }
+        finally {
+            mtx.unlock();
+        }
+    }
 
     @Override
     public DbId getDbId(int pos) {
@@ -348,39 +373,60 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
     }
 
     public boolean isEmpty() {
-		load();
-        return ( (listCB.size()==0) && (this.newItems.size()==0) );
-	}
+        try {
+            mtx.lock();
+            load();
+            return ((listCB.size() == 0) && (this.newItems.size() == 0));
+        }
+        finally {
+            mtx.unlock();
+        }
+    }
 
 	public boolean remove(M object) {
-        load();
-		boolean ret = deletedItems.add((M) object);
-        notifyViewModelDirty();
-		return ret;
-	}
+        try {
+            mtx.lock();
+            load();
+            boolean ret = deletedItems.add((M) object);
+            notifyViewModelDirty();
+            return ret;
+        }
+        finally {
+            mtx.unlock();
+        }
+    }
 
     public M remove(int location) {
-        load();
-        M item = get(location);
-        if (remove(item)) {
-            notifyViewModelDirty();
-            return item;
+        try {
+            mtx.lock();
+            load();
+            M item = get(location);
+            if (remove(item)) {
+                notifyViewModelDirty();
+                return item;
+            } else {
+                return null;
+            }
         }
-        else
-        {
-            return null;
+        finally {
+            mtx.unlock();
         }
     }
 
     public void clear() {
-        load();
-        for (int i=0; i<listCB.size(); i++)
-        {
-            deletedItems.add(listCB.get(i));
+        try {
+            mtx.lock();
+            load();
+            for (int i = 0; i < listCB.size(); i++) {
+                deletedItems.add(listCB.get(i));
+            }
+            newItems.clear();
+            dirtyItems.clear();
+            notifyViewModelDirty();
         }
-        newItems.clear();
-        dirtyItems.clear();
-        notifyViewModelDirty();
+        finally {
+            mtx.unlock();
+        }
     }
 
     public boolean removeAll(Collection<?> arg0) {
@@ -403,20 +449,27 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 	}
 
     public int dirtySize() {
-        int ret = listCB.size() + newItems.size() - deletedItems.size();
+        try {
+            mtx.lock();
+            int ret = listCB.size() + newItems.size() - deletedItems.size();
 
-        return (newVMs != null) ? ret + newVMs.size() : ret;
+            return (newVMs != null) ? ret + newVMs.size() : ret;
+        }
+        finally {
+            mtx.unlock();
+        }
     }
 
 	@Override
 	public boolean isDirty() {
-		return ( (newItems.size()>0) || (deletedItems.size()>0) || super.isDirty());
-	};
-
-    @Override
-    public void startCommit() {
-        super.startCommit();
-    }
+        try {
+            mtx.lock();
+            return ( (newItems.size()>0) || (deletedItems.size()>0) || super.isDirty());
+        }
+        finally {
+            mtx.unlock();
+        }
+    };
 
     @Override
 	public void commitData() {
@@ -424,8 +477,7 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 			return;
 
         try {
-            try {
-                mtx.lock();
+            mtx.lock();
             /**
              * It can happen that we have made changes without getting the cursor before
              * (eg. add without reading before)
@@ -490,19 +542,20 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
              * Update of Adapter data-source and the appropriate notifyDataSetchanged have to be
              * called from the main-thread...
              */
-                save();
-                listCB.commitFinished();
-            }
-            finally {
-                mtx.unlock();
-            }
+            save();
+            listCB.commitFinished();
+            dataLoaded = true;
+
         }
         catch (Exception e) {
             throw new MVVMException("Error committing list!", e);
         }
+        finally {
+            mtx.unlock();
+        }
     }
 
-    public void save()
+    private void save()
     {
         load();
         for (Iterator<M> iterator = deletedItems.iterator(); iterator.hasNext();) {
@@ -533,6 +586,7 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 		VM vm = null;
 		
 		try {
+            mtx.lock();
 			if (hasViewModel(pos))
 				return (VM)positionToViewModel.get(pos);
 			else
@@ -553,13 +607,22 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
 		{
 			throw new ArgumentException("Unable to create ViewModel-object", ex);			
 		}
+		finally {
+            mtx.unlock();
+        }
 
 		return vm;
 	}
 
     @Override
     public boolean hasViewModel(int pos) {
-        return positionToViewModel.containsKey(pos);
+        try {
+            mtx.lock();
+            return positionToViewModel.containsKey(pos);
+        }
+        finally {
+            mtx.unlock();
+        }
     }
 
     @Override

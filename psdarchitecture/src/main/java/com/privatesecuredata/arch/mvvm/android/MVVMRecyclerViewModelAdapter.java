@@ -318,23 +318,19 @@ public class MVVMRecyclerViewModelAdapter<M, COMPLEXVM extends IViewModel> exten
     }
 
     public void onBindViewHolder(MVVMRecyclerViewModelAdapter.ViewHolder holder, int position) {
-        Log.i(getClass().getName(), "onBindViewHolder() start...");
         M model = null;
         isBinding = true;
 
         if (!isEmpty())
             model = position < data.size() ? data.get(position) : null;
 
-        if (null != model) {
-            holder.updateViews(this, model);
+        holder.updateViews(this, model);
 
-            /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
-            for (ViewManipulator manipulator : getManipulators()) {
-                manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
-            }
+        /** Search for View-IDs of the views to manipulate and register them with the viewholder **/
+        for (ViewManipulator manipulator : getManipulators()) {
+            manipulator.manipulate(position, model, holder.getRowView(), holder.getParentView());
         }
         isBinding = false;
-        Log.i(getClass().getName(), "onBindViewHolder() finish...");
     }
 
     /**

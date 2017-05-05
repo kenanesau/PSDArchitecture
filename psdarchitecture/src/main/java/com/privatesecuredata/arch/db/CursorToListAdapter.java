@@ -38,7 +38,6 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 	private PersistanceManager pm;
 	private Cursor csr;
     private Query query;
-    private IDataChangedListener listener;
 	private IPersister<M> persister;
 	private Class<?> parentClazz;
 	private IPersistable parent;
@@ -104,46 +103,19 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         } finally {
             if (null != oldCursor)
                 oldCursor.close();
-            //listener.notifyDataChanged();
         }
     }
 
     private void updateCursor() {
-        Log.i(getClass().getName(), "updateCursor started...");
-        lock.lock();
-        Cursor oldCursor = csr;
-        Cursor newCursor = doDbAction();
-        notifyNewCursorChange(oldCursor, newCursor);
-        lock.unlock();
-        Log.i(getClass().getName(), "updateCursor finished...");
-    }
-
-	private void updateCursorAsync() {
-        Log.i(getClass().getName(), "updateCursor() start...");
-        Cursor oldCursor = csr;
-        if ( (null == query) && (parent != null) && ((IPersistable)parent).getDbId() == null)
-            return;
-
-        Observable.defer(new Callable<ObservableSource<? extends Cursor>>() {
-            @Override
-            public ObservableSource<? extends Cursor> call() throws Exception {
-                Cursor newCursor = doDbAction();
-
-                if (newCursor==null)
-                    throw new Exception();
-
-                return Observable.just(newCursor);
-            }
-        })
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(new Consumer<Cursor>() {
-            @Override
-            public void accept(Cursor newCursor) throws Exception {
-                CursorToListAdapter.this.notifyNewCursorChange(oldCursor, newCursor);
-            }
-        });
-
+        try {
+            lock.lock();
+            Cursor oldCursor = csr;
+            Cursor newCursor = doDbAction();
+            notifyNewCursorChange(oldCursor, newCursor);
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
 	public Cursor getCursor() { return this.csr; }
@@ -175,7 +147,6 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     @Override
 	public M get(int pos) {
         try {
-            Log.i(getClass().getName(), "get() started...");
             lock.lock();
             if (csr == null) return null;
             boolean retry = false;
@@ -218,36 +189,47 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
         }
         finally {
             lock.unlock();
-            Log.i(getClass().getName(), "get() finished...");
         }
     }
     public long getPosition(DbId dbId) {
-        if (csr == null)
-            return -1;
+        try {
+            lock.lock();
+            if (csr == null)
+                return -1;
 
-        long pos = -1;
-        long id = dbId.getId();
-        csr.moveToFirst();
-        long i = 0;
-        do {
-            if (id==csr.getLong(0)) {
-                pos = i;
-                break;
-            }
-            i++;
-        } while (csr.moveToNext());
+            long pos = -1;
+            long id = dbId.getId();
+            csr.moveToFirst();
+            long i = 0;
+            do {
+                if (id == csr.getLong(0)) {
+                    pos = i;
+                    break;
+                }
+                i++;
+            } while (csr.moveToNext());
 
-        return pos;
+            return pos;
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public DbId getDbId(int pos) {
-        if (null == csr)
-            return null;
+        try {
+            lock.lock();
+            if (null == csr)
+                return null;
 
-        csr.moveToPosition(pos);
-        DbId dbId = new DbId(this.childClazz, csr.getLong(0));
-        return dbId;
+            csr.moveToPosition(pos);
+            DbId dbId = new DbId(this.childClazz, csr.getLong(0));
+            return dbId;
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -333,45 +315,50 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     }
 
     public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
-        Cursor csr;
+        try {
+            lock.lock();
+            Cursor csr;
 
-        if (null == query) {
-            if (this.sortOrderTerms != null)
-                csr = persister.getFilteredCursor(DbNameHelper.getSimpleFieldName(getFilteredParamId()),
-                        constraint, sortOrderTerms);
-            else
-                csr = persister.getFilteredCursor(DbNameHelper.getSimpleFieldName(getFilteredParamId()),
-                        constraint);
+            if (null == query) {
+                if (this.sortOrderTerms != null)
+                    csr = persister.getFilteredCursor(DbNameHelper.getSimpleFieldName(getFilteredParamId()),
+                            constraint, sortOrderTerms);
+                else
+                    csr = persister.getFilteredCursor(DbNameHelper.getSimpleFieldName(getFilteredParamId()),
+                            constraint);
+            } else {
+                query.setParameter(getFilteredParamId(), constraint);
+                csr = query.run();
+            }
+            return csr;
         }
-        else
-        {
-            query.setParameter(getFilteredParamId(), constraint);
-            csr = query.run();
+        finally {
+            lock.unlock();
         }
-        return csr;
     }
 
     public void changeCursor(Cursor newCursor)
     {
-        Cursor oldCursor = this.csr;
-
-        this.csr = newCursor;
-
+        Cursor oldCursor = null;
         try {
+            lock.lock();
+            oldCursor = this.csr;
+
+            this.csr = newCursor;
+
             for (ICursorChangedListener listener : this.csrListeners) {
                 listener.notifyCursorChanged(csr);
             }
-
-            if (listener != null)
-                listener.notifyDataChanged();
         }
-        catch(Exception e) {
+        catch (Exception e) {
             throw new DBException("Error changing cursor!", e);
-        }
-        finally {
+        } finally {
             if (null != oldCursor)
                 oldCursor.close();
+
+            lock.unlock();
         }
+
     }
 
     public String getFilteredParamId() {
@@ -381,11 +368,6 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
     public void setFilterParamId(String filteredColumn)
     {
         this.filteredParamId = filteredColumn;
-    }
-
-    @Override
-    public void registerForDataChange(IDataChangedListener listener) {
-        this.listener = listener;
     }
 
     @Override
@@ -423,7 +405,13 @@ public class CursorToListAdapter<M extends IPersistable> implements IModelListCa
 
     @Override
     public void dispose() {
-        if (null != csr)
-            this.csr.close();
+        try {
+            lock.lock();
+            if (null != csr)
+                this.csr.close();
+        }
+        finally {
+            lock.unlock();
+        }
     }
 }
