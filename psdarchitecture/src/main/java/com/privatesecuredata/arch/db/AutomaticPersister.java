@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteStatement;
+import android.util.Log;
 
 import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.annotations.DbFactory;
@@ -286,29 +287,37 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
     @Override
     public void init(Object obj) throws DBException {
-        super.init(obj);
+        try {
+            super.init(obj);
 
-        String insertStatement = getInsertStatement();
-        if (null != insertStatement)
-            insert = getDb().compileStatement(insertStatement);
-        String updateStatement = getUpdateStatement();
-        if (null != updateStatement)
-            update = getDb().compileStatement(getUpdateStatement());
-        if (getDescription().hasForeignKeyFields()) {
-            for (SqlForeignKeyField fld : getDescription().getForeignKeyFields()) {
-                fld.compileUpdateStatement(getDb());
+            String insertStatement = getInsertStatement();
+            if (null != insertStatement)
+                insert = getDb().compileStatement(insertStatement);
+            String updateStatement = getUpdateStatement();
+            if (null != updateStatement)
+                update = getDb().compileStatement(getUpdateStatement());
+            if (getDescription().hasForeignKeyFields()) {
+                for (SqlForeignKeyField fld : getDescription().getForeignKeyFields()) {
+                    fld.compileUpdateStatement(getDb());
+                }
+            }
+
+            List<SqlDataField> proxyCntFields = getDescription().getAndResetProxyCntFields();
+            if (null != proxyCntFields) {
+                for (SqlDataField collectionProxySizeFld : proxyCntFields) {
+                    // Create an update-Statement for the collection-proxy-size
+                    SQLiteStatement updateListCountStatement = createUpdateListCountStatement(getTableName(), collectionProxySizeFld);
+                    addUpdateProxyStatement(collectionProxySizeFld.getObjectField(), updateListCountStatement);
+                }
+
+                proxyCntFields.clear();
             }
         }
-
-        List<SqlDataField> proxyCntFields = getDescription().getAndResetProxyCntFields();
-        if (null != proxyCntFields) {
-            for (SqlDataField collectionProxySizeFld : proxyCntFields) {
-                // Create an update-Statement for the collection-proxy-size
-                SQLiteStatement updateListCountStatement = createUpdateListCountStatement(getTableName(), collectionProxySizeFld);
-                addUpdateProxyStatement(collectionProxySizeFld.getObjectField(), updateListCountStatement);
-            }
-
-            proxyCntFields.clear();
+        catch (Exception ex)
+        {
+            Log.e(getClass().getName(), String.format("Error initializing AutomaticPersister for table '%s':", getTableName()));
+            Log.e(getClass().getName(), ex.toString());
+            throw ex;
         }
     }
 

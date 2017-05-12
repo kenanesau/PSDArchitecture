@@ -39,4 +39,47 @@ public class StatusMessage {
     public Throwable getException() {
         return ex;
     }
+
+    @Override
+    public String toString() {
+
+        String status = null;
+        switch (this.status) {
+            case UNINITIALIZED:
+                status = "UNINITIALIZED";
+                break;
+            case INITIALIZINGPM:
+                status = "INITIALIZINGPM";
+                break;
+            case INITIALIZEDPM:
+                status = "INITIALIZEDPM";
+                break;
+            case CREATINGDB:
+                status = "CREATINGDB";
+                break;
+            case CREATEDDB:
+                status = "CREATEDDB";
+                break;
+            case UPGRADINGDB:
+                status = "UPGRADINGDB";
+                break;
+            case OPERATIONAL:
+                status = "OPERATIONAL";
+                break;
+            case INFO:
+                status = "INFO";
+                break;
+            case ERROR:
+                status = "ERROR";
+                break;
+        }
+
+        if (ex != null) {
+            return String.format("%s: %s:\n%s", status, text != null ? text : "", ex.toString());
+        }
+        else
+        {
+            return String.format("%s: %s", status, text != null ? text : "");
+        }
+    }
 }

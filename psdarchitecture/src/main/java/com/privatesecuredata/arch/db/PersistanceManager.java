@@ -212,11 +212,13 @@ public class PersistanceManager {
     public IDbDescription getDbDescription() { return dbDesc; }
 
     public void publishStatus(StatusMessage msg) {
+        Log.i(getClass().getName(), msg.toString());
         if (null != statusRelay)
             statusRelay.onNext(msg);
     }
 
     public void publishStatus(String msg, Exception ex) {
+        Log.e(getClass().getName(), String.format("%s:\n%s", msg, ex.toString()));
         if ( (null != statusRelay) && (statusRelay.hasObservers())) {
             statusRelay.onNext(new StatusMessage(Status.ERROR, msg, ex));
         }
@@ -350,6 +352,10 @@ public class PersistanceManager {
 		catch (Exception ex)
 		{
             publishStatus("Error initializing Persistance-Manager", ex);
+            throw new DBException(String.format("Error initializing Persistance-Manager for DB: '%s' V%d I%d",
+                    getDbDescription().getBaseName(),
+                    getDbDescription().getVersion(),
+                    getDbDescription().getInstance()), ex);
 		}
 	}
 
@@ -550,6 +556,7 @@ public class PersistanceManager {
 	}
 
 	public void onUpgrade(Context ctx, int oldVersion, int newVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) throws DBException {
+        boolean errorOnUpgrade = false;
         if (!hasInitializedDb())
             initializeDb(ctx, true);
 
@@ -584,16 +591,25 @@ public class PersistanceManager {
                     conv.convert(convMan);
 
                     db.close();
+                    Log.i(getClass().getName(), "Renaming new Db-File");
                     File newDbFile = getDbFile(ctx);
                     Files.move(getUpgradingDbFile(ctx), newDbFile);
+
+                    Log.i(getClass().getName(), "Calling deInit");
                     deInit();
+                    Log.i(getClass().getName(), "Calling Init");
                     init(this.dbDesc);
+
+                    Log.i(getClass().getName(), "Calling initializeDb");
                     initializeDb(this.appCtx, false);
                 }
                 catch (Exception ex) {
+                    errorOnUpgrade = true;
+                    Log.e(getClass().getName(), ex.toString());
+                    if (null != ex.getCause())
+                        Log.e(getClass().getName(), ex.getCause().toString());
                     String errMsg = String.format("Error converting '%s' to new Version '%d' Instance '%d'",
                             dbDesc.getBaseName(), newVersion, instance);
-                    Log.e(getClass().getName(), errMsg);
                     publishStatus(errMsg, ex);
                     throw new DBException(ex);
                 }
@@ -602,26 +618,33 @@ public class PersistanceManager {
                        oldPm.close();
 
                     try {
-                        File filesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+                        File filesDir = ctx.getExternalFilesDir(null);
+                        // Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
                         //File filesDir = ctx.getFilesDir(); //getExternalFilesDir(null);
 
                         if (null == filesDir) {
                             Log.w(getClass().getName(), "Unable to write DB backup! No Documents directory!!!");
                         }
                         else {
+                            if (!filesDir.exists())
+                                filesDir.mkdirs();
+
                             File backupOldDbFile = new File(filesDir, oldDescription.getName());
                             File dir = backupOldDbFile.getParentFile();
                             if (!dir.exists())
                                 dir.createNewFile();
                             File oldDbFile = ctx.getDatabasePath(oldDescription.getName());
 
-                            Files.move(oldDbFile, backupOldDbFile);
+                            if (!errorOnUpgrade) {
+                                Files.move(oldDbFile, backupOldDbFile);
+                            }
+                            else
+                                Files.copy(oldDbFile, backupOldDbFile);
                         }
                     }
                     catch (IOException ex) {
                         String errMsg = String.format("Error moving db-file '%s' to %s",
                                 oldDescription.getName(), ctx.getExternalFilesDir(null).getName());
-                        Log.e(getClass().getName(), errMsg);
                         publishStatus(errMsg, ex);
                         throw new DBException(errMsg, ex);
                     }

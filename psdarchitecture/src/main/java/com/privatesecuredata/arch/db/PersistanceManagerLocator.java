@@ -175,10 +175,12 @@ public class PersistanceManagerLocator {
             }
         }
         catch (Exception e) {
-            if (null != pm)
+            Log.e(getClass().getName(), e.toString());
+            throw e;
+            /*if (null != pm)
                 pm.publishStatus("Error initializing PM", e);
             else
-                throw e;
+                throw e;*/
         }
 
         return pm;
