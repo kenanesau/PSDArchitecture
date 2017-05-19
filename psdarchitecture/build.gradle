@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.getkeepsafe.dexcount'
+apply plugin: 'me.tatarka.retrolambda'
 
 android {
     compileSdkVersion 25
@@ -16,13 +17,28 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    retrolambda {
+        jvmArgs '-noverify'
+        jdk '/usr/lib/jvm/java-8-oracle'
+        javaVersion JavaVersion.VERSION_1_7
+        defaultMethods false
+        defaultMethods false
+        incremental true
+    }
 
     buildTypes {
         debug {
-            //testCoverageEnabled = true
+            testCoverageEnabled = true
+            jackOptions {
+                enabled false
+            }
         }
+
         release {
             zipAlignEnabled true
+            jackOptions {
+                enabled false
+            }
         }
     }
 }
