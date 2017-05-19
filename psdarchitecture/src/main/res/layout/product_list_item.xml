@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    android:id="@+id/product_list_row"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/raster12"
+    style="@style/activated">
+
+    <TextView android:id="@+id/txt_product_name"
+        android:layout_marginLeft="@dimen/raster4"
+        android:layout_marginRight="@dimen/raster2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|center_vertical"
+        android:text="Large Text"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView android:id="@+id/txt_product_version"
+        android:layout_marginLeft="@dimen/raster2"
+        android:layout_marginRight="@dimen/raster4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:text="V 1.2"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+</FrameLayout>

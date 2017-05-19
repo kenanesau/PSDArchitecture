@@ -14,4 +14,6 @@
     <string name="psdarch_cancel">Abbrechen</string>
     <string name="psdarch_moving">verschiebe…</string>
     <string name="psdarch_searching">Suche…</string>
+    <string name="title_activity_licenses">Lizenzen</string>
+    <string name="toast_info_activity" formatted="false">%s V%s benutzt diese großartigen Open-Source-Produkte! DANKE!!!</string>
 </resources>
