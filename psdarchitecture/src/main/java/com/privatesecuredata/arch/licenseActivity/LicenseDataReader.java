@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import io.reactivex.Flowable;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -26,17 +27,20 @@ public class LicenseDataReader {
     public static Flowable<StringBuilder> readLicense(Activity ctx, Product product) {
         return Flowable.just(product)
                 .subscribeOn(Schedulers.io())
-                .map(prod -> {
-                    InputStream licenseStream = ctx.getAssets().open(prod.getLicense().getFile());
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(licenseStream));
+                .map(new Function<Product, StringBuilder>() {
+                    @Override
+                    public StringBuilder apply(Product prod) throws Exception {
+                        InputStream licenseStream = ctx.getAssets().open(prod.getLicense().getFile());
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(licenseStream));
 
-                    StringBuilder sb = new StringBuilder();
-                    while (reader.ready()) {
-                        String line = reader.readLine();
-                        sb.append(line).append("\n");
+                        StringBuilder sb = new StringBuilder();
+                        while (reader.ready()) {
+                            String line = reader.readLine();
+                            sb.append(line).append("\n");
+                        }
+                        reader.close();
+                        return sb;
                     }
-                    reader.close();
-                    return sb;
                 });
     }
 
@@ -49,17 +53,20 @@ public class LicenseDataReader {
     public static Flowable<Product> readProduct(Activity ctx, String dir) {
         return Flowable.just(dir)
                 .subscribeOn(Schedulers.io())
-                .map(prodName -> {
-                    Product product = null;
-                    if (null != prodName) {
-                        try {
-                            product = Product.createProduct(ctx, prodName);
-                        } catch (IOException e) {
-                            throw new ArgumentException("Unable to restore state", e);
+                .map(new Function<String, Product>() {
+                    @Override
+                    public Product apply(String prodName) throws Exception {
+                        Product product = null;
+                        if (null != prodName) {
+                            try {
+                                product = Product.createProduct(ctx, prodName);
+                            } catch (IOException e) {
+                                throw new ArgumentException("Unable to restore state", e);
+                            }
                         }
-                    }
 
-                    return product;
+                        return product;
+                    }
                 });
     }
 }
