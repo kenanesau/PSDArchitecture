@@ -58,7 +58,7 @@ public class PlayStoreVM extends ComplexViewModel {
         public void onIabPurchaseFinished(IabResult result, Purchase purchase)
         {
             if (result.isFailure()) {
-                Log.d(TAG, "Error purchasing: " + result);
+                Log.e(TAG, "Error purchasing: " + result);
                 return;
             }
             else if (purchase.getSku().equals(_skuInPurchase.getSku())) {
@@ -104,10 +104,19 @@ public class PlayStoreVM extends ComplexViewModel {
                 _connected.set(true);
 
                 ArrayList<String> skus = new ArrayList<String>(_appSkus.length);
+                ArrayList<String> subSkus = new ArrayList<String>();
 
                 for(String sku : _appSkus)
                     skus.add(sku);
-                _billingHelper.queryInventoryAsync(true, skus, _gotInventoryListener);
+
+                try {
+                    _billingHelper.queryInventoryAsync(true, skus, subSkus, _gotInventoryListener);
+                } catch (IabHelper.IabAsyncInProgressException e) {
+                    Log.e(TAG, "Error querying inventory!");
+                    e.printStackTrace();
+                    _error.set(true);
+                    _errorMsg.set("Error querying inventory!");
+                }
             }
         });
     }
@@ -115,7 +124,7 @@ public class PlayStoreVM extends ComplexViewModel {
     public void dispose()
     {
         if (_billingHelper != null)
-            _billingHelper.dispose();
+            _billingHelper.disposeWhenFinished();
         _billingHelper = null;
     }
 
@@ -130,7 +139,7 @@ public class PlayStoreVM extends ComplexViewModel {
         return false;
     }
 
-    public void buy(Activity activity, SkuDetailsVM sku, int requestCode) {
+    public void buy(Activity activity, SkuDetailsVM sku, int requestCode) throws IabHelper.IabAsyncInProgressException {
         _skuInPurchase=sku;
         _billingHelper.launchPurchaseFlow(activity, sku.getSku().get(), requestCode,
                 _purchaseFinishedListener, "");

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+import com.privatesecuredata.arch.billing.IabHelper;
 import com.privatesecuredata.arch.mvvm.android.MVVMActivity;
 import com.privatesecuredata.arch.tools.vm.PlayStoreVM;
 import com.privatesecuredata.arch.tools.vm.SkuDetailsVM;
@@ -62,8 +63,17 @@ public class ShopActivity extends MVVMActivity implements SkuListFragment.OnSkuC
                     .setPositiveButton(getResources().getString(R.string.psdarch_ok), null)
                     .show();
         }
-        else
-            store.buy(this, sku, REQUESTCODE_SHOP);
+        else {
+            try {
+                store.buy(this, sku, REQUESTCODE_SHOP);
+            }
+            catch (IabHelper.IabAsyncInProgressException ex) {
+                new AlertDialog.Builder(ShopActivity.this).setTitle(getResources().getString(R.string.psdarch_async_operation_in_progress_title))
+                        .setMessage(getResources().getString(R.string.psdarch_async_operation_in_progress_message))
+                        .setPositiveButton(getResources().getString(R.string.psdarch_ok), null)
+                        .show();
+            }
+        }
     }
 
     @Override
