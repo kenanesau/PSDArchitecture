@@ -43,6 +43,11 @@ public class ViewModelListAdapter<COMPLEXVM extends ComplexViewModel> extends Ba
         this.adapterTemplate = adapterTemplate;
     }
 
+    public void setData(List<COMPLEXVM> lst) {
+        this.data = lst;
+        notifyDataSetChanged();
+    }
+
     public void setRowViewId(int _rowViewId) {
         this.rowViewId = _rowViewId;
     }

@@ -291,10 +291,6 @@ public class IabHelper {
                     e.printStackTrace();
                     return;
                 }
-
-                if (listener != null) {
-                    listener.onIabSetupFinished(new IabResult(BILLING_RESPONSE_RESULT_OK, "Setup successful."));
-                }
             }
         };
 

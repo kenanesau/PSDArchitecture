@@ -21,21 +21,28 @@ import com.privatesecuredata.arch.mvvm.android.MVVMComplexVmAdapterTemplate;
 import com.privatesecuredata.arch.mvvm.android.MVVMFragment;
 import com.privatesecuredata.arch.mvvm.android.ViewModelListAdapter;
 import com.privatesecuredata.arch.mvvm.vm.IListViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IModelChangedListener;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
 import com.privatesecuredata.arch.tools.vm.PlayStoreVM;
 import com.privatesecuredata.arch.tools.vm.SkuDetailsVM;
 import com.privatesecuredata.arch.R;
 
+import io.reactivex.Observable;
+
 public class SkuListFragment extends MVVMFragment
-			implements OnItemClickListener, OnItemLongClickListener, OnCreateContextMenuListener
-{
+			implements OnItemClickListener, OnItemLongClickListener, OnCreateContextMenuListener, IModelChangedListener {
     public static final String TAG_SHOP = "tag_shop_uuid";
     private Context attachedActivity;
     private ViewModelListAdapter adapter;
     private AbsListView lstView;
-    private IListViewModel<SkuDetails> listVM;
     private PlayStoreVM playStoreVM;
+
+    @Override
+    public void notifyModelChanged(IViewModel<?> vm, IViewModel<?> originator) {
+        if ( (adapter != null) && (playStoreVM != null) )
+            adapter.setData(playStoreVM.getSkuList());
+    }
 
     public class SkuListRowAdapterTemplate extends MVVMComplexVmAdapterTemplate<SkuDetailsVM>
     {
@@ -106,7 +113,9 @@ public class SkuListFragment extends MVVMFragment
                 playStoreVM = DataHive.getInstance().get(uuid);
             }
         }
+
         MVVMComplexVmAdapterTemplate mappingTemplate = new SkuListRowAdapterTemplate();
+        playStoreVM.addModelListener(this);
         adapter = new ViewModelListAdapter(mappingTemplate, playStoreVM.getSkuList(), getMVVMActivity());
         adapter.setRowViewId(R.layout.psdarch_sku_details_long);
 	}
@@ -124,6 +133,11 @@ public class SkuListFragment extends MVVMFragment
 	}
 
     @Override
+    protected void doViewToVMMapping() {
+        super.doViewToVMMapping();
+    }
+
+    @Override
 	public void onItemClick(AdapterView<?> parent, View view, int pos, long id) {
 		SkuDetailsVM skuVM = (SkuDetailsVM)adapter.getItem(pos);
 		if (null != attachedActivity)
@@ -137,4 +151,11 @@ public class SkuListFragment extends MVVMFragment
 	}
 
     public PlayStoreVM getPlayStore() { return playStoreVM; }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        playStoreVM.delModelListener(this);
+    }
 }

@@ -150,4 +150,8 @@ public class PlayStoreVM extends ComplexViewModel {
             _skuInPurchase.buy();
         }
     }
+
+    public Boolean getError() {
+        return _error.get();
+    }
 }
