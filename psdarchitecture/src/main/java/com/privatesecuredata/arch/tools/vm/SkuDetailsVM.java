@@ -88,6 +88,6 @@ public class SkuDetailsVM extends ComplexViewModel<SkuDetails> {
     }
 
     public void buy() {
-        _isAvailable.set(false);
+        _isAvailable.set(true);
     }
 }

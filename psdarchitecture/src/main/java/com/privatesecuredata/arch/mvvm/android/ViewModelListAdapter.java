@@ -6,8 +6,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.binder.TransientViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
+import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -21,7 +23,7 @@ import java.util.List;
  * @param <COMPLEXVM>
  * @sa MVVMComplexVmAdapterTemplate
  */
-public class ViewModelListAdapter<COMPLEXVM extends ComplexViewModel> extends BaseAdapter {
+public class ViewModelListAdapter<COMPLEXVM extends ComplexViewModel> extends BaseAdapter implements IViewModelChangedListener {
 
     private List<COMPLEXVM> data;
     private final MVVMActivity ctx;
@@ -38,13 +40,25 @@ public class ViewModelListAdapter<COMPLEXVM extends ComplexViewModel> extends Ba
     public ViewModelListAdapter(MVVMComplexVmAdapterTemplate adapterTemplate, List<COMPLEXVM> data,
                                 MVVMActivity ctx) {
 
-        this.data = data;
         this.ctx = ctx;
         this.adapterTemplate = adapterTemplate;
+
+        setData(data);
     }
 
     public void setData(List<COMPLEXVM> lst) {
+        if (null != this.data) {
+            for(COMPLEXVM vm : this.data) {
+                vm.delViewModelListener(this);
+            }
+        }
+
         this.data = lst;
+
+        for(COMPLEXVM vm : data) {
+            vm.addViewModelListener(this);
+        }
+
         notifyDataSetChanged();
     }
 
@@ -114,4 +128,8 @@ public class ViewModelListAdapter<COMPLEXVM extends ComplexViewModel> extends Ba
         manipulators.add(manipulator);
     }
 
+    @Override
+    public void notifyViewModelDirty(IViewModel<?> vm, IViewModelChangedListener originator) {
+        notifyDataSetChanged();
+    }
 }

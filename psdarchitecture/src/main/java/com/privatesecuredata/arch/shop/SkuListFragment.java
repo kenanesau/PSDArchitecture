@@ -135,6 +135,7 @@ public class SkuListFragment extends MVVMFragment
     @Override
     protected void doViewToVMMapping() {
         super.doViewToVMMapping();
+        adapter.notifyDataSetChanged();
     }
 
     @Override

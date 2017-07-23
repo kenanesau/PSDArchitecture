@@ -66,6 +66,7 @@ public class ShopActivity extends MVVMActivity implements SkuListFragment.OnSkuC
         else {
             try {
                 store.buy(this, sku, REQUESTCODE_SHOP);
+                frag.doViewToVMMapping();
             }
             catch (IabHelper.IabAsyncInProgressException ex) {
                 new AlertDialog.Builder(ShopActivity.this).setTitle(getResources().getString(R.string.psdarch_async_operation_in_progress_title))

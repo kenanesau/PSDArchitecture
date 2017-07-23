@@ -61,7 +61,7 @@ public class PlayStoreVM extends ComplexViewModel {
                 Log.e(TAG, "Error purchasing: " + result);
                 return;
             }
-            else if (purchase.getSku().equals(_skuInPurchase.getSku())) {
+            else if (purchase.getSku().equals(_skuInPurchase.getSku().get())) {
                 _skuInPurchase.buy();
             }
         }
