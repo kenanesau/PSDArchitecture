@@ -7,6 +7,7 @@ import com.privatesecuredata.arch.mvvm.CommitCommand;
 import com.privatesecuredata.arch.mvvm.ICommitCommand;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,16 +116,17 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 		commitCommands.add(command);		
 	}
 	
-	public void RegisterCommitCommand(final Object complexModel, final Method commitMethod)
+	public void RegisterCommitCommand(final Object complexModel, final Field field)
 	{
-		commitCommands.add( new CommitCommand(complexModel, commitMethod) {
+		commitCommands.add( new CommitCommand(complexModel, field) {
 			
 			@Override
 			public void commit() {
 				try {
-					commitMethod.invoke(complexModel, SimpleValueVM.this.get());
+
+					field.set(complexModel, SimpleValueVM.this.get());
 				} catch (Exception e) {
-					throw new CommitException(String.format("Error committing data via Method \"%s\"", commitMethod.getName()), e);
+					throw new CommitException(String.format("Error committing data via field \"%s\"", field.getName()), e);
 				}
 			}
 		});		

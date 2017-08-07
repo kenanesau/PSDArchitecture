@@ -368,7 +368,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
                 throw new ArgumentException("Error invoking method!", ex);
             }
             catch (NoSuchMethodException ex) {
-                throw new ArgumentException(String.format("Could not find property with base-name \"%s\"", field.getName()), ex);
+                throw new ArgumentException(String.format("Could not find field with name \"%s\"", field.getName()), ex);
             }
             catch (InstantiationException ex) {
                 throw new ArgumentException(String.format("Error instantiating complex viewmodel of field \"%s\"", field.getName()), ex);
@@ -384,22 +384,6 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		return childViewModels;
 	}
 	
-	protected Method createGetter(Field field) throws NoSuchMethodException
-	{
-		String propName = field.getName();
-		propName = Character.toUpperCase(propName.charAt(0)) + propName.substring(1);
-		String name = String.format("get%s", propName);
-        return getModel().getClass().getMethod(name, (Class[])null);
-	}
-	
-	protected Method createSetter(Field field, Class<?> valType) throws NoSuchMethodException
-	{
-		String propName = field.getName();
-		propName = Character.toUpperCase(propName.charAt(0)) + propName.substring(1);
-		String name = String.format("set%s", propName); 
-		return getModel().getClass().getMethod(name, new Class[]{valType});
-	}
-
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected void setListModelMapping(HashMap<String, IViewModel<?>> childViewModels,
 			Field field, ListVmMapping listAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException
@@ -484,12 +468,12 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     protected void setSimpleModelMapping(HashMap<String, IViewModel<?>> childModels,
 			Field field, SimpleVmMapping simpleAnno) throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException 
 	{
-		Method getter = createGetter(field);
-		Class<?> valType = getter.getReturnType();
-		Method setter = createSetter(field, valType);
+		//Method getter = createGetter(field);
+		Class<?> valType = field.getType(); //getter.getReturnType();
+		//Method setter = createSetter(field, valType);
 		
-		SimpleValueVM<?> vm = new SimpleValueVM(valType, getter.invoke(getModel(), (Object[])null));
-		vm.RegisterCommitCommand(getModel(), setter);
+		SimpleValueVM<?> vm = new SimpleValueVM(valType, field.get(getModel()));
+		vm.RegisterCommitCommand(getModel(), field);
 		registerChildVM(vm);
 
 		childModels.put(field.getName(), vm);
