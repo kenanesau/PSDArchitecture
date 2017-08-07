@@ -1,7 +1,6 @@
 package com.privatesecuredata.arch.tools.vm;
 
 import com.privatesecuredata.arch.mvvm.MVVM;
-import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
@@ -17,6 +16,7 @@ import java.util.HashMap;
 public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
     private SimpleValueVM<Double> valueVm;
     private SimpleValueVM<MeasurementSysFactory.System> typeVm;
+    private SimpleValueVM<Integer> unitVm;
 
     public static class VmFactory implements ComplexViewModel.VmFactory<MeasurementValueVM, MeasurementValue> {
 
@@ -33,6 +33,7 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
     {
         this.valueVm = (SimpleValueVM<Double>)childVMs.get(MeasurementValue.FLD_VAL);
         this.typeVm = (SimpleValueVM<MeasurementSysFactory.System>)childVMs.get(MeasurementValue.FLD_TYPE);
+        this.unitVm = (SimpleValueVM<Integer>)childVMs.get(MeasurementValue.FLD_UNIT);
     }
 
     public SimpleValueVM<Double> getValueVM() {
@@ -41,6 +42,10 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
 
     public SimpleValueVM<MeasurementSysFactory.System> getTypeVM() {
         return typeVm;
+    }
+
+    public SimpleValueVM<Integer> getUnitVM() {
+        return unitVm;
     }
 
     public SimpleValueVM<String> getTxtUnitVM() {

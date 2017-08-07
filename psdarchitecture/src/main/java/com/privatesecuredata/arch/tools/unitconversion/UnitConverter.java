@@ -39,6 +39,47 @@ public class UnitConverter {
      * @return
      */
     public static void convert(MeasurementValue from, MeasurementValue to) {
+        AbstractMeasurementSystem fromSys = MeasurementSysFactory.create(from.getSys(), from.getType());
+        AbstractMeasurementSystem toSys = MeasurementSysFactory.create(to.getSys(), to.getType());
+
+        Conversion[] fromConvs = fromSys.getUnits();
+        long enumerator = 1;
+        long denominator = 1;
+
+        /**
+         * Convert to smallest unit within from-system
+         */
+        for (int i = 0; i<from.getUnitVal(); i++) {
+            enumerator *= fromConvs[i].getFactorNextEnumerator();
+            denominator *= fromConvs[i].getFactorNextDenominator();
+        }
+
+        double val = from.getVal() * (double)enumerator / (double)denominator;
+
+        /**
+         * Convert to metric-system
+         */
+        val = val * (double)fromSys.getMetricConversion().getFactorNextEnumerator() / (double)fromSys.getMetricConversion().getFactorNextDenominator();
+
+        /**
+         * Convert from metric-system to toSys
+         */
+        val = val * (double)fromSys.getMetricConversion().getFactorNextDenominator() / (double)fromSys.getMetricConversion().getFactorNextEnumerator();
+
+        Conversion[] toConvs = toSys.getUnits();
+        enumerator = 1;
+        denominator = 1;
+        /**
+         * Convert to target unit in toSys
+         */
+        for (int i = 0; i<to.getUnitVal(); i++) {
+            enumerator *= toConvs[i].getFactorNextEnumerator();
+            denominator *= toConvs[i].getFactorNextDenominator();
+        }
+
+        val = val * (double)denominator / (double)enumerator;
+
+        to.setVal(val);
         return;
     }
 

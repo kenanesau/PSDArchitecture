@@ -29,7 +29,7 @@ public class Conversion {
         return factorNextEnumerator;
     }
 
-    public int getFactorNexDenominator() {
+    public int getFactorNextDenominator() {
         return factorNexDenominator;
     }
 }
