@@ -177,7 +177,39 @@ public class PersisterDescription<T> {
         return fld;
     }
 
-    void extend(PersisterDescription<?> other)
+    void extend(PersisterDescription other) {
+        extend(other, null);
+    }
+
+    void extend(PersisterDescription<?> other, Field composedField )
+    {
+        for (SqlDataField fld : other.getTableFields()) {
+            if (null != composedField) {
+                SqlDataField compField = new SqlDataField(composedField, fld);
+                _tableFields.put(compField.getSqlName(), compField);
+            }
+            else
+                _tableFields.put(fld.getSqlName(), fld);
+        }
+
+        if (composedField == null) {
+            if (other._proxyCntFields != null) {
+                for (SqlDataField fld : other._proxyCntFields)
+                    _proxyCntFields.add(fld);
+            }
+
+            _foreignKeyFields.putAll(other._foreignKeyFields);
+            _foreignKeyFieldsDbType.putAll(other._foreignKeyFieldsDbType);
+
+            for (ObjectRelation rel : other._thisToOneRelations.values())
+                _thisToOneRelations.put(rel.getField().getName(), rel);
+
+            for (ObjectRelation rel : other._oneToManyRelations.values())
+                _oneToManyRelations.put(rel.getField().getName(), rel);
+        }
+    }
+
+    void compose(Field composedField, PersisterDescription<?> other)
     {
         for (SqlDataField fld : other.getTableFields())
             _tableFields.put(fld.getSqlName(), fld);

@@ -57,7 +57,7 @@ dependencies {
     compile "com.android.support:design:${supportLibVersion}"
     compile "com.google.guava:guava:${rootProject.ext.versions.guava}"
     compile 'javax.annotation:jsr250-api:1.0'
-    compile "io.reactivex.rxjava2:rxandroid:${rootProject.ext.versions.rxjava}"
+    compile "io.reactivex.rxjava2:rxandroid:${rootProject.ext.versions.rxandroid}"
     compile "io.reactivex.rxjava2:rxjava:${rootProject.ext.versions.rxjava}"
 }
 

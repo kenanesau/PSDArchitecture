@@ -16,8 +16,8 @@ import java.util.Locale;
  *
  */
 public class SqlDataField {
-	
-	public enum SqlFieldType 
+
+    public enum SqlFieldType
 	{
         BOOLEAN,
 		INTEGER,
@@ -37,9 +37,25 @@ public class SqlDataField {
 	private Field _field;
 	private boolean _mandatory = false;
 	private Class<?> _referencedType = null;
+
+    /**
+     * Only set if this is a SqlDataField describing  a composed field.
+     * ComposeField is the field in the parent object which points to the object whose fields
+     * are composed to the data of the parent.
+     */
+    private Field _composeField = null;
     private String _id;
 	
 	protected SqlDataField() {}
+
+	public SqlDataField(Field composeParentField, SqlDataField composedField) {
+        _tableName = null;
+        this._field = composedField._field;
+        this._type = composedField.getSqlType();
+        this._name = DbNameHelper.getComposedFieldName(composeParentField.getName(), composedField._field.getName(), this._type);
+        this._composeField = composeParentField;
+        this._composeField.setAccessible(true);
+	}
 
 	public SqlDataField(String table, String name, SqlFieldType type)
 	{
@@ -118,8 +134,16 @@ public class SqlDataField {
 		_name = DbNameHelper.getFieldName(field, _type);
 			
 	}
-	
-	protected void setName(String name) { _name = name; }
+
+    public boolean isComposition() {
+        return _composeField!=null;
+    }
+
+    public Field getComposeField() {
+        return _composeField;
+    }
+
+    protected void setName(String name) { _name = name; }
 	public String getSqlName() { return _name; }
 	
 	protected void setSqlType(SqlFieldType type) { _type = type; }
