@@ -1,21 +1,22 @@
 package com.privatesecuredata.arch.mvvm;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 
 public abstract class CommitCommand implements ICommitCommand {
 
-	Method commitMethod = null;
+	Field commitField = null;
 	Object complexModel = null;
 	
-	public CommitCommand(Object complexModel, Method commitMethod)
+	public CommitCommand(Object complexModel, Field commitField)
 	{
-		if ( (null == complexModel) || (null == commitMethod) )
+		if ( (null == complexModel) || (null == commitField) )
 			throw new ArgumentException("The constructor of CommitComand does not accept parameters with value \"null\"!");
 		
 		this.complexModel = complexModel;
-		this.commitMethod = commitMethod;
+		this.commitField = commitField;
 	}
 	
 	public abstract void commit(); 
