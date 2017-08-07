@@ -118,4 +118,8 @@ public class DbNameHelper {
 
         return valStr;
     }
+
+    public static String getComposedFieldName(String parentFldName, String composedFldName, SqlFieldType fldType) {
+        return getFieldName(String.format("%s_%s", parentFldName, composedFldName), fldType);
+    }
 }

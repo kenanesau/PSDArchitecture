@@ -10,7 +10,7 @@ public class SimpleValueLogicVM<T> extends SimpleValueVM<T> {
         boolean setCB(T currentValue, T newValue) throws ArgumentException;
     }
     public interface IGetData<T> {
-        T getCB(T currentValue);
+        T get(T currentValue);
     }
     private SimpleValueVM[] _valueVMs;
     private ISetData<T> setDataCB;
@@ -47,7 +47,7 @@ public class SimpleValueLogicVM<T> extends SimpleValueVM<T> {
     public T get() {
         T data = super.get();
         if (null != this.getDataCB) {
-            data = (this.getDataCB.getCB(data));
+            data = (this.getDataCB.get(data));
         }
 
         return data;
