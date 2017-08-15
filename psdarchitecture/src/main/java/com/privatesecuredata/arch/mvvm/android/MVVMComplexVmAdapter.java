@@ -7,6 +7,7 @@ import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.binder.DisableViewBinder;
 import com.privatesecuredata.arch.mvvm.binder.ViewToVmBinder;
 import com.privatesecuredata.arch.mvvm.binder.ViewVisibilityBinder;
+import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 
 import java.util.ArrayList;
@@ -19,10 +20,16 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
     private View mainView;
     private COMPLEXVM vm;
     private boolean readOnly = false;
+
     /**
-     * View-ID -> ViewtoVM-Adapter
+     * View-ID -> ViewtoVM-Binder
      */
 	private HashMap<Integer, List<ViewToVmBinder>> view2ModelAdapters = new HashMap<>();
+
+    /**
+     * BindableViews
+     */
+    private HashMap<IBindableView, IBindableView> bindableViews = new HashMap<>();
 
 	protected MVVMComplexVmAdapter(View mainView, COMPLEXVM vm) {
 		if (null == mainView)
@@ -76,29 +83,35 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
         this.readOnly = readOnly;
     }
 
-	public <T> ViewToVmBinder setMapping(Class<T> type, int viewId, IGetVMCommand<T> getSimpleVmCmd)
-	{
-		List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
-		if (null == adapters) {
-            adapters = new ArrayList<ViewToVmBinder>();
-            view2ModelAdapters.put(viewId, adapters);
+    protected List<ViewToVmBinder> getBinderList(int viewId) {
+        List<ViewToVmBinder> binders = view2ModelAdapters.get(viewId);
+        if (null == binders) {
+            binders = new ArrayList<ViewToVmBinder>();
+            view2ModelAdapters.put(viewId, binders);
         }
 
-        ViewToVmBinder adapter = new ViewToVmBinder(type, getSimpleVmCmd, isReadOnly());
-        adapters.add(adapter);
+        return binders;
+    }
+
+	public <T> ViewToVmBinder setMapping(Class<T> type, int viewId, IGetVMCommand<T> getSimpleVmCmd)
+	{
+		List<ViewToVmBinder> binders = getBinderList(viewId);
+
+        ViewToVmBinder binder = new ViewToVmBinder(type, getSimpleVmCmd, isReadOnly());
+        binders.add(binder);
         View view = mainView.findViewById(viewId);
         if (null == view)
             throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
-        adapter.init(view, vm);
+        binder.init(view, vm);
         if (this.ctx.isResumedActivity()) {
-            adapter.updateVM();
+            binder.updateVM();
         }
         else {
-            adapter.updateView(vm);
+            binder.updateView(vm);
         }
 
-        return adapter;
+        return binder;
 	}
 
     /**
@@ -110,13 +123,13 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
 
         for (Integer key : keys)
         {
-            List<ViewToVmBinder> adapters = view2ModelAdapters.get(key);
-            if (null != adapters) {
-                for (ViewToVmBinder adapter : adapters) {
+            List<ViewToVmBinder> binders = view2ModelAdapters.get(key);
+            if (null != binders) {
+                for (ViewToVmBinder binder : binders) {
                     /**
                      * update the view with the current values of the VM
                      */
-                    adapter.updateView(vm);
+                    binder.updateView(vm);
                 }
             }
         }
@@ -134,13 +147,13 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
 
         for (Integer key : keys)
         {
-            List<ViewToVmBinder> adapters = view2ModelAdapters.get(key);
-            if (null != adapters) {
-                for (ViewToVmBinder adapter : adapters) {
+            List<ViewToVmBinder> binders = view2ModelAdapters.get(key);
+            if (null != binders) {
+                for (ViewToVmBinder binder : binders) {
                     /**
                      * update the view with the current values of the VM
                      */
-                    adapter.reinit(vm);
+                    binder.reinit(vm);
                 }
             }
         }
@@ -148,57 +161,71 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
 
     public ViewToVmBinder setViewDisableMapping(int viewId, IGetVMCommand<Boolean> getModelCmd)
     {
-        List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
-        if (null == adapters) {
-            adapters = new ArrayList<ViewToVmBinder>();
-            view2ModelAdapters.put(viewId, new ArrayList<ViewToVmBinder>());
-        }
+        List<ViewToVmBinder> binders = getBinderList(viewId);
 
-        ViewToVmBinder adapter = new DisableViewBinder(getModelCmd);
-        adapters.add(adapter);
+        ViewToVmBinder binder = new DisableViewBinder(getModelCmd);
+        binders.add(binder);
         View view = mainView.findViewById(viewId);
         if (null == view)
             throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
-        adapter.init(view, vm);
-        adapter.updateView(vm);
-        return adapter;
+        binder.init(view, vm);
+        binder.updateView(vm);
+        return binder;
     }
 
     public ViewToVmBinder setViewVisibilityMapping(int viewId, IGetVMCommand<Boolean> getModelCmd)
     {
-        List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
-        if (null == adapters) {
-            adapters = new ArrayList<ViewToVmBinder>();
-            view2ModelAdapters.put(viewId, new ArrayList<ViewToVmBinder>());
-        }
+        List<ViewToVmBinder> binders = getBinderList(viewId);
 
-        ViewToVmBinder adapter = new ViewVisibilityBinder(getModelCmd);
-        adapters.add(adapter);
+        ViewToVmBinder binder = new ViewVisibilityBinder(getModelCmd);
+        binders.add(binder);
         View view = mainView.findViewById(viewId);
         if (null == view)
             throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
-        adapter.init(view, vm);
-        adapter.updateView(vm);
-        return adapter;
+        binder.init(view, vm);
+        binder.updateView(vm);
+        return binder;
     }
 
-    public void setMapping(int viewId, ViewToVmBinder adapter)
+    public void setMapping(int viewId, ViewToVmBinder binder)
     {
-        List<ViewToVmBinder> adapters = view2ModelAdapters.get(viewId);
-        if (null == adapters) {
-            adapters = new ArrayList<>();
-            view2ModelAdapters.put(viewId, adapters);
-        }
+        List<ViewToVmBinder> binders = getBinderList(viewId);
 
         View view = mainView.findViewById(viewId);
         if (null == view)
             throw new ArgumentException(String.format("Can not find View with id %d", viewId));
 
-        adapters.add(adapter);
-        adapter.init(view, vm);
-        adapter.updateView(view, vm);
+        binders.add(binder);
+        binder.init(view, vm);
+        binder.updateView(view, vm);
+    }
+
+    /**
+     * Set a mapping between a view implementing IBindableView and a complex viewmodel
+     *
+     * @param viewId Id of the view implementing IBindableView
+     * @param viewModel ComplexViewModel to bind the view to
+     * @param <T> Type extending from ComplexViewModel
+     */
+    public <T extends ComplexViewModel> void setMapping(int viewId, T viewModel)
+    {
+        View view = mainView.findViewById(viewId);
+        if (null == view)
+            throw new ArgumentException(String.format("Can not find View with id %d!", viewId));
+        if (view instanceof IBindableView) {
+            IBindableView<T> bindableView = (IBindableView<T>)view;
+            if (bindableViews.containsKey(bindableView)) {
+                throw new ArgumentException(String.format("View with id %d is already bound!", viewId));
+            }
+
+            bindableViews.put(bindableView, bindableView);
+            bindableView.bind(viewModel);
+        }
+        else {
+            throw new ArgumentException(String.format("View with id %d does not implement IBindableView!", viewId));
+        }
     }
 
     public void dispose()
@@ -207,18 +234,24 @@ public class MVVMComplexVmAdapter<COMPLEXVM extends IViewModel> implements IComp
 
         for (Integer key : keys)
         {
-            List<ViewToVmBinder> adapters = view2ModelAdapters.get(key);
-            if (null != adapters) {
-                for (ViewToVmBinder adapter : adapters) {
+            List<ViewToVmBinder> binders = view2ModelAdapters.get(key);
+            if (null != binders) {
+                for (ViewToVmBinder binder : binders) {
                     /**
                      * unregister VM-listener...
                      */
-                    adapter.dispose();
+                    binder.dispose();
                 }
             }
         }
 
         view2ModelAdapters.clear();
+
+        for(IBindableView bindableView : bindableViews.values()) {
+            bindableView.unbind();
+        }
+
+        bindableViews.clear();
     }
 
     public boolean isReadOnly() {

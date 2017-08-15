@@ -13,6 +13,12 @@
     <declare-styleable name="psdarch_number_selector">
         <attr name="android:orientation" />
     </declare-styleable>
+    <declare-styleable name="psdarch_measvalctrl">
+        <attr name="android:orientation" />
+        <attr name="android:hint" />
+        <attr name="format_string" format="string" />
+        <attr name="readonly" format="boolean" />
+    </declare-styleable>
     <declare-styleable name="psdarch_dialog_titlebar">
         <attr name="icon_cancel" format="reference" />
         <attr name="txt_title" format="reference" />

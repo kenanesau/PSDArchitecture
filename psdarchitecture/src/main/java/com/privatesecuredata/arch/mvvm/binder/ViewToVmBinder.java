@@ -33,12 +33,13 @@ import io.reactivex.functions.Consumer;
 
 /**
  * Objects of this type can be used to establish a binding between a View and a corresponding
- * SimpleViewModel.
+ * SimpleViewModel wich is usually part of a ComplexViewModel.
  *
  * @param <T> Datatype of the underlying SimpleValueVM
  */
 public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 									implements IModelChangedListener, IViewModelChangedListener
+
 {
 	private boolean viewChanged;
 	private View view;
@@ -71,7 +72,7 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 		this.setWriteViewCommand(other.getWriteViewCommand());
         this.setReadOnly(other.isReadOnly());
 	}
-	
+
 	protected void setVMUpdatesView() { this.vmUpdatesView = true; }
 	protected void resetVMUpdatesView() { this.vmUpdatesView = false; }
 	protected boolean isVMUpdatesView() { return this.vmUpdatesView; }
@@ -228,45 +229,6 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 			}
 		};
 		
-//		focusChangeListener = new OnFocusChangeListener() 
-//		{
-//			
-//			@Override
-//			public void onFocusChange(View view, boolean hasFocus) {
-//				SimpleValueVM<T> vm = ViewToVmBinder.this.getVM();
-//				
-//				if ( (!hasFocus) && (isViewChanged()) )
-//				{
-//					if ( (canWriteToModel()) && (!isVMUpdatesView()) ) {
-//						vm.set(ViewToVmBinder.this.getReadViewCommand().get(view));
-//						resetViewChanged();
-//					}
-//				}
-//			}
-//		};
-		
-		
-		
-//		attachStateChangedListener = new OnAttachStateChangeListener() {
-//			
-//			@Override
-//			public void onViewDetachedFromWindow(View v) {
-//				if (isViewChanged())
-//				{
-//					vm.set(ViewToVmBinder.this.getReadViewCommand().get(v));
-//					resetViewChanged();
-//				}
-//				if (v instanceof EditText)
-//				{
-//					((EditText) v).removeTextChangedListener(ViewToVmBinder.this.txtWatch);
-//				}
-//				v.removeOnAttachStateChangeListener(ViewToVmBinder.this.attachStateChangedListener);
-//			}
-//			
-//			@Override
-//			public void onViewAttachedToWindow(View v) {}
-//		};
-		
 		chkButtonListener = new View.OnClickListener() {
 			
 			@Override
@@ -276,9 +238,6 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 					viewValueToViewModel(v, vm);
 			}
 		};
-		
-		//this.view.setOnFocusChangeListener(focusChangeListener);
-		//this.view.addOnAttachStateChangeListener(attachStateChangedListener);
 		
 		if (this.view instanceof EditText)
 		{
@@ -313,9 +272,6 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 
 	protected void unregisterListeners()
 	{
-		//this.view.setOnFocusChangeListener(null);
-		//this.view.removeOnAttachStateChangeListener(attachStateChangedListener);
-		
 		if (this.view instanceof EditText)
 		{
 			EditText txtView = (EditText)this.view; 

@@ -43,8 +43,7 @@ public class TransientViewToVmBinder<T> {
 	public void setWriteViewCommand(IWriteViewCommand<T> cmd) { this.writeViewCmd = cmd; }
 	public IReadViewCommand<T> getReadViewCommand() { return this.readViewCmd; }
 	public IWriteViewCommand<T> getWriteViewCommand() { return this.writeViewCmd; }
-    public Class<T> getDataType() { return this.dataType; }
-	
+
 	/**
 	 * Set the commands for reading and writing the View
 	 * 
