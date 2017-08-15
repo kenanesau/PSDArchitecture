@@ -29,6 +29,11 @@ public class MetricLiquidVolumeMeasurementSystem extends AbstractMeasurementSyst
     private Conversion metricConversion = new Conversion("Milliliter", "ml", 1, 1);
 
     @Override
+    public MeasurementSysFactory.Type getType() {
+        return MeasurementSysFactory.Type.LIQUIDVOLUME;
+    }
+
+    @Override
     public Conversion[] getUnits() {
         return convs;
     }

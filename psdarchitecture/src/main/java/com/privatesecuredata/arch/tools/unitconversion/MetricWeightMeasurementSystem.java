@@ -33,6 +33,11 @@ public class MetricWeightMeasurementSystem extends AbstractMeasurementSystem {
     private Conversion metricConversion = new Conversion("Milligramm", "mg", 1, 1);
 
     @Override
+    public MeasurementSysFactory.Type getType() {
+        return MeasurementSysFactory.Type.WEIGHT;
+    }
+
+    @Override
     public Conversion[] getUnits() {
         return convs;
     }

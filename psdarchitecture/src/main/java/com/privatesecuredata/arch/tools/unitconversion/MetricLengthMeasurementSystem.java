@@ -32,6 +32,11 @@ public class MetricLengthMeasurementSystem extends AbstractMeasurementSystem {
     private Conversion metricConversion = new Conversion("Millimeter", "mm", 1, 1);
 
     @Override
+    public MeasurementSysFactory.Type getType() {
+        return MeasurementSysFactory.Type.LENGTH;
+    }
+
+    @Override
     public Conversion[] getUnits() {
         return convs;
     }

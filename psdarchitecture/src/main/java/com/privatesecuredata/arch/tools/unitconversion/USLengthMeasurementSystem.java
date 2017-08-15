@@ -36,6 +36,11 @@ public class USLengthMeasurementSystem extends AbstractMeasurementSystem {
     private Conversion metricConversion = new Conversion("Millimeter", "mm", 254, 10 * 12 * 6);
 
     @Override
+    public MeasurementSysFactory.Type getType() {
+        return MeasurementSysFactory.Type.LENGTH;
+    }
+
+    @Override
     public Conversion[] getUnits() {
         return convs;
     }

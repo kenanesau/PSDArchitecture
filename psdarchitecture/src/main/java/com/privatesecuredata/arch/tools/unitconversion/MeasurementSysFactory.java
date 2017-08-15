@@ -19,8 +19,8 @@ public class MeasurementSysFactory {
     };
 
     public enum Type {
-        WEIGHT(0),
-        LENGTH(1),
+        LENGTH(0),
+        WEIGHT(1),
         LIQUIDVOLUME(2);
 
         private int _val;

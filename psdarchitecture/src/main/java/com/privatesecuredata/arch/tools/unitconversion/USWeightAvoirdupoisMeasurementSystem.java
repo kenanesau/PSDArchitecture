@@ -25,7 +25,7 @@ public class USWeightAvoirdupoisMeasurementSystem extends AbstractMeasurementSys
     }
 
     private Conversion[] convs = new Conversion[] {
-            new Conversion("Grain", "gr", 27*11, 32),
+            new Conversion("Grain", "gr", 27*32+11, 32),
             new Conversion("Dram", "dr", 16, 1),
             new Conversion("Ounce", "oz", 16, 1),
             new Conversion("Pound", "lb", 100, 1),
@@ -34,6 +34,11 @@ public class USWeightAvoirdupoisMeasurementSystem extends AbstractMeasurementSys
     };
 
     private Conversion metricConversion = new Conversion("Millimeter", "mm", 6479891, 100000);
+
+    @Override
+    public MeasurementSysFactory.Type getType() {
+        return MeasurementSysFactory.Type.WEIGHT;
+    }
 
     @Override
     public Conversion[] getUnits() {

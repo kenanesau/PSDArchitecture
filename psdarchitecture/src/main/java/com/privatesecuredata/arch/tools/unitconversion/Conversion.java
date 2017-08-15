@@ -7,14 +7,14 @@ package com.privatesecuredata.arch.tools.unitconversion;
 public class Conversion {
     private String name; // eg. Millimeter
     private String unit; // eg. mm
-    private int factorNextEnumerator; // eg. 10 (to get to centimeter)
-    private int factorNexDenominator; // eg. 1 (to get to centimeter)
+    private long factorNextEnumerator; // eg. 10 (to get to centimeter)
+    private long factorNextDenominator; // eg. 1 (to get to centimeter)
 
-    public Conversion(String name, String unit, int enumerator, int denominator) {
+    public Conversion(String name, String unit, long enumerator, long denominator) {
         this.name = name;
         this.unit = unit;
         this.factorNextEnumerator = enumerator;
-        this.factorNexDenominator = denominator;
+        this.factorNextDenominator = denominator;
     }
 
     public String getName() {
@@ -25,11 +25,11 @@ public class Conversion {
         return unit;
     }
 
-    public int getFactorNextEnumerator() {
+    public long getFactorNextEnumerator() {
         return factorNextEnumerator;
     }
 
-    public int getFactorNextDenominator() {
-        return factorNexDenominator;
+    public long getFactorNextDenominator() {
+        return factorNextDenominator;
     }
 }

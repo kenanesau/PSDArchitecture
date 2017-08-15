@@ -5,6 +5,7 @@ package com.privatesecuredata.arch.tools.unitconversion;
  */
 
 public abstract class AbstractMeasurementSystem {
+    public abstract MeasurementSysFactory.Type getType();
     public abstract Conversion[] getUnits();
     /**
      * Return the conversion of the smallest unit to the smallest metric unit
@@ -21,9 +22,5 @@ public abstract class AbstractMeasurementSystem {
 
     public Conversion getUnit(int unit) {
         return getUnits()[unit];
-    }
-
-    public static <T> T convert(int fromUnit, int toUnit, AbstractMeasurementSystem otherSystem, T value) {
-        return null;
     }
 }
