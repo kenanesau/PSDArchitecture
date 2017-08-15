@@ -53,9 +53,9 @@ public class SimpleValueLogicVM<T> extends SimpleValueVM<T> {
         return data;
     }
 
-    public SimpleValueVM<?> getParam(int i)
+    public <T> SimpleValueVM<T> getParam(int i)
     {
-        return _valueVMs[i];
+        return (SimpleValueVM<T>)_valueVMs[i];
     }
 
     public void setDataCBs(SimpleValueLogicVM.ISetData<T> setter, SimpleValueLogicVM.IGetData<T> getter)

@@ -17,7 +17,8 @@ public class Conversion {
         this.factorNextDenominator = denominator;
     }
 
-    public String getName() {
+    public String getName()
+    {
         return name;
     }
 
