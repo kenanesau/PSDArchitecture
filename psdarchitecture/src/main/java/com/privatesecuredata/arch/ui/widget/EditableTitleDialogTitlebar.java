@@ -15,10 +15,6 @@ import com.privatesecuredata.arch.R;
 public class EditableTitleDialogTitlebar extends DialogTitlebar {
     private ImageView _titleIcon;
 
-    public EditableTitleDialogTitlebar(Context context) {
-        super(context);
-    }
-
     public EditableTitleDialogTitlebar(Context context, AttributeSet attrs) {
         super(context, attrs);
     }

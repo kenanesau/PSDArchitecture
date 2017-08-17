@@ -49,10 +49,6 @@ public class CheckableFab extends Fab implements Checkable {
 		android.R.attr.state_checked
 	};
 	
-	public CheckableFab(Context context) {
-		this(context, null, 0, 0);
-	}
-
 	public CheckableFab(Context context, AttributeSet attrs) {
 		this(context, attrs, 0, 0);
 	}
@@ -64,11 +60,6 @@ public class CheckableFab extends Fab implements Checkable {
 	public CheckableFab(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
 		super(context, attrs, defStyleAttr);
 
-        if (isInEditMode()) {
-            return;
-        }
-
-		Resources res = context.getResources();
 		_checkedImageView = (ImageView)findViewById(R.id.psdarch_checked_fab_icon);
 		
 		if (attrs!=null) {

@@ -26,10 +26,6 @@ public class NumberSelector extends FrameLayout
     private TextView _txtNumber;
     private ArrayList<IWidgetValueReceiver> valueReceivers = new ArrayList<IWidgetValueReceiver>();
 
-    public NumberSelector(Context context) {
-        this(context, null, 0);
-    }
-
     public NumberSelector(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
@@ -47,7 +43,7 @@ public class NumberSelector extends FrameLayout
 
     protected void init(Context context, AttributeSet attrs, int defStyleAttr)
     {
-        if (attrs != null) {
+        if ( (attrs != null) && (!isInEditMode() )) {
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.psdarch_number_selector, 0, 0);
 
             //1 - Vertical, 0 - Horizontal

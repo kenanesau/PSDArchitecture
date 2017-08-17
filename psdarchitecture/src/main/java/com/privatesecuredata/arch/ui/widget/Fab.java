@@ -15,6 +15,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
@@ -31,10 +32,6 @@ public class Fab extends FrameLayout
     protected int _color;
     protected boolean _disableOutline;
 	
-	public Fab(Context context) {
-		this(context, null, 0);
-	}
-
 	public Fab(Context context, AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
@@ -42,13 +39,10 @@ public class Fab extends FrameLayout
 	public Fab(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
 
-        if (isInEditMode()) {
-            return;
-        }
         setClickable(true);
         setFocusable(true);
 
-        inflate(context, R.layout.psdarch_fab, this);
+        LayoutInflater.from(context).inflate(R.layout.psdarch_fab, this, true);
         _defaultImageView = (ImageView)findViewById(R.id.psdarch_fab_icon);
         FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.psdarch_fab_widget);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

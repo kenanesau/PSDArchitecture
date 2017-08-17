@@ -1,17 +1,14 @@
 package com.privatesecuredata.arch.ui.widget;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -28,10 +25,6 @@ public class DialogTitlebar extends Toolbar {
     private int cancelId = R.id.psdarch_btn_cancel;
     private int titleId = R.id.psdarch_dialog_titlebar_txt_title;
     private int okId = R.id.psdarch_btn_ok;
-
-    public DialogTitlebar(Context context) {
-        this(context, null, 0);
-    }
 
     public DialogTitlebar(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -61,8 +54,7 @@ public class DialogTitlebar extends Toolbar {
 
     protected void init(Context context, AttributeSet attrs, int defStyleAttr)
     {
-        if (!isInEditMode())
-            LayoutInflater.from(context).inflate(getLayoutId(), this, true);
+        LayoutInflater.from(context).inflate(getLayoutId(), this, true);
         _defaultCancelIcon = (ImageView)findViewById(getCancelId());
         _txtTitle = (TextView)findViewById(getTitleId());
         _txtActionOk = (TextView)findViewById(getOkId());
