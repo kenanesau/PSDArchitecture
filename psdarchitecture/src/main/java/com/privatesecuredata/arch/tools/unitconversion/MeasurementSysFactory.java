@@ -15,7 +15,7 @@ public class MeasurementSysFactory {
             _val = val;
         }
 
-        int val() { return _val; }
+        public int val() { return _val; }
     };
 
     public enum Type {
@@ -29,7 +29,7 @@ public class MeasurementSysFactory {
             _val = val;
         }
 
-        int val() { return _val; }
+        public int val() { return _val; }
     };
 
     private MeasurementValue.ValueSpec spec;

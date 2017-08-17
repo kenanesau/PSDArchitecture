@@ -40,6 +40,7 @@
             android:layout_marginBottom="@dimen/raster3" />
 
         <TextView
+            android:id="@+id/psdarch_measvalctrl_lbl_unit"
             app:layout_column="2"
             app:layout_row="1"
             android:textAppearance="?android:attr/textAppearanceMedium"

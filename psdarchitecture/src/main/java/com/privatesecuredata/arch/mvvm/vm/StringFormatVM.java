@@ -52,4 +52,7 @@ public class StringFormatVM extends SimpleValueVM<String> {
         return str;
     }
 
+    public void setFormatString(String formatString) {
+        set(formatString);
+    }
 }
