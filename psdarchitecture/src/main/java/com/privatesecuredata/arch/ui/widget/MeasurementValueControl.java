@@ -31,6 +31,7 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
     private String _hint = "";
     private String _formatStr = "%.2f";
     private String _label = "Label";
+    private String _unit_postfix = null;
     private boolean _hideLabel = false;
     private boolean _readonly = true;
     private MeasurementValueVM _value;
@@ -73,9 +74,11 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
 
             _readonly = a.getBoolean(R.styleable.psdarch_measvalctrl_readonly, true);
             _hint = a.getString(R.styleable.psdarch_measvalctrl_android_hint);
-            _formatStr = a.getString(R.styleable.psdarch_measvalctrl_format_string);
+            String formatStr = a.getString(R.styleable.psdarch_measvalctrl_format_string);
+            _formatStr = formatStr != null ? formatStr : _formatStr;
             _label = a.getString(R.styleable.psdarch_measvalctrl_label);
             _hideLabel = a.getBoolean(R.styleable.psdarch_measvalctrl_hide_label, false);
+            _unit_postfix = a.getString(R.styleable.psdarch_measvalctrl_unit_postfix);
             a.recycle();
         }
 
@@ -105,6 +108,10 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
             adapter = new MVVMComplexVmAdapter<MeasurementValueVM>((MVVMActivity) getContext(), this, _value);
 
             vm.getStrValueVM().setFormatString(_formatStr);
+
+            if (_unit_postfix != null) {
+                vm.getUnitPostfixVM().set(_unit_postfix);
+            }
             if (!_readonly)
                 adapter.setMapping(String.class, R.id.psdarch_measvalctrl_edit_value,
                         new IGetVMCommand<String>() {

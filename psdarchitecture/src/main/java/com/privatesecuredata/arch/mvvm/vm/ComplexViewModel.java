@@ -380,7 +380,12 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             if (((IPersistable) m).getDbId() == null)
                 setDirty();
         }
-        doMappings(childViewModels);
+        try {
+            doMappings(childViewModels);
+        }
+        catch (Exception ex) {
+            throw new MVVMException(String.format("Error doing the mappings for VM of type '%s'", getClass().getName()), ex);
+        }
 		return childViewModels;
 	}
 	

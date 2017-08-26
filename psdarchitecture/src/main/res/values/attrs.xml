@@ -20,6 +20,7 @@
         <attr name="label" format="string" />
         <attr name="hide_label" format="boolean" />
         <attr name="readonly" format="boolean" />
+        <attr name="unit_postfix" format="string" />
     </declare-styleable>
     <declare-styleable name="psdarch_dialog_titlebar">
         <attr name="icon_cancel" format="reference" />

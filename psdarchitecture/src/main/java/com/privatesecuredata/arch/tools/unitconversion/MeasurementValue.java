@@ -147,4 +147,10 @@ public class MeasurementValue implements IPersistable{
             return false;
         }
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s: %s: %.2f %s", getSys().toString(),
+                getType().toString(), getVal(), getUnit().getUnit());
+    }
 }
