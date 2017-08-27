@@ -89,6 +89,10 @@ public class MeasurementValue implements IPersistable{
         return MeasurementSysFactory.create(getSys(), getType()).getUnit(unit);
     }
 
+    public String getUnitString() {
+        return getUnit().getUnit();
+    }
+
     public MeasurementSysFactory.System getSys() {
         return MeasurementSysFactory.System.values()[sys];
     }
