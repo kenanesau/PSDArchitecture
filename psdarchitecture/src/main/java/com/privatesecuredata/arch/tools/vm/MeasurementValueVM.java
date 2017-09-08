@@ -1,5 +1,8 @@
 package com.privatesecuredata.arch.tools.vm;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
@@ -36,13 +39,16 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
 
     public MeasurementValueVM(MVVM mvvm, MeasurementValue model) { super(mvvm, model); }
 
-    @Override
-    protected void doMappings(HashMap<String, IViewModel<?>> childVMs)
-    {
-        this.valueVm = (SimpleValueVM<Double>)childVMs.get(MeasurementValue.FLD_VAL);
-        this.sysVm = (SimpleValueVM<Integer>)childVMs.get(MeasurementValue.FLD_SYS);
-        this.typeVm = (SimpleValueVM<Integer>)childVMs.get(MeasurementValue.FLD_TYPE);
-        this.intUnitVm = (SimpleValueVM<Integer>)childVMs.get(MeasurementValue.FLD_UNIT);
+    private MeasurementValueVM(Parcel in) {
+        this.sysVm.set(in.readInt());
+        this.typeVm.set(in.readInt());
+        this.intUnitVm.set(in.readInt());
+        this.valueVm.set(in.readDouble());
+
+        initSecondaryVMs();
+    }
+
+    protected void initSecondaryVMs() {
         this.strUnitVm = new SimpleValueLogicVM<String>("gr", this.sysVm, this.typeVm, this.intUnitVm);
         this.strUnitVm.setDataCBs(null,
                 new SimpleValueLogicVM.IGetData<String>() {
@@ -51,7 +57,7 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
                         return MeasurementSysFactory.create(
                                 MeasurementValueVM.this.getSys(),
                                 MeasurementValueVM.this.getType())
-                                    .getUnit(MeasurementValueVM.this.intUnitVm.get()).getUnit();
+                                .getUnit(MeasurementValueVM.this.intUnitVm.get()).getUnit();
                     }
                 });
         registerChildVM(strUnitVm);
@@ -66,6 +72,17 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
                 this.strUnitVm,
                 this.unitPostfixVm);
         registerChildVM(unitVm);
+    }
+
+    @Override
+    protected void doMappings(HashMap<String, IViewModel<?>> childVMs)
+    {
+        this.valueVm = (SimpleValueVM<Double>)childVMs.get(MeasurementValue.FLD_VAL);
+        this.sysVm = (SimpleValueVM<Integer>)childVMs.get(MeasurementValue.FLD_SYS);
+        this.typeVm = (SimpleValueVM<Integer>)childVMs.get(MeasurementValue.FLD_TYPE);
+        this.intUnitVm = (SimpleValueVM<Integer>)childVMs.get(MeasurementValue.FLD_UNIT);
+
+        initSecondaryVMs();
     }
 
     public SimpleValueVM<Double> getValueVM() {
@@ -111,4 +128,25 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
     public StringFormatVM getUnitVM() {
         return unitVm;
     }
+
+    public void set(MeasurementValue measVal) {
+        getSysVM().set(measVal.getSys().val());
+        getTypeVM().set(measVal.getType().val());
+        getIntUnitVM().set(measVal.getUnitVal());
+        getValueVM().set(measVal.getVal());
+    }
+
+    /**
+     * returns the uncommitted values as MeasurementValue
+     * @return
+     */
+    public MeasurementValue get() {
+        return new MeasurementValue(
+                MeasurementSysFactory.System.values()[getSysVM().get()],
+                MeasurementSysFactory.Type.values()[getTypeVM().get()],
+                getIntUnitVM().get(),
+                getValueVM().get()
+        );
+    }
+
 }

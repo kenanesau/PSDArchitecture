@@ -1,5 +1,8 @@
 package com.privatesecuredata.arch.tools.unitconversion;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.common.base.Objects;
 import com.privatesecuredata.arch.db.DbId;
 import com.privatesecuredata.arch.db.IPersistable;
@@ -16,7 +19,7 @@ import com.privatesecuredata.arch.tools.vm.MeasurementValueVM;
 
 @DbFactory(factoryType = MeasurementValue.DbFactory.class)
 @ComplexVmMapping(vmType = MeasurementValueVM.class, vmFactoryType = MeasurementValueVM.VmFactory.class)
-public class MeasurementValue implements IPersistable{
+public class MeasurementValue implements IPersistable, Parcelable {
     public static final String FLD_SYS = "sys";
     public static final String FLD_TYPE = "type";
     public static final String FLD_UNIT = "unit";
@@ -64,6 +67,13 @@ public class MeasurementValue implements IPersistable{
         this.type = type.val();
         this.unit = unit;
         this.val = val;
+    }
+
+    private MeasurementValue(Parcel in) {
+        this.sys = in.readInt();
+        this.type = in.readInt();
+        this.unit = in.readInt();
+        this.val = in.readDouble();
     }
 
     @Override
@@ -157,4 +167,28 @@ public class MeasurementValue implements IPersistable{
         return String.format("%s: %s: %.2f %s", getSys().toString(),
                 getType().toString(), getVal(), getUnit().getUnit());
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(sys);
+        dest.writeInt(type);
+        dest.writeInt(unit);
+        dest.writeDouble(val);
+    }
+
+    public static final Parcelable.Creator<MeasurementValue> CREATOR
+            = new Parcelable.Creator<MeasurementValue>() {
+        public MeasurementValue createFromParcel(Parcel in) {
+            return new MeasurementValue(in);
+        }
+
+        public MeasurementValue[] newArray(int size) {
+            return new MeasurementValue[size];
+        }
+    };
 }
