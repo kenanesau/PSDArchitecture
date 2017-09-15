@@ -9,6 +9,7 @@ import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
+import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
@@ -20,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -677,6 +679,18 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             unregisterChildVM(oldChildVM);
 
             Field fld = oldChildVM.getModelField();
+            Collection<IModelChangedListener> modelListeners = oldChildVM.getModelListeners();
+            for (IModelChangedListener listener : modelListeners) {
+                oldChildVM.delModelListener(listener);
+                newChildViewModel.addModelListener(listener);
+            }
+
+            Collection<IViewModelChangedListener> vmListeners = oldChildVM.getViewModelListeners();
+            for (IViewModelChangedListener listener : vmListeners) {
+                oldChildVM.delViewModelListener(listener);
+                newChildViewModel.addViewModelListener(listener);
+            }
+
             if (null == fld)
                 throw new ArgumentException("Field for setting own value in parent is null!!");
 

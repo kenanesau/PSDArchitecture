@@ -37,6 +37,14 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	 * Sets the model
 	 */
 	public void setModel (MODEL m) { this.model = m; }
+
+    protected Collection<IModelChangedListener> getModelListeners() {
+        return modelChangeListeners;
+    }
+
+    protected Collection<IViewModelChangedListener> getViewModelListeners() {
+        return viewModelChangeListeners;
+    }
 	
 	@Override
 	public MODEL getModel() throws MVVMException { return this.model; }
