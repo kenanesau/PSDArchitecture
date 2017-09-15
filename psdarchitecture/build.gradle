@@ -13,13 +13,13 @@ android {
 
     compileOptions {
         incremental false
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        //sourceCompatibility JavaVersion.VERSION_1_8
+        //targetCompatibility JavaVersion.VERSION_1_8
     }
 
     retrolambda {
         jvmArgs '-noverify'
-        jdk '/usr/lib/jvm/java-8-oracle'
+        //jdk '/usr/lib/jvm/java-8-oracle'
         javaVersion JavaVersion.VERSION_1_7
         defaultMethods false
         defaultMethods false
