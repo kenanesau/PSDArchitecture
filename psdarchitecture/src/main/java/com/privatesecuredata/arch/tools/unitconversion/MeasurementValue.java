@@ -115,10 +115,16 @@ public class MeasurementValue implements IPersistable, Parcelable {
         return unit;
     }
 
-    public static class ValueSpec {
+    public static class ValueSpec implements Parcelable {
         private MeasurementSysFactory.System sys;
         private MeasurementSysFactory.Type type;
         private int unit;
+
+        private ValueSpec(Parcel in) {
+            this.sys = MeasurementSysFactory.System.values()[in.readInt()];
+            this.type = MeasurementSysFactory.Type.values()[in.readInt()];
+            this.unit = in.readInt();
+        }
 
         public ValueSpec(MeasurementSysFactory.System sys, MeasurementSysFactory.Type type, int unit) {
             this.sys = sys;
@@ -137,6 +143,29 @@ public class MeasurementValue implements IPersistable, Parcelable {
         public int getUnit() {
             return unit;
         }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(this.sys.val());
+            dest.writeInt(this.type.val());
+            dest.writeInt(this.unit);
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        public static final Parcelable.Creator<ValueSpec> CREATOR
+                = new Parcelable.Creator<ValueSpec>() {
+            public ValueSpec createFromParcel(Parcel in) {
+                return new ValueSpec(in);
+            }
+
+            public ValueSpec[] newArray(int size) {
+                return new ValueSpec[size];
+            }
+        };
 
     }
 
