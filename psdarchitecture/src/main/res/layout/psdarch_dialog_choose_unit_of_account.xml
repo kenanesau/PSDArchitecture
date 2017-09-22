@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="@dimen/raster4"
+    android:paddingLeft="@dimen/raster4"
+    android:paddingRight="@dimen/raster4">
+
+    <android.support.v7.widget.GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:columnCount="4"
+        app:rowCount="1"
+        app:alignmentMode="alignBounds"
+        >
+        <EditText app:layout_column="0"
+            app:layout_row="0"
+            app:layout_columnSpan="3"
+            app:layout_gravity="fill_horizontal"
+            app:layout_columnWeight="1"
+            android:id="@+id/psdarch_measval_value"
+            android:inputType="numberDecimal"
+            android:selectAllOnFocus="true"
+            android:layout_width="0dp"
+            android:maxLength="24"
+            />
+        <Spinner app:layout_column="3"
+            app:layout_row="0"
+            app:layout_gravity="fill_horizontal"
+            android:id="@+id/psdarch_unit_spinner"
+            />
+    </android.support.v7.widget.GridLayout>
+    <RadioGroup
+        android:id="@+id/unit_of_account_choices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/unspecified_weight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/psdarch_unspecified_weight" />
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/custom_weight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/psdarch_custom_weight" />
+        <android.support.v7.widget.GridLayout
+            android:id="@+id/custom_weight_txt_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_gravity="fill_horizontal"
+            app:columnCount="2"
+            app:orientation="horizontal"
+            android:elevation="0dp"
+            android:visibility="gone"
+            >
+            <EditText
+                android:id="@+id/edit_dialog_unit_of_account_custom_weight"
+                app:layout_column="0"
+                app:layout_gravity="fill_horizontal"
+                android:inputType="number"
+                android:enabled="false"
+            />
+            <TextView
+                android:id="@+id/edit_dialog_unit_of_account_custom_weight_lbl"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                />
+        </android.support.v7.widget.GridLayout>
+    </RadioGroup>
+
+</LinearLayout>

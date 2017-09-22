@@ -16,6 +16,10 @@
     <string name="psdarch_cancel">Abbrechen</string>
     <string name="psdarch_moving">verschiebe…</string>
     <string name="psdarch_searching">Suche…</string>
+    <string name="psdarch_unspecified_weight">unspezifiziertes Gewicht</string>
+    <string name="psdarch_custom_weight">benutzerspezifisches Gewicht</string>
     <string name="title_activity_licenses">Lizenzen</string>
     <string name="toast_info_activity" formatted="false">%s V%s benutzt diese großartigen Open-Source-Produkte! DANKE!!!</string>
+    <string name="psdarch_per_piece">per piece</string>
+    <string name="psdarch_per_bin">per bin</string>
 </resources>

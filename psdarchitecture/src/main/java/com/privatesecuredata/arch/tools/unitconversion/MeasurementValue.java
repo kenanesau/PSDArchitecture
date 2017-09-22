@@ -95,8 +95,15 @@ public class MeasurementValue implements IPersistable, Parcelable {
         this.val = val;
     }
 
+    public void setVal(int val) {
+        this.val = new Integer(val).doubleValue();
+    }
+
     public Conversion getUnit() {
         return MeasurementSysFactory.create(getSys(), getType()).getUnit(unit);
+    }
+    public void setUnit(int unit) {
+        this.unit = unit;
     }
 
     public String getUnitString() {
@@ -105,6 +112,9 @@ public class MeasurementValue implements IPersistable, Parcelable {
 
     public MeasurementSysFactory.System getSys() {
         return MeasurementSysFactory.System.values()[sys];
+    }
+    public void setSys(int sys) {
+        this.sys = sys;
     }
 
     public MeasurementSysFactory.Type getType() {
