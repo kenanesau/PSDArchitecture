@@ -1,7 +1,8 @@
 package com.privatesecuredata.arch.ui.widget;
 
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.os.Parcelable;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatRadioButton;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -15,7 +16,6 @@ import android.widget.FrameLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TabHost;
 import android.widget.TabHost.TabContentFactory;
 
@@ -26,14 +26,12 @@ import com.privatesecuredata.arch.tools.unitconversion.AbstractMeasurementSystem
 import com.privatesecuredata.arch.tools.unitconversion.Conversion;
 import com.privatesecuredata.arch.tools.unitconversion.MeasurementSysFactory;
 import com.privatesecuredata.arch.tools.unitconversion.MeasurementValue;
-import com.privatesecuredata.arch.tools.vm.MeasurementValueVM;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
 
 /**
  * Created by kenan on 9/15/17.
@@ -45,12 +43,14 @@ public class EditMeasurementValueFragment extends MVVMFragment
     public static final String TAG = "psdarch_tag_edit_measurement_value_frag";
     public static final String ARG_SELECTED_VALUE = "arg_selected_meas_val";
     public static final String ARG_SELECTED_TAB = "arg_selected_tab";
+    public static final String ARG_SPECS = "arg_specs_parameter";
     private MeasurementValue selectedValue = null;
     private int selectedTab = 0;
     private MeasurementValue.ValueSpec[] specs = null;
     private HashMap<String, View> tabViews = new HashMap<>();
     private boolean noWatch = false;
     private boolean textChanging = false;
+    private boolean viewStateRestored = false;
 
     private int[] unitOfAccounts10 = {
             250,
@@ -98,18 +98,20 @@ public class EditMeasurementValueFragment extends MVVMFragment
         TabHost host = (TabHost)view.findViewById(R.id.edit_measval_tabhost);
         host.setup();
 
-        Bundle args = getArguments();
-        specs = (MeasurementValue.ValueSpec[])args.getParcelableArray(TAG_SPEC_PARAMS);
-        if ( (null == specs) || (specs.length < 1) )
-            throw new ArgumentException("Add at least one MeasurementValue-Spec!");
-
         if (null == savedInstanceState) {
+            Bundle args = getArguments();
+            Parcelable[] parcelables = args.getParcelableArray(TAG_SPEC_PARAMS);
+            specs = Arrays.copyOf(parcelables, parcelables.length, MeasurementValue.ValueSpec[].class);
+            if ( (null == specs) || (specs.length < 1) )
+                throw new ArgumentException("Add at least one MeasurementValue-Spec!");
             selectedValue = new MeasurementValue(specs[0].getSys(), specs[0].getType(), specs[0].getUnit(), -1.0d);
             selectedTab = 0;
         }
         else {
+            Parcelable[] parcelables = savedInstanceState.getParcelableArray(ARG_SPECS);
+            specs = Arrays.copyOf(parcelables, parcelables.length, MeasurementValue.ValueSpec[].class);
             selectedValue = savedInstanceState.getParcelable(ARG_SELECTED_VALUE);
-            selectedTab = savedInstanceState.getInt(ARG_SELECTED_TAB);
+            //selectedTab = savedInstanceState.getInt(ARG_SELECTED_TAB);
         }
 
         if (specs.length > 1) {
@@ -130,13 +132,13 @@ public class EditMeasurementValueFragment extends MVVMFragment
             frame.setVisibility(View.VISIBLE);
         }
 
-        host.setCurrentTab(selectedTab);
+        //host.setCurrentTab(selectedTab);
 
         host.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
             @Override
             public void onTabChanged(String tabId) {
-                int tabIndex = Integer.parseInt(tabId);
-                selectedValue.setSys(tabIndex);
+                selectedTab = Integer.parseInt(tabId);
+                selectedValue.setSys(selectedTab);
                 AbstractMeasurementSystem system = MeasurementSysFactory.create(selectedValue.getSys(), selectedValue.getType());
                 if (selectedValue.getUnitVal() > system.getUnits().length - 1)
                     selectedValue.setUnit(system.getUnits().length - 1);
@@ -144,26 +146,31 @@ public class EditMeasurementValueFragment extends MVVMFragment
                 View v = tabViews.get(tabId);
                 RadioGroup rg = (RadioGroup)v.findViewById(R.id.unit_of_account_choices);
                 if (null != rg)
-                    createOptionList(rg);
+                    createOptionList(rg, specs[selectedTab]);
             }
         });
 
         return view;
     }
 
-    protected void createOptionList(final RadioGroup rg) {
+    protected void createOptionList(final RadioGroup rg, MeasurementValue.ValueSpec spec) {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 rg.removeAllViews();
+
                 AppCompatRadioButton rb = new AppCompatRadioButton(getActivity());
                 rb.setText(getResources().getString(R.string.psdarch_custom_weight));
                 rb.setId(R.id.custom_weight);
+                rb.setChecked(true);
                 rg.addView(rb);
 
                 rb = new AppCompatRadioButton(getActivity());
                 rb.setText(getResources().getString(R.string.psdarch_unspecified_weight));
                 rb.setId(R.id.unspecified_weight);
+                if (selectedValue.getVal() < 0.0d) {
+                    rb.setChecked(true);
+                }
                 rg.addView(rb);
 
                 int[] unitsOfAccount = { };
@@ -201,6 +208,8 @@ public class EditMeasurementValueFragment extends MVVMFragment
                         rb.setChecked(true);
                     }
                 }
+
+
             }
         });
 
@@ -212,7 +221,6 @@ public class EditMeasurementValueFragment extends MVVMFragment
         View view = getActivity().getLayoutInflater().inflate(R.layout.psdarch_dialog_choose_unit_of_account, null);
 
         RadioGroup rg = (RadioGroup)view.findViewById(R.id.unit_of_account_choices);
-        boolean foundUnit = false;
         MeasurementValue.ValueSpec spec = specs[activeTab];
         AbstractMeasurementSystem system = MeasurementSysFactory.create(spec.getSys(), spec.getType());
 
@@ -221,6 +229,10 @@ public class EditMeasurementValueFragment extends MVVMFragment
             units.add(conv.getUnit());
         }
         Spinner spinner = (Spinner)view.findViewById(R.id.psdarch_unit_spinner);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, units);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setSelection(activeTab == selectedTab ? selectedValue.getUnitVal() : spec.getUnit());
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -230,7 +242,7 @@ public class EditMeasurementValueFragment extends MVVMFragment
                 View v = host.getCurrentTabTag() != null ? tabViews.get(host.getCurrentTabTag()) :
                         tabViews.get("0");
                 RadioGroup rg = (RadioGroup)v.findViewById(R.id.unit_of_account_choices);
-                createOptionList(rg);
+                createOptionList(rg, spec);
             }
 
             @Override
@@ -238,20 +250,18 @@ public class EditMeasurementValueFragment extends MVVMFragment
 
             }
         });
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, units);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        spinner.setSelection(selectedValue.getUnitVal());
 
-        createOptionList(rg);
-
-        if (foundUnit == false)
-        {
-            AppCompatRadioButton rb = (AppCompatRadioButton)view.findViewById(R.id.custom_weight);
-            rb.setChecked(true);
-        }
+        createOptionList(rg, spec);
 
         EditText editVal = (EditText)view.findViewById(R.id.psdarch_measval_value);
+        if (activeTab == selectedTab) {
+            if (selectedValue.getVal() < 0.0d) {
+                editVal.setText("0.0");
+                editVal.setEnabled(false);
+            } else {
+                editVal.setText(new Double(selectedValue.getVal()).toString());
+            }
+        }
         editVal.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -296,10 +306,13 @@ public class EditMeasurementValueFragment extends MVVMFragment
         rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (textChanging)
+                if ( (!viewStateRestored) || (textChanging) )
                     return;
 
                 AppCompatRadioButton rb = (AppCompatRadioButton)group.findViewById(checkedId);
+                if (rb==null)
+                    return;
+
                 TabHost host = (TabHost)getActivity().findViewById(R.id.edit_measval_tabhost);
                 View v = host.getCurrentTabTag() != null ? tabViews.get(host.getCurrentTabTag()) :
                         tabViews.get("0");
@@ -337,9 +350,16 @@ public class EditMeasurementValueFragment extends MVVMFragment
     }
 
     @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        super.onViewStateRestored(savedInstanceState);
+        viewStateRestored = true;
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        outState.putParcelableArray(ARG_SPECS, specs);
         outState.putParcelable(ARG_SELECTED_VALUE, selectedValue);
         outState.putInt(ARG_SELECTED_TAB, selectedTab);
     }
