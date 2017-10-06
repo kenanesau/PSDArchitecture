@@ -135,25 +135,26 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                             String strVal = ((TextView) view).getText().toString();
 
 							try {
-                                if ( (strVal!= null) && (!strVal.isEmpty()) ) {
+                                if (strVal!= null) {
                                     if (dataType == String.class) {
                                         return dataType.cast(strVal);
                                     }
-                                    if (dataType == Integer.class) {
-                                        return dataType.cast(Integer.parseInt(strVal));
+                                    if (!strVal.isEmpty()) {
+                                        if (dataType == Integer.class) {
+                                            return dataType.cast(Integer.parseInt(strVal));
+                                        }
+                                        if (dataType == Long.class) {
+                                            return dataType.cast(Long.parseLong(strVal));
+                                        }
+                                        if (dataType == Float.class) {
+                                            return dataType.cast(Float.parseFloat(strVal));
+                                        }
+                                        if (dataType == Double.class) {
+                                            return dataType.cast(Double.parseDouble(strVal));
+                                        }
                                     }
-                                    if (dataType == Long.class) {
-                                        return dataType.cast(Long.parseLong(strVal));
-                                    }
-                                    if (dataType == Float.class) {
-                                        return dataType.cast(Float.parseFloat(strVal));
-                                    }
-                                    if (dataType == Double.class) {
-                                        return dataType.cast(Double.parseDouble(strVal));
-                                    }
-                                    else {
-										throw new MVVMException("Unable to convert view-value for the viewmodel! Datatype not supported!");
-									}
+
+                                    throw new MVVMException("Unable to convert view-value for the viewmodel! Datatype not supported!");
                                 }
 							}
 							catch (Exception ex)
@@ -215,17 +216,19 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
 		txtWatch = new TextWatcher() {
 			
 			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) {}
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				if ( !isVMUpdatesView() && canWriteToModel() )
+				{
+					viewValueToViewModel(ViewToVmBinder.this.view, vm);
+				}
+			}
 			
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count,	int after) {}
 			
 			@Override
 			public void afterTextChanged(Editable s) {
-				if ( !isVMUpdatesView() && canWriteToModel() ) 
-				{
-					viewValueToViewModel(ViewToVmBinder.this.view, vm);
-				}
+
 			}
 		};
 		

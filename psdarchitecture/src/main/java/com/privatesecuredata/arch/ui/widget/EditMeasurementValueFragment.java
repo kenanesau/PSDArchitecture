@@ -144,9 +144,19 @@ public class EditMeasurementValueFragment extends MVVMFragment
                     selectedValue.setUnit(system.getUnits().length - 1);
 
                 View v = tabViews.get(tabId);
-                RadioGroup rg = (RadioGroup)v.findViewById(R.id.unit_of_account_choices);
-                if (null != rg)
-                    createOptionList(rg, specs[selectedTab]);
+                //RadioGroup rg = (RadioGroup)v.findViewById(R.id.unit_of_account_choices);
+                //if (null != rg)
+                //    createOptionList(rg, specs[selectedTab]);
+                EditText editVal = (EditText)v.findViewById(R.id.psdarch_measval_value);
+                noWatch = true;
+                if (selectedValue.getVal() >= 0.0d)
+                        editVal.setText(new Double(selectedValue.getVal()).toString());
+                noWatch=false;
+
+                Spinner spinner = (Spinner)v.findViewById(R.id.psdarch_unit_spinner);
+                if (null != spinner)
+                    spinner.setSelection(selectedValue.getUnitVal());
+
             }
         });
 
@@ -286,12 +296,12 @@ public class EditMeasurementValueFragment extends MVVMFragment
 
                 if (str.isEmpty()) {
                     selectedValue.setVal(-1.0d);
-                    RadioButton rb = (RadioButton) rg.findViewById(R.id.unspecified_weight);
+                    /*RadioButton rb = (RadioButton) rg.findViewById(R.id.unspecified_weight);
                     textChanging = true;
                     rb.setChecked(true);
                     textChanging = false;
                     EditText txt = (EditText)v.findViewById(R.id.psdarch_measval_value);
-                    txt.setEnabled(false);
+                    txt.setEnabled(false);*/
                 }
                 else {
                     selectedValue.setVal(Double.parseDouble(s.toString()));
