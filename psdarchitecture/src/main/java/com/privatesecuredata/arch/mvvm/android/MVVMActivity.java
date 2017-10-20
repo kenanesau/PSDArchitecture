@@ -47,7 +47,8 @@ public class MVVMActivity extends AppCompatActivity
 	public void setDefaultPM(PersistanceManager pm)
 	{
 		if (null != pmUUID)
-			DataHive.getInstance().remove(pmUUID);
+			throw new ArgumentException("There is already an PM registered! Don't do that twice!!");
+
 		pmUUID = DataHive.getInstance().put(pm);
 		getIntent().putExtra(MVVMActivity.TAG_PERSISTANCE_MANAGER, pmUUID);
 	}
