@@ -38,6 +38,16 @@ public class MeasurementSysFactory {
             {new USLengthMeasurementSystem(), new USWeightAvoirdupoisMeasurementSystem(), new USLiquidVolumeMeasurementSystem()}
     };
 
+    public static MeasurementValue.ValueSpec[] createSpecs(Type type) {
+        MeasurementValue.ValueSpec[] ar = new MeasurementValue.ValueSpec[System.values().length];
+
+        for (int i=0; i<System.values().length; i++) {
+            ar[i] = new MeasurementValue.ValueSpec(System.values()[i], type, 0);
+        }
+
+        return ar;
+    }
+
     public static AbstractMeasurementSystem create(System sys, Type type) {
         return systems[sys.val()][type.val()];
     }
