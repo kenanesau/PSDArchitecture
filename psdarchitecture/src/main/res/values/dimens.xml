@@ -13,6 +13,8 @@
 	<dimen name="keyline1">16dp</dimen>
 	<dimen name="keyline2">72dp</dimen>
 	<dimen name="small_fab">40dp</dimen>
+	<dimen name="action_area_height">52dp</dimen>
+	<dimen name="button_height">36dp</dimen>
 	<dimen name="large_fab">56dp</dimen>
 	<dimen name="elevation">4dp</dimen>
 	<dimen name="small_fab_margin_top">108dp</dimen>

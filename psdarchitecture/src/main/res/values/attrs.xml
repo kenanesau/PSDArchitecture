@@ -13,13 +13,19 @@
     <declare-styleable name="psdarch_number_selector">
         <attr name="android:orientation" />
     </declare-styleable>
+    <attr name="edit_mode" format="enum">
+        <enum name="ro" value="0"/>
+        <enum name="simple" value="1"/>
+        <enum name="complex" value="2"/>
+        <enum name="full" value="3"/>
+    </attr>
     <declare-styleable name="psdarch_measvalctrl">
+        <attr name="edit_mode" />
         <attr name="android:orientation" />
         <attr name="android:hint" />
         <attr name="format_string" format="string" />
         <attr name="label" format="string" />
         <attr name="hide_label" format="boolean" />
-        <attr name="readonly" format="boolean" />
         <attr name="unit_postfix" format="string" />
     </declare-styleable>
     <declare-styleable name="psdarch_dialog_titlebar">

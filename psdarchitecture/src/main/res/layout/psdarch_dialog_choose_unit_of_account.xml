@@ -35,7 +35,8 @@
     <RadioGroup
         android:id="@+id/unit_of_account_choices"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/raster2">
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/unspecified_weight"
             android:layout_width="match_parent"

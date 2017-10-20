@@ -1,13 +1,16 @@
 package com.privatesecuredata.arch.ui.widget;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
+import android.os.Parcelable;
 import android.support.annotation.AttrRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.StyleRes;
+import android.support.v7.app.AppCompatActivity;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,24 +19,42 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.privatesecuredata.arch.R;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.mvvm.IGetVMCommand;
 import com.privatesecuredata.arch.mvvm.android.IBindableView;
 import com.privatesecuredata.arch.mvvm.android.MVVMActivity;
 import com.privatesecuredata.arch.mvvm.android.MVVMComplexVmAdapter;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
+import com.privatesecuredata.arch.tools.unitconversion.MeasurementSysFactory;
+import com.privatesecuredata.arch.tools.unitconversion.MeasurementValue;
 import com.privatesecuredata.arch.tools.vm.MeasurementValueVM;
 
 /**
  * Created by kenan on 8/7/17.
  */
-public class MeasurementValueControl extends FrameLayout implements IBindableView<MeasurementValueVM>{
+public class MeasurementValueControl extends FrameLayout implements IBindableView<MeasurementValueVM>,
+        EditMeasurementValueFragment.IMeasurementValueListener
+{
+    public enum EditMode {
+        READONLY(0), /* just ro */
+        SIMPLE(1),   /* Enable EditText */
+        COMPLEX(2),  /* Not implemented yet -- SIMPLE + add a spinner to change the unit */
+        FULL(3);     /* Open EditMeasurementValueFragment as Dialog */
+
+        private int value;
+
+        private EditMode(int value) {
+            this.value = value;
+        }
+    }
+
     private String _hint = "";
     private String _formatStr = "%.2f";
     private String _label = "Label";
     private String _unit_postfix = null;
     private boolean _hideLabel = false;
-    private boolean _readonly = true;
+    private EditMode _editMode = EditMode.READONLY;
     private MeasurementValueVM _value;
     private MVVMComplexVmAdapter<MeasurementValueVM> adapter;
 
@@ -52,12 +73,37 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
         init(context, attrs, defStyleAttr);
     }
 
-    public void setReadOnly(boolean ro) {
-        _readonly = ro;
+    public void setEditMode(EditMode editMode) {
+        _editMode = editMode;
         EditText valueEdit = (EditText) findViewById(R.id.psdarch_measvalctrl_edit_value);
         TextView valueLabel = (TextView) findViewById(R.id.psdarch_measvalctrl_lbl_value);
-        valueEdit.setVisibility(_readonly ? GONE : VISIBLE);
-        valueLabel.setVisibility(_readonly ? VISIBLE : GONE);
+
+        switch (_editMode) {
+            case READONLY:
+                valueEdit.setVisibility(GONE);
+                valueLabel.setVisibility(VISIBLE);
+                break;
+            case SIMPLE:
+                valueEdit.setVisibility(VISIBLE);
+                valueLabel.setVisibility(GONE);
+                break;
+            case COMPLEX:
+                throw new ArgumentException("Not implemented yet!");
+            case FULL:
+                valueEdit.setVisibility(GONE);
+                valueLabel.setVisibility(VISIBLE);
+                valueLabel.setOnClickListener(new OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        MeasurementValue.ValueSpec[] specs = MeasurementSysFactory.createSpecs(_value.getType());
+
+                        EditMeasurementValueFragment frag = EditMeasurementValueFragment.newInstance(_value.get(), specs);
+                        frag.setValueListener(MeasurementValueControl.this);
+                        frag.show(((AppCompatActivity)getContext()).getSupportFragmentManager(), EditMeasurementValueFragment.TAG);
+                    }
+                });
+                break;
+        }
     }
 
     protected void init(Context context, AttributeSet attrs, int defStyleAttr)
@@ -72,7 +118,7 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
             else
                 LayoutInflater.from(context).inflate(R.layout.psdarch_measurement_value_control, this, true);
 
-            _readonly = a.getBoolean(R.styleable.psdarch_measvalctrl_readonly, true);
+            _editMode = EditMode.values()[(a.getInt(R.styleable.psdarch_measvalctrl_edit_mode, 0))];
             _hint = a.getString(R.styleable.psdarch_measvalctrl_android_hint);
             String formatStr = a.getString(R.styleable.psdarch_measvalctrl_format_string);
             _formatStr = formatStr != null ? formatStr : _formatStr;
@@ -90,7 +136,7 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
         TextView valueLabel = (TextView) findViewById(R.id.psdarch_measvalctrl_lbl_value);
         valueEdit.setHint(_hint);
         valueLabel.setHint(_hint);
-        setReadOnly(_readonly);
+        setEditMode(_editMode);
 
         if (isInEditMode()) {
             valueLabel.setText("99,99");
@@ -112,7 +158,7 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
             if (_unit_postfix != null) {
                 vm.getUnitPostfixVM().set(_unit_postfix);
             }
-            if (!_readonly)
+            if (_editMode==EditMode.SIMPLE)
                 adapter.setMapping(String.class, R.id.psdarch_measvalctrl_edit_value,
                         new IGetVMCommand<String>() {
                             @Override
@@ -120,7 +166,7 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
                                 return vm.getStrValueVM();
                             }
                         });
-            else
+            else if ( (_editMode==EditMode.READONLY) || (_editMode == EditMode.FULL) ) {
                 adapter.setMapping(String.class, R.id.psdarch_measvalctrl_lbl_value,
                         new IGetVMCommand<String>() {
                             @Override
@@ -129,15 +175,26 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
                             }
                         });
 
-            adapter.setMapping(String.class, R.id.psdarch_measvalctrl_lbl_unit,
-                    new IGetVMCommand<String>() {
-                        @Override
-                        public SimpleValueVM<String> getVM(IViewModel<?> vm1) {
-                            return vm.getUnitVM();
-                        }
-                    });
+                adapter.setMapping(String.class, R.id.psdarch_measvalctrl_lbl_unit,
+                        new IGetVMCommand<String>() {
+                            @Override
+                            public SimpleValueVM<String> getVM(IViewModel<?> vm1) {
+                                return vm.getUnitVM();
+                            }
+                        });
+            }
 
         }
+
+    }
+
+    @Override
+    public void commitValue(MeasurementValue value) {
+        this._value.set(value);
+    }
+
+    @Override
+    public void cancelValue() {
 
     }
 
@@ -148,5 +205,14 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
 
         this._value = null;
         this.adapter = null;
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        super.onRestoreInstanceState(state);
+        AppCompatActivity activity = (AppCompatActivity)getContext();
+        EditMeasurementValueFragment frag = (EditMeasurementValueFragment)activity.getSupportFragmentManager().findFragmentByTag(EditMeasurementValueFragment.TAG);
+        if (null != frag)
+            frag.setValueListener(this);
     }
 }

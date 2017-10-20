@@ -3,6 +3,7 @@ package com.privatesecuredata.arch.ui.widget;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.widget.AppCompatRadioButton;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,10 +19,10 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TabHost;
 import android.widget.TabHost.TabContentFactory;
+import android.widget.TextView;
 
 import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
-import com.privatesecuredata.arch.mvvm.android.MVVMFragment;
 import com.privatesecuredata.arch.tools.unitconversion.AbstractMeasurementSystem;
 import com.privatesecuredata.arch.tools.unitconversion.Conversion;
 import com.privatesecuredata.arch.tools.unitconversion.MeasurementSysFactory;
@@ -37,13 +38,23 @@ import java.util.List;
  * Created by kenan on 9/15/17.
  */
 
-public class EditMeasurementValueFragment extends MVVMFragment
-    implements TabContentFactory {
-    public static final String TAG_SPEC_PARAMS = "psdarch_spec_params";
+public class EditMeasurementValueFragment extends DialogFragment
+        implements TabContentFactory {
+
+    public interface IMeasurementValueListener {
+        void commitValue(MeasurementValue value);
+        void cancelValue();
+    }
+
+    public static final String TAG_SPECS_PARAM = "psdarch_specs_param";
+    public static final String TAG_VALUE_PARAM = "psdarch_value_param";
     public static final String TAG = "psdarch_tag_edit_measurement_value_frag";
     public static final String ARG_SELECTED_VALUE = "arg_selected_meas_val";
     public static final String ARG_SELECTED_TAB = "arg_selected_tab";
-    public static final String ARG_SPECS = "arg_specs_parameter";
+    protected static final String ARG_SPECS = "arg_specs_parameter";
+
+    private IMeasurementValueListener valueListener;
+    private TabHost host;
     private MeasurementValue selectedValue = null;
     private int selectedTab = 0;
     private MeasurementValue.ValueSpec[] specs = null;
@@ -51,6 +62,78 @@ public class EditMeasurementValueFragment extends MVVMFragment
     private boolean noWatch = false;
     private boolean textChanging = false;
     private boolean viewStateRestored = false;
+    private View.OnClickListener onClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int id = v.getId();
+
+            if (id == R.id.psdarch_edit_measval_ok) {
+                if (null != valueListener)
+                    valueListener.commitValue(selectedValue);
+            }
+
+            dismiss();
+        }
+    };
+    private TextWatcher textChangedListener = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            if ( (noWatch) || (!viewStateRestored) )
+                return;
+
+            String str = s.toString();
+            View v = host.getCurrentTabTag() != null ? tabViews.get(host.getCurrentTabTag()) :
+                    tabViews.get("0");
+            RadioGroup rg = (RadioGroup) v.findViewById(R.id.unit_of_account_choices);
+
+            if (str.isEmpty()) {
+                selectedValue.setVal(-1.0d);
+            }
+            else {
+                selectedValue.setVal(Double.parseDouble(s.toString()));
+                RadioButton rb = (RadioButton) rg.findViewById(R.id.unspecified_weight);
+
+                textChanging = true;
+                if (selectedValue.getVal() < 0.0d) {
+                    rb.setChecked(true);
+                }
+                else {
+                    rb = (RadioButton) rg.findViewById(R.id.custom_weight);
+                    rb.setChecked(true);
+                }
+
+                for (int i = 0; i < rg.getChildCount(); i++) {
+                    View child = rg.getChildAt(i);
+                    if (child instanceof RadioButton) {
+                        rb = (RadioButton) child;
+                        int id = rb.getId();
+                        if ((id == R.id.unspecified_weight) || (id == R.id.custom_weight))
+                            continue;
+
+                        Integer value = (Integer)rb.getTag();
+                        if (null == value)
+                            continue;
+
+                        if (selectedValue.getVal() == value) {
+                            rb.setChecked(true);
+                        }
+                    }
+                }
+
+                textChanging = false;
+            }
+        }
+    };
 
     private int[] unitOfAccounts10 = {
             250,
@@ -79,15 +162,38 @@ public class EditMeasurementValueFragment extends MVVMFragment
     };
 
 
-    public static EditMeasurementValueFragment newInstance(MeasurementValue.ValueSpec ... specs) {
+    public static EditMeasurementValueFragment newInstance(MeasurementValue value, MeasurementValue.ValueSpec ... specs) {
 
         Bundle params = new Bundle();
-        params.putParcelableArray(TAG_SPEC_PARAMS, specs);
+        params.putParcelableArray(TAG_SPECS_PARAM, specs);
 
         EditMeasurementValueFragment f = new EditMeasurementValueFragment();
-        f.setArguments(params);
+        f.addArguments(value, specs);
 
         return f;
+    }
+
+    public IMeasurementValueListener getValueListener() {
+        return valueListener;
+    }
+
+    public void setValueListener(IMeasurementValueListener valueListener) {
+        this.valueListener = valueListener;
+    }
+
+    public void addArguments(MeasurementValue value, MeasurementValue.ValueSpec ... specs) {
+
+        Bundle params = new Bundle();
+        params.putParcelableArray(TAG_SPECS_PARAM, specs);
+        params.putParcelable(TAG_VALUE_PARAM, value);
+        setArguments(params);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setStyle(DialogFragment.STYLE_NO_TITLE, R.style.ThemeOverlay_AppCompat_Dialog_Alert);
     }
 
     @Override
@@ -95,27 +201,41 @@ public class EditMeasurementValueFragment extends MVVMFragment
         super.onCreateView(inflater, container, savedInstanceState);
 
         View view = inflater.inflate(R.layout.psdarch_edit_measurement_value_fragment, container, false);
-        TabHost host = (TabHost)view.findViewById(R.id.edit_measval_tabhost);
+        host = (TabHost)view.findViewById(R.id.edit_measval_tabhost);
         host.setup();
+
+        TextView btn = (TextView)view.findViewById(R.id.psdarch_edit_measval_cancel);
+        btn.setOnClickListener(this.onClick);
+        btn = (TextView)view.findViewById(R.id.psdarch_edit_measval_ok);
+        btn.setOnClickListener(this.onClick);
 
         if (null == savedInstanceState) {
             Bundle args = getArguments();
-            Parcelable[] parcelables = args.getParcelableArray(TAG_SPEC_PARAMS);
+            if (null == args)
+                throw new ArgumentException("You did not provide any arguments!! Please specify at least one ValueSpec!");
+
+            Parcelable[] parcelables = args.getParcelableArray(TAG_SPECS_PARAM);
             specs = Arrays.copyOf(parcelables, parcelables.length, MeasurementValue.ValueSpec[].class);
             if ( (null == specs) || (specs.length < 1) )
                 throw new ArgumentException("Add at least one MeasurementValue-Spec!");
-            selectedValue = new MeasurementValue(specs[0].getSys(), specs[0].getType(), specs[0].getUnit(), -1.0d);
+
+            selectedValue = (MeasurementValue) args.getParcelable(TAG_VALUE_PARAM);
+            if (null == selectedValue)
+                selectedValue = new MeasurementValue(specs[0].getSys(), specs[0].getType(), specs[0].getUnit(), -1.0d);
             selectedTab = 0;
         }
         else {
             Parcelable[] parcelables = savedInstanceState.getParcelableArray(ARG_SPECS);
             specs = Arrays.copyOf(parcelables, parcelables.length, MeasurementValue.ValueSpec[].class);
             selectedValue = savedInstanceState.getParcelable(ARG_SELECTED_VALUE);
-            //selectedTab = savedInstanceState.getInt(ARG_SELECTED_TAB);
+            selectedTab = savedInstanceState.getInt(ARG_SELECTED_TAB);
         }
 
         if (specs.length > 1) {
             Integer i = 0;
+            host.setVisibility(View.VISIBLE);
+            host.setOnTabChangedListener(null);
+
             for (MeasurementValue.ValueSpec spec : specs) {
                 TabHost.TabSpec tab = host.newTabSpec(i.toString());
 
@@ -124,6 +244,8 @@ public class EditMeasurementValueFragment extends MVVMFragment
                 host.addTab(tab);
                 i++;
             }
+
+            host.setCurrentTab(selectedTab);
         }
         else {
             FrameLayout frame = (FrameLayout)view.findViewById(R.id.psdarch_no_tabs_frame);
@@ -131,8 +253,6 @@ public class EditMeasurementValueFragment extends MVVMFragment
             frame.addView(createTabContent(new Integer(specs[0].getSys().val()).toString()));
             frame.setVisibility(View.VISIBLE);
         }
-
-        //host.setCurrentTab(selectedTab);
 
         host.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
             @Override
@@ -144,14 +264,16 @@ public class EditMeasurementValueFragment extends MVVMFragment
                     selectedValue.setUnit(system.getUnits().length - 1);
 
                 View v = tabViews.get(tabId);
-                //RadioGroup rg = (RadioGroup)v.findViewById(R.id.unit_of_account_choices);
-                //if (null != rg)
-                //    createOptionList(rg, specs[selectedTab]);
                 EditText editVal = (EditText)v.findViewById(R.id.psdarch_measval_value);
-                noWatch = true;
-                if (selectedValue.getVal() >= 0.0d)
-                        editVal.setText(new Double(selectedValue.getVal()).toString());
-                noWatch=false;
+                if (selectedValue.getVal() > -1.0d) {
+                    editVal.setText(new Double(selectedValue.getVal()).toString());
+                    editVal.setEnabled(true);
+                }
+                else {
+                    editVal.setEnabled(false);
+                    RadioButton rb = (RadioButton) v.findViewById(R.id.unspecified_weight);
+                    rb.setChecked(true);
+                }
 
                 Spinner spinner = (Spinner)v.findViewById(R.id.psdarch_unit_spinner);
                 if (null != spinner)
@@ -178,9 +300,8 @@ public class EditMeasurementValueFragment extends MVVMFragment
                 rb = new AppCompatRadioButton(getActivity());
                 rb.setText(getResources().getString(R.string.psdarch_unspecified_weight));
                 rb.setId(R.id.unspecified_weight);
-                if (selectedValue.getVal() < 0.0d) {
+                if (selectedValue.getVal()<0.0d)
                     rb.setChecked(true);
-                }
                 rg.addView(rb);
 
                 int[] unitsOfAccount = { };
@@ -214,11 +335,10 @@ public class EditMeasurementValueFragment extends MVVMFragment
                     rb.setId(i++);
                     rg.addView(rb);
 
-                    if (val == (int)selectedValue.getVal()) {
+                    if (val == selectedValue.getVal()) {
                         rb.setChecked(true);
                     }
                 }
-
 
             }
         });
@@ -248,11 +368,17 @@ public class EditMeasurementValueFragment extends MVVMFragment
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 selectedValue.setUnit(position);
 
-                TabHost host = (TabHost)getActivity().findViewById(R.id.edit_measval_tabhost);
                 View v = host.getCurrentTabTag() != null ? tabViews.get(host.getCurrentTabTag()) :
                         tabViews.get("0");
                 RadioGroup rg = (RadioGroup)v.findViewById(R.id.unit_of_account_choices);
                 createOptionList(rg, spec);
+                EditText editVal = (EditText)v.findViewById(R.id.psdarch_measval_value);
+                if (selectedValue.getVal() < 0.0d) {
+                    editVal.setEnabled(false);
+                }
+                else {
+                    editVal.setEnabled(true);
+                }
             }
 
             @Override
@@ -266,52 +392,15 @@ public class EditMeasurementValueFragment extends MVVMFragment
         EditText editVal = (EditText)view.findViewById(R.id.psdarch_measval_value);
         if (activeTab == selectedTab) {
             if (selectedValue.getVal() < 0.0d) {
-                editVal.setText("0.0");
+                editVal.setText("");
                 editVal.setEnabled(false);
             } else {
+                noWatch = true;
                 editVal.setText(new Double(selectedValue.getVal()).toString());
+                noWatch = false;
             }
         }
-        editVal.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (noWatch)
-                    return;
-
-                String str = s.toString();
-                TabHost host = (TabHost) getActivity().findViewById(R.id.edit_measval_tabhost);
-                View v = host.getCurrentTabTag() != null ? tabViews.get(host.getCurrentTabTag()) :
-                        tabViews.get("0");
-                RadioGroup rg = (RadioGroup) v.findViewById(R.id.unit_of_account_choices);
-
-                if (str.isEmpty()) {
-                    selectedValue.setVal(-1.0d);
-                    /*RadioButton rb = (RadioButton) rg.findViewById(R.id.unspecified_weight);
-                    textChanging = true;
-                    rb.setChecked(true);
-                    textChanging = false;
-                    EditText txt = (EditText)v.findViewById(R.id.psdarch_measval_value);
-                    txt.setEnabled(false);*/
-                }
-                else {
-                    selectedValue.setVal(Double.parseDouble(s.toString()));
-                    RadioButton rb = (RadioButton) rg.findViewById(R.id.custom_weight);
-                    textChanging = true;
-                    rb.setChecked(true);
-                    textChanging = false;
-                }
-            }
-        });
+        editVal.addTextChangedListener(textChangedListener);
 
         rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -323,7 +412,6 @@ public class EditMeasurementValueFragment extends MVVMFragment
                 if (rb==null)
                     return;
 
-                TabHost host = (TabHost)getActivity().findViewById(R.id.edit_measval_tabhost);
                 View v = host.getCurrentTabTag() != null ? tabViews.get(host.getCurrentTabTag()) :
                         tabViews.get("0");
                 EditText editVal = (EditText)v.findViewById(R.id.psdarch_measval_value);
@@ -336,9 +424,7 @@ public class EditMeasurementValueFragment extends MVVMFragment
                     if ( (checkedId == R.id.custom_weight) && (selectedValue.getVal() < 0.0) ) {
                         Editable s = editVal.getText();
                         String str = s.toString();
-                        if (str.isEmpty())
-                            selectedValue.setVal(0.0);
-                        else
+                        if (!str.isEmpty())
                             selectedValue.setVal(Double.parseDouble(str));
                     }
                     else {
@@ -347,7 +433,8 @@ public class EditMeasurementValueFragment extends MVVMFragment
                     }
                     editVal.setEnabled(true);
                     noWatch = true;
-                    editVal.setText(new Double(selectedValue.getVal()).toString());
+                    if(selectedValue.getVal() > -1.0)
+                        editVal.setText(new Double(selectedValue.getVal()).toString());
                     noWatch = false;
                 }
             }
@@ -363,6 +450,18 @@ public class EditMeasurementValueFragment extends MVVMFragment
     public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
         super.onViewStateRestored(savedInstanceState);
         viewStateRestored = true;
+
+        for (View view : tabViews.values()) {
+            if (null != view) {
+                EditText editVal = (EditText) view.findViewById(R.id.psdarch_measval_value);
+                if (selectedValue.getVal() > -1.0) {
+                    noWatch=true;
+                    editVal.setText(new Double(selectedValue.getVal()).toString());
+                    noWatch=false;
+                }
+                //editVal.addTextChangedListener(textChangedListener);
+            }
+        }
     }
 
     @Override
@@ -372,5 +471,13 @@ public class EditMeasurementValueFragment extends MVVMFragment
         outState.putParcelableArray(ARG_SPECS, specs);
         outState.putParcelable(ARG_SELECTED_VALUE, selectedValue);
         outState.putInt(ARG_SELECTED_TAB, selectedTab);
+
+        for (View view : tabViews.values()) {
+            if (null != view) {
+                //EditText editVal = (EditText) view.findViewById(R.id.psdarch_measval_value);
+                //editVal.addTextChangedListener(null);
+            }
+        }
     }
+
 }
