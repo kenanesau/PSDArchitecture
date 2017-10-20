@@ -433,8 +433,9 @@ public class EditMeasurementValueFragment extends DialogFragment
                     }
                     editVal.setEnabled(true);
                     noWatch = true;
-                    if(selectedValue.getVal() > -1.0)
+                    if(selectedValue.getVal() > -1.0) {
                         editVal.setText(new Double(selectedValue.getVal()).toString());
+                    }
                     noWatch = false;
                 }
             }

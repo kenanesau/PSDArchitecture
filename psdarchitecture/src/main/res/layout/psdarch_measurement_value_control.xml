@@ -24,9 +24,12 @@
             app:layout_row="1"
             app:layout_gravity="fill_horizontal"
             android:paddingLeft="0dp"
+            android:paddingStart="0dp"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:hint="value"
+            android:hint="@string/psdarch_value"
             android:inputType="numberDecimal"
+            android:maxLength="24"
+            android:selectAllOnFocus="true"
             android:layout_marginBottom="@dimen/raster2" />
 
         <TextView
@@ -44,6 +47,6 @@
             app:layout_column="2"
             app:layout_row="1"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Unit" />
+            android:text="@string/psdarch_unit" />
 
 </android.support.v7.widget.GridLayout>

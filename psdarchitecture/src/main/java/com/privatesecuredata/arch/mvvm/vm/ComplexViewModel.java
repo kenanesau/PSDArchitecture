@@ -7,6 +7,7 @@ import android.support.annotation.CallSuper;
 import com.google.common.base.MoreObjects;
 import com.privatesecuredata.arch.db.IPersistable;
 import com.privatesecuredata.arch.db.LazyCollectionInvocationHandler;
+import com.privatesecuredata.arch.db.annotations.DbFactory;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
@@ -15,6 +16,8 @@ import com.privatesecuredata.arch.mvvm.annotations.ComplexVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.ListVmMapping;
 import com.privatesecuredata.arch.mvvm.annotations.SimpleVmMapping;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -422,13 +425,16 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
              * This VM has a model otherwise this method would not be called
              **/
             Object childModel = field.get(getModel());
-
+            if (null == childModel) {
+                //TODO: childModel = MVVM.createMVVM().createModel(modelType);
+                throw new ArgumentException("A childmodel is null!!");
+            }
             /**
              * If the Childmodel is != null -> it is in memory -> create the VM
              */
             if (!complexAnno.loadLazy() || childModel != null)
             {
-                isLazy = false;
+                unsetLazy();
                 if (childModel != null) {
                     modelType = childModel.getClass();
                     ComplexVmMapping anno = modelType.getAnnotation(ComplexVmMapping.class);

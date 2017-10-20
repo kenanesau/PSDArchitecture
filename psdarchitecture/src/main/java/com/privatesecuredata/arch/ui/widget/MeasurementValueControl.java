@@ -1,6 +1,5 @@
 package com.privatesecuredata.arch.ui.widget;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
@@ -153,7 +152,7 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
         if (null != _value) {
             adapter = new MVVMComplexVmAdapter<MeasurementValueVM>((MVVMActivity) getContext(), this, _value);
 
-            vm.getStrValueVM().setFormatString(_formatStr);
+            _value.getStrValueVM().setFormatString(_formatStr);
 
             if (_unit_postfix != null) {
                 vm.getUnitPostfixVM().set(_unit_postfix);
