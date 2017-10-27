@@ -30,7 +30,8 @@
             android:inputType="numberDecimal"
             android:maxLength="24"
             android:selectAllOnFocus="true"
-            android:layout_marginBottom="@dimen/raster2" />
+            android:layout_marginRight="@dimen/raster0"
+            android:layout_marginEnd="@dimen/raster0" />
 
         <TextView
             android:id="@+id/psdarch_measvalctrl_lbl_value"
@@ -40,7 +41,9 @@
             app:layout_row="1"
             app:layout_gravity="fill_horizontal"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:layout_marginBottom="@dimen/raster3" />
+            android:layout_marginRight="@dimen/raster0"
+            android:layout_marginEnd="@dimen/raster0"
+            />
 
         <TextView
             android:id="@+id/psdarch_measvalctrl_lbl_unit"

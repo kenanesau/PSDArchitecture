@@ -3,6 +3,7 @@ package com.privatesecuredata.arch.tools.vm;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.mvvm.MVVM;
 import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
@@ -20,14 +21,15 @@ import java.util.HashMap;
 
 public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
     private SimpleValueVM<Double> valueVm;
-    private StringFormatVM stringValueVm;
+    private SimpleValueLogicVM stringValueVm;
+    private SimpleValueVM<String> formatStringVm;
     private SimpleValueVM<Integer> sysVm;
     private SimpleValueVM<Integer> typeVm;
     private SimpleValueVM<Integer> intUnitVm;
     private SimpleValueLogicVM<String> strUnitVm;
     private SimpleValueVM<String> unitPrefixVm;
     private SimpleValueVM<String> unitPostfixVm;
-    private StringFormatVM unitVm;
+    private SimpleValueLogicVM<String> unitVm;
 
     public static class VmFactory implements ComplexViewModel.VmFactory<MeasurementValueVM, MeasurementValue> {
 
@@ -49,15 +51,17 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
     }
 
     protected void initSecondaryVMs() {
-        this.strUnitVm = new SimpleValueLogicVM<String>("gr", this.sysVm, this.typeVm, this.intUnitVm);
+        this.formatStringVm = new SimpleValueVM<String>("%.2f");
+        this.strUnitVm = new SimpleValueLogicVM<String>("gr", this.valueVm, this.sysVm, this.typeVm, this.intUnitVm);
         this.strUnitVm.setDataCBs(null,
                 new SimpleValueLogicVM.IGetData<String>() {
                     @Override
-                    public String get(String intUnit) {
+                    public String get(String currentVal) {
+
                         return MeasurementSysFactory.create(
-                                MeasurementValueVM.this.getSys(),
-                                MeasurementValueVM.this.getType())
-                                .getUnit(MeasurementValueVM.this.intUnitVm.get()).getUnit();
+                                    MeasurementValueVM.this.getSys(),
+                                    MeasurementValueVM.this.getType())
+                                    .getUnit(MeasurementValueVM.this.intUnitVm.get()).getUnit();
                     }
                 });
         registerChildVM(strUnitVm);
@@ -65,12 +69,44 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
         registerChildVM(this.unitPrefixVm);
         this.unitPostfixVm = new SimpleValueVM<String>("");
         registerChildVM(unitPostfixVm);
-        this.stringValueVm = new StringFormatVM("%.2f", valueVm);
+        this.stringValueVm = new SimpleValueLogicVM<String>("", this.valueVm);
+        this.stringValueVm.setDataCBs(null,
+                new SimpleValueLogicVM.IGetData<String>() {
+                    @Override
+                    public String get(String currentVal) {
+                        if (MeasurementValueVM.this.valueVm.get() < 0.0) {
+                            if (MeasurementValueVM.this.getType() == MeasurementSysFactory.Type.LENGTH)
+                                return getResources().getString(R.string.psdarch_unspecified_length);
+                            else if (MeasurementValueVM.this.getType() == MeasurementSysFactory.Type.WEIGHT)
+                                return getResources().getString(R.string.psdarch_unspecified_weight);
+                            else if (MeasurementValueVM.this.getType() == MeasurementSysFactory.Type.LIQUIDVOLUME)
+                                return getResources().getString(R.string.psdarch_unspecified_volume);
+                        }
+                        else {
+                            return String.format(
+                                    MeasurementValueVM.this.getFormatStringVM().get(),
+                                    MeasurementValueVM.this.getValueVM().get());
+                        }
+
+                        return currentVal;
+                    }
+                });
         registerChildVM(stringValueVm);
-        this.unitVm = new StringFormatVM("%s%s%s",
-                this.unitPrefixVm,
-                this.strUnitVm,
-                this.unitPostfixVm);
+        this.unitVm = new SimpleValueLogicVM<String>("", this.valueVm, this.strUnitVm, this.unitPrefixVm, this.unitPostfixVm);
+        this.unitVm.setDataCBs(null,
+                new SimpleValueLogicVM.IGetData<String>() {
+                    @Override
+                    public String get(String currentValue) {
+                        if (MeasurementValueVM.this.getValueVM().get() < 0.0)
+                            return "";
+                        else
+                            return String.format("%s %s %s",
+                                MeasurementValueVM.this.unitPrefixVm.get(),
+                                MeasurementValueVM.this.strUnitVm.get(),
+                                MeasurementValueVM.this.unitPostfixVm.get());
+
+                    }
+                });
         registerChildVM(unitVm);
     }
 
@@ -113,7 +149,7 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
         return MeasurementSysFactory.Type.values()[this.getTypeVM().get()];
     }
 
-    public StringFormatVM getStrValueVM() {
+    public SimpleValueLogicVM<String> getStrValueVM() {
         return stringValueVm;
     }
 
@@ -125,9 +161,11 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
         return unitPostfixVm;
     }
 
-    public StringFormatVM getUnitVM() {
+    public SimpleValueLogicVM<String> getUnitVM() {
         return unitVm;
     }
+
+    public SimpleValueVM<String> getFormatStringVM() { return  formatStringVm; }
 
     public void set(MeasurementValue measVal) {
         getSysVM().set(measVal.getSys().val());

@@ -9,10 +9,4 @@
         android:minSdkVersion="21"
         android:targetSdkVersion="21" />
 
-    <activity
-        android:name=".EditMeasurementValueDialogActivity"
-        android:label="Edit Value"
-        android:theme="@android:style/Theme.Dialog"
-        >
-    </activity>
 </manifest>

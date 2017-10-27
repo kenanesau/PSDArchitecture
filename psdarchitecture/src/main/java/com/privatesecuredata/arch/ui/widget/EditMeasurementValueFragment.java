@@ -304,7 +304,7 @@ public class EditMeasurementValueFragment extends DialogFragment
                     rb.setChecked(true);
                 rg.addView(rb);
 
-                int[] unitsOfAccount = { };
+                int[] unitsOfAccount = unitOfAccounts10;
                 if (selectedValue.getUnit().getFactorNextEnumerator() % 10 == 0) {
                     unitsOfAccount = unitOfAccounts10;
                 }

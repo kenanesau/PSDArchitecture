@@ -19,7 +19,9 @@
     <string name="psdarch_searching">Searching…</string>
     <string name="title_activity_licenses">Licenses</string>
     <string name="toast_info_activity" formatted="false">%s V%s uses these great Open-Source products!! THANK YOU!!!</string>
-    <string name="psdarch_unspecified_weight">unsecified weight</string>
+    <string name="psdarch_unspecified_length">unspecified length</string>
+    <string name="psdarch_unspecified_volume">unspecified volume</string>
+    <string name="psdarch_unspecified_weight">unspecified weight</string>
     <string name="psdarch_unit">Unit</string>
     <string name="psdarch_per_piece">per piece</string>
     <string name="psdarch_per_bin">per bin</string>
