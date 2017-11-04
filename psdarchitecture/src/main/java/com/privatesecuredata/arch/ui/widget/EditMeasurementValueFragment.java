@@ -43,7 +43,6 @@ public class EditMeasurementValueFragment extends DialogFragment
 
     public interface IMeasurementValueListener {
         void commitValue(MeasurementValue value);
-        void cancelValue();
     }
 
     public static final String TAG_SPECS_PARAM = "psdarch_specs_param";
@@ -222,7 +221,7 @@ public class EditMeasurementValueFragment extends DialogFragment
             selectedValue = (MeasurementValue) args.getParcelable(TAG_VALUE_PARAM);
             if (null == selectedValue)
                 selectedValue = new MeasurementValue(specs[0].getSys(), specs[0].getType(), specs[0].getUnit(), -1.0d);
-            selectedTab = 0;
+            selectedTab = selectedValue.getSys().val();
         }
         else {
             Parcelable[] parcelables = savedInstanceState.getParcelableArray(ARG_SPECS);

@@ -205,11 +205,6 @@ public class MeasurementValueControl extends FrameLayout implements IBindableVie
     }
 
     @Override
-    public void cancelValue() {
-
-    }
-
-    @Override
     public void unbind() {
         if (null != adapter)
             adapter.dispose();
