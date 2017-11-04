@@ -53,12 +53,12 @@ public class MeasurementValue implements IPersistable, Parcelable {
 
     public MeasurementValue() {
         new ValueSpec(MeasurementSysFactory.System.METRIC, MeasurementSysFactory.Type.LENGTH, 0);
-        val = 0.0d;
+        val = -1.0d;
     }
 
     public MeasurementValue(MeasurementSysFactory.System sys, MeasurementSysFactory.Type type, int unit)
     {
-        this(sys, type, unit, 0.0);
+        this(sys, type, unit, -1.0);
     }
 
     public MeasurementValue(MeasurementSysFactory.System sys, MeasurementSysFactory.Type type, int unit, double val)
