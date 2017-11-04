@@ -56,7 +56,7 @@ public class PersistanceManagerLocator {
          */
         for(String dbName : allDbs) {
             if (dbName.startsWith(dbDesc.getBaseName()))
-                if(dbName.endsWith(".db"))
+                if( dbName.endsWith(".db") && dbName.startsWith(dbDesc.getBaseName()) )
                     currentDbs.add(dbName);
 
             if (dbName.startsWith("upgrading_"))

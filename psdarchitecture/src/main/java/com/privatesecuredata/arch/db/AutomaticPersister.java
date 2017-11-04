@@ -69,6 +69,9 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
             if (null != thisToOneAnno) {
                 if (thisToOneAnno.isComposition()) {
                     IPersister composedPersister = pm.getPersister((Class)field.getType());
+                    if (null == composedPersister)
+                        throw new DBException(String.format("Could not find composed persister for type '%s'",
+                                field.getType().getCanonicalName()));
 
                     composePersister(composedPersister, field);
                 }

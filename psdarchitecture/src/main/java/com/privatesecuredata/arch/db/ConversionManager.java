@@ -152,6 +152,9 @@ public class ConversionManager {
 
         for (int i=0; i<csr.getCount(); i++) {
             DefaultObjectConverter converter = _converterMap.get(newType);
+            if (null == converter)
+                throw new ArgumentException(String.format("Could not find Objectconverter for type '%s'",
+                        newType.getCanonicalName()));
 
             IPersistable oldObj = load(converter.getOldDesc().getType(), csr, i);
             convert(newType, oldObj);

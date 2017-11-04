@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -467,7 +468,7 @@ public class PersistanceManager {
 	public void addPersistentType(Class<?> persistentType) {
 		try {
 			IPersister<? extends IPersistable> persisterObj = new AutomaticPersister(this, persistentType);
-					
+
 			addPersisterToMap(persistentType, persisterObj);
 		}
         catch (NoSuchMethodException ex)
@@ -556,10 +557,16 @@ public class PersistanceManager {
 	}
 
 	public void onUpgrade(Context ctx, int oldVersion, int newVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) throws DBException {
-        boolean errorOnUpgrade = false;
         if (!hasInitializedDb())
             initializeDb(ctx, true);
 
+        for(int version=oldVersion; version<newVersion; version++) {
+            upgradeToNextVersion(ctx, version, dbNames);
+        }
+    }
+
+    private void upgradeToNextVersion(Context ctx, int oldVersion, HashMap<Integer, HashMap<Integer, String>> dbNames) {
+        boolean errorOnUpgrade = false;
         IDbHistoryDescription history = getDbDescription().getDbHistory();
         PersistanceManager oldPm = null;
 
@@ -567,11 +574,21 @@ public class PersistanceManager {
         {
             IDbDescription oldDescription = null;
 
+            /*
+                Upgrade ALL instances of "oldVersion"
+             */
+            int newVersion = oldVersion + 1;
             for(int instance : dbNames.get(oldVersion).keySet()) {
                 try {
                     oldDescription = history.getDbDescription(oldVersion, instance);
                     Map<Integer, IConversionDescription> conversionDescriptions = history.getDbConversions();
                     IConversionDescription conv = conversionDescriptions.get(newVersion);
+
+                    PersistanceManager newPm = this;
+                    if (newVersion < this.getDbDescription().getVersion()) {
+                        newPm = new PersistanceManager(history.getDbDescription(newVersion, instance));
+                        newPm.initializeDb(ctx, true);
+                    }
 
                     if (conv == null)
                         throw new ArgumentException(
@@ -587,21 +604,30 @@ public class PersistanceManager {
                     oldPm = new PersistanceManager(oldDescription, null);
                     oldPm.initializeDb(ctx);
 
-                    ConversionManager convMan = new ConversionManager(oldPm, this, conv);
+                    ConversionManager convMan = new ConversionManager(oldPm, newPm, conv);
                     conv.convert(convMan);
 
-                    db.close();
+                    newPm.getDb().close();
                     Log.i(getClass().getName(), "Renaming new Db-File");
-                    File newDbFile = getDbFile(ctx);
-                    Files.move(getUpgradingDbFile(ctx), newDbFile);
+                    File newDbFile = newPm.getDbFile(ctx);
+                    Files.move(newPm.getUpgradingDbFile(ctx), newDbFile);
 
                     Log.i(getClass().getName(), "Calling deInit");
-                    deInit();
-                    Log.i(getClass().getName(), "Calling Init");
-                    init(this.dbDesc);
+                    newPm.deInit();
 
-                    Log.i(getClass().getName(), "Calling initializeDb");
-                    initializeDb(this.appCtx, false);
+                    if (newPm == this) {
+                        Log.i(getClass().getName(), "Calling Init");
+                        newPm.init(newPm.getDbDescription());
+
+                        Log.i(getClass().getName(), "Calling initializeDb");
+                        newPm.initializeDb(this.appCtx, false);
+                    }
+
+                    if (!dbNames.containsKey(newVersion))
+                        dbNames.put(newVersion, new LinkedHashMap<Integer, String>());
+
+                    if (!dbNames.get(newVersion).containsKey(instance))
+                        dbNames.get(newVersion).put(instance, newPm.getDbDescription().getName());
                 }
                 catch (Exception ex) {
                     errorOnUpgrade = true;
@@ -646,12 +672,12 @@ public class PersistanceManager {
                         String errMsg = String.format("Error moving db-file '%s' to %s",
                                 oldDescription.getName(), ctx.getExternalFilesDir(null).getName());
                         publishStatus(errMsg, ex);
-                        throw new DBException(errMsg, ex);
+                        //throw new DBException(errMsg, ex);
                     }
                 }
             }
         }
-	}
+    }
 
     /**
      * Sets the persistable dirty
