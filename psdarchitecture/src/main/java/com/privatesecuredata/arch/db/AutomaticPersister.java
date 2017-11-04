@@ -137,10 +137,9 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         parentPersister.addExtendingPersister(this);
     }
 
-    private void composePersister(IPersister composedPersister, Field composeParentField) {
+    protected void composePersister(IPersister composedPersister, Field composeParentField) {
         getDescription().extend(composedPersister.getDescription(), composeParentField);
     }
-
 
     /**
      * Constructor of the Persistable for which this Persister is used for
@@ -645,7 +644,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     } else {
                         loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
                     }
-                    Collection lstItems = CollectionProxyFactory.getCollectionProxy(getPM(), (Class) field.getReferencedType(), obj, collSize, loader);
+                    Collection lstItems = (Collection)CollectionProxyFactory.getCollectionProxy(getPM(), (Class) field.getReferencedType(), obj, collSize, loader);
 
                     fld.set(obj, lstItems);
                     break;

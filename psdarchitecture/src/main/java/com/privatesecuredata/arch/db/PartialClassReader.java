@@ -33,15 +33,24 @@ public class PartialClassReader<T extends IPersistable> extends AutomaticPersist
 
             DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
             if (null != thisToOneAnno) {
-                field.setAccessible(true);
+                if (thisToOneAnno.isComposition()) {
+                    IPersister composedPersister = pm.getPersister((Class)field.getType());
 
-                // At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
-                // object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
-                SqlDataField idField = new SqlDataField(field);
-                getDescription().addSqlField(idField);
+                    composePersister(composedPersister, field);
+                }
+                else {
+                    field.setAccessible(true);
+                    ObjectRelation objRel = new ObjectRelation(field, getPersistentType(), thisToOneAnno);
+                    getDescription().addOneToOneRelation(objRel);
 
-                SqlDataField fldTypeName = new SqlDataField(field, field.getType());
-                getDescription().addSqlField(fldTypeName);
+                    // At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
+                    // object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
+                    SqlDataField idField = new SqlDataField(field);
+                    getDescription().addSqlField(idField);
+
+                    SqlDataField fldTypeName = new SqlDataField(field, field.getType());
+                    getDescription().addSqlField(fldTypeName);
+                }
             }
 
             DbThisToMany oneToManyAnno = field.getAnnotation(DbThisToMany.class);
