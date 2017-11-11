@@ -1,7 +1,6 @@
 package com.privatesecuredata.arch.tools.vm;
 
 import android.os.Parcel;
-import android.os.Parcelable;
 
 import com.privatesecuredata.arch.R;
 import com.privatesecuredata.arch.mvvm.MVVM;
@@ -9,7 +8,6 @@ import com.privatesecuredata.arch.mvvm.vm.ComplexViewModel;
 import com.privatesecuredata.arch.mvvm.vm.IViewModel;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueLogicVM;
 import com.privatesecuredata.arch.mvvm.vm.SimpleValueVM;
-import com.privatesecuredata.arch.mvvm.vm.StringFormatVM;
 import com.privatesecuredata.arch.tools.unitconversion.MeasurementSysFactory;
 import com.privatesecuredata.arch.tools.unitconversion.MeasurementValue;
 
@@ -78,7 +76,7 @@ public class MeasurementValueVM extends ComplexViewModel<MeasurementValue> {
                             if (MeasurementValueVM.this.getType() == MeasurementSysFactory.Type.LENGTH)
                                 return getResources().getString(R.string.psdarch_unspecified_length);
                             else if (MeasurementValueVM.this.getType() == MeasurementSysFactory.Type.WEIGHT)
-                                return getResources().getString(R.string.psdarch_unspecified_weight);
+                                return getResources().getString(R.string.psdarch_unspecified_value);
                             else if (MeasurementValueVM.this.getType() == MeasurementSysFactory.Type.LIQUIDVOLUME)
                                 return getResources().getString(R.string.psdarch_unspecified_volume);
                         }

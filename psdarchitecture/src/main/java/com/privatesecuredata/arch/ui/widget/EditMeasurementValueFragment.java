@@ -291,13 +291,13 @@ public class EditMeasurementValueFragment extends DialogFragment
                 rg.removeAllViews();
 
                 AppCompatRadioButton rb = new AppCompatRadioButton(getActivity());
-                rb.setText(getResources().getString(R.string.psdarch_custom_weight));
+                rb.setText(getResources().getString(R.string.psdarch_custom_value));
                 rb.setId(R.id.custom_weight);
                 rb.setChecked(true);
                 rg.addView(rb);
 
                 rb = new AppCompatRadioButton(getActivity());
-                rb.setText(getResources().getString(R.string.psdarch_unspecified_weight));
+                rb.setText(getResources().getString(R.string.psdarch_unspecified_value));
                 rb.setId(R.id.unspecified_weight);
                 if (selectedValue.getVal()<0.0d)
                     rb.setChecked(true);

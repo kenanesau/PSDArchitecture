@@ -41,12 +41,12 @@
             android:id="@+id/unspecified_weight"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/psdarch_unspecified_weight" />
+            android:text="@string/psdarch_unspecified_value" />
         <android.support.v7.widget.AppCompatRadioButton
             android:id="@+id/custom_weight"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/psdarch_custom_weight" />
+            android:text="@string/psdarch_custom_value" />
     </RadioGroup>
 
 </LinearLayout>

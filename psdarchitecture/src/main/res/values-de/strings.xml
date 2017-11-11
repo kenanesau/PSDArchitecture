@@ -3,6 +3,7 @@
     <string name="app_name">PSDArchitecture</string>
     <string name="psdarch_async_operation_in_progress_title">Asynchrone operation läuft noch!</string>
     <string name="psdarch_async_operation_in_progress_message">Im Moment kannst Du nichts kaufen, da eine anderer Vorgang im Hintergrund noch läuft. Bitte versuch es noch einmal!</string>
+    <string name="psdarch_custom_value">benutzerspezifischer Wert</string>
     <string name="psdarch_dialog_titlebar_title">Title</string>
     <string name="psdarch_dialog_titlebar_txt_ok">OK</string>
     <string name="psdarch_fragment_action_move_number_of_items">Items</string>
@@ -20,7 +21,7 @@
     <string name="psdarch_unspecified_length">unspezifizierte Länge</string>
     <string name="psdarch_unspecified_volume">unspezifiziertes Volumen</string>
     <string name="psdarch_unspecified_weight">unspezifiziertes Gewicht</string>
-    <string name="psdarch_custom_weight">benutzerspezifisches Gewicht</string>
+    <string name="psdarch_unspecified_value">unspezifizierter Wert</string>
     <string name="title_activity_licenses">Lizenzen</string>
     <string name="toast_info_activity" formatted="false">%s V%s benutzt diese großartigen Open-Source-Produkte! DANKE!!!</string>
     <string name="psdarch_per_piece">per piece</string>
