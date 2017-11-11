@@ -67,6 +67,9 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
             DbThisToOne thisToOneAnno = field.getAnnotation(DbThisToOne.class);
             if (null != thisToOneAnno) {
+                ObjectRelation objRel = new ObjectRelation(field, getPersistentType(), thisToOneAnno);
+                getDescription().addOneToOneRelation(objRel);
+
                 if (thisToOneAnno.isComposition()) {
                     IPersister composedPersister = pm.getPersister((Class)field.getType());
                     if (null == composedPersister)
@@ -77,8 +80,6 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                 }
                 else {
                     field.setAccessible(true);
-                    ObjectRelation objRel = new ObjectRelation(field, getPersistentType(), thisToOneAnno);
-                    getDescription().addOneToOneRelation(objRel);
 
                     // At the moment DbThisToOne-Annotations are always saved in a long-field of the referencing
                     // object -> Maybe later: also make it possible to save as a foreign-key in the referenced object.
@@ -95,7 +96,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
             if (null != oneToManyAnno) {
                 field.setAccessible(true);
-                ObjectRelation objRel = new ObjectRelation(field, oneToManyAnno.referencedType(), getPersistentType(), oneToManyAnno.deleteChildren(), false, oneToManyAnno.queryId());
+                ObjectRelation objRel = new ObjectRelation(field, oneToManyAnno.referencedType(), getPersistentType(), oneToManyAnno.deleteChildren(), false, false, oneToManyAnno.queryId());
                 getDescription().addOneToManyRelation(objRel);
 
                 Class referencedType = oneToManyAnno.referencedType();

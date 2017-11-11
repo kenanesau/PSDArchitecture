@@ -155,6 +155,9 @@ public class PersistanceManager {
 
             Collection<ObjectRelation> rels = persister.getDescription().getOneToOneRelations();
             for (ObjectRelation rel : rels) {
+                if (rel.isComposition())
+                    continue;
+
                 IPersister referencedPersister = this.getIPersister(rel.getField().getType());
                 referencedPersister.getDescription().increaseRefCount();
             }
@@ -378,6 +381,9 @@ public class PersistanceManager {
     protected Collection<String> createTriggerStatementLst(Class persitentType, String prefix, Collection<ObjectRelation> relations) {
         Hashtable<Pair<String, Class>, String> sqlStatements = new Hashtable<>();
         for (ObjectRelation rel : relations) {
+            if (rel.isComposition())
+                continue;
+
             if (rel.deleteChildren()) {
                 Class<?> childType = rel.getReferencedListType();
                 if (null == childType)

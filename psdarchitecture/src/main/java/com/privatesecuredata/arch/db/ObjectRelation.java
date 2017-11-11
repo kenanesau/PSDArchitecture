@@ -19,6 +19,7 @@ public class ObjectRelation {
     private Class<?> _referencedListType;
     private boolean _deleteChildren;
     private boolean _isMandatory;
+    private boolean _isComposition;
     private String _queryId;
     private Query _cachedQuery;
 
@@ -32,13 +33,14 @@ public class ObjectRelation {
      * @param isMandatory
      * @param queryId
      */
-    public ObjectRelation(Field fld, Class<?> referencedListType, Class<?> referencingType, boolean deleteChildren, boolean isMandatory, String queryId)
+    public ObjectRelation(Field fld, Class<?> referencedListType, Class<?> referencingType, boolean deleteChildren, boolean isMandatory, boolean isComposition, String queryId)
     {
         _fld = fld;
         _referencedListType = referencedListType;
         _referencingType = referencingType;
         _deleteChildren = deleteChildren;
         _isMandatory = isMandatory;
+        _isComposition = isComposition;
         if ( (null != queryId) && (queryId.compareTo("") == 0) ) {
             _queryId = null;
         }
@@ -48,7 +50,7 @@ public class ObjectRelation {
     }
 
     public ObjectRelation(Field fld, Class<?> referencedListType, Class<?> referencingType, DbThisToOne thisToOneAnno, String queryId) {
-        this(fld, referencedListType, referencingType, thisToOneAnno.deleteChildren(), thisToOneAnno.isMandatory(), queryId);
+        this(fld, referencedListType, referencingType, thisToOneAnno.deleteChildren(), thisToOneAnno.isMandatory(), thisToOneAnno.isComposition(), queryId);
     }
 
     /**
@@ -60,7 +62,7 @@ public class ObjectRelation {
      */
 	public ObjectRelation(Field fld, Class<?> referencedType, boolean deleteChildren)
 	{
-		this(fld, null, referencedType, deleteChildren, true, null);
+		this(fld, null, referencedType, deleteChildren, true, false, null);
 	}
 
     public ObjectRelation(Field fld, Class<?> referencedType, DbThisToOne thisToOne)
@@ -68,6 +70,7 @@ public class ObjectRelation {
         this(fld, null, referencedType, thisToOne, null);
     }
 
+    public boolean isComposition() { return _isComposition; }
 	public Field getField() { return _fld; }
 	public Class getReferencingType() { return _referencingType; }
     public Class getReferencedListType() { return _referencedListType; }

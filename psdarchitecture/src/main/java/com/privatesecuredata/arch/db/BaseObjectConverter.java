@@ -15,14 +15,32 @@ public class BaseObjectConverter<T extends IPersistable> {
 
     public BaseObjectConverter() {}
 
+    /**
+     * Register a converter for an object-field
+     *
+     * @param key new Name of the field
+     * @param converter Converter to convert old to new
+     */
     public void registerFieldConverter(String key, DefaultObjectConverter.IFieldConverter<T> converter) {
         _fieldConverterMap.put(key, converter);
     }
 
+    /**
+     * Register a converter for an one-to-one-relation
+     *
+     * @param key new Name of the field
+     * @param converter Converter to convert old to new
+     */
     public void registerOneToOneConverter(String key, DefaultObjectConverter.IObjectRelationConverter<T> converter) {
         _oneToOneConverterMap.put(key, converter);
     }
 
+    /**
+     * Register a converter for an one-to-many-relation
+     *
+     * @param key new Name of the field
+     * @param converter Converter to convert old to new
+     */
     public void registerOneToManyConverter(String key, DefaultObjectConverter.IObjectRelationConverter<T> converter) {
         _oneToManyConverterMap.put(key, converter);
     }

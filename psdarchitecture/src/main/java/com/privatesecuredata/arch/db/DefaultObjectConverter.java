@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 
+import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.lang.reflect.Field;
@@ -122,7 +123,7 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
 
         }
 
-        if (null != newData)
+        if ( (null != newData) && (!newRelation.isComposition()) )
             this.save(oldData, newData);
         newRelation.getField().set(newObject, newData);
     }
@@ -207,12 +208,17 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
                         fldType == SqlDataField.SqlFieldType.OBJECT_REFERENCE)
                     continue;
 
-                IFieldConverter<T> fldConverter = _fieldConverterMap.get(newSqlField.getObjectField().getName());
+                if (newSqlField.isComposition()) {
 
-                if (null == fldConverter)
-                    convertField(newSqlField, newObject, oldObject);
-                else
-                    fldConverter.convertField(newSqlField, newObject, _oldDesc, oldObject);
+                }
+                else {
+                    IFieldConverter<T> fldConverter = _fieldConverterMap.get(newSqlField.getObjectField().getName());
+
+                    if (null == fldConverter)
+                        convertField(newSqlField, newObject, oldObject);
+                    else
+                        fldConverter.convertField(newSqlField, newObject, _oldDesc, oldObject);
+                }
             }
             this.save(oldObject, newObject);
 
