@@ -7,7 +7,8 @@ package com.privatesecuredata.arch.tools.unitconversion;
 public class MeasurementSysFactory {
     public enum System {
         METRIC(0),
-        US(1);
+        US(1),
+        MIXED(-1);
 
         private int _val;
 
