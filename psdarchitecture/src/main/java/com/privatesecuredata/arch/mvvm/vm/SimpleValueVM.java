@@ -1,5 +1,6 @@
 package com.privatesecuredata.arch.mvvm.vm;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.CommitException;
@@ -190,7 +191,7 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
+		return MoreObjects.toStringHelper(this)
 				.add("data", (data==null ? "null" : this.data.toString()))
 				.add("model",(this.getModel()==null ? "null" : this.getModel().toString()))
 				.toString();
