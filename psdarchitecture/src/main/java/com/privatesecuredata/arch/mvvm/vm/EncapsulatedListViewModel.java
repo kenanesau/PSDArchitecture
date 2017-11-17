@@ -641,7 +641,8 @@ public class EncapsulatedListViewModel<M> extends ComplexViewModel<List<M>>
                         vm.addModelListener(this);
                         positionToViewModel.put(pos, (ComplexViewModel)vm);
                     } else
-                        throw new ArgumentException("Could not find object at position");
+                        throw new ArgumentException(
+                                String.format("Could not find object at position '%d'", pos));
                 }
 			}
 		}
