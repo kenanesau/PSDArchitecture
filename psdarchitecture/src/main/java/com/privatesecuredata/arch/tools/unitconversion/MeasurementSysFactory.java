@@ -40,9 +40,10 @@ public class MeasurementSysFactory {
     };
 
     public static MeasurementValue.ValueSpec[] createSpecs(Type type) {
-        MeasurementValue.ValueSpec[] ar = new MeasurementValue.ValueSpec[System.values().length];
+        /** Do not create a ValueSpec vor MIXEDMODE (-1) **/
+        MeasurementValue.ValueSpec[] ar = new MeasurementValue.ValueSpec[System.values().length - 1];
 
-        for (int i=0; i<System.values().length; i++) {
+        for (int i=0; i<System.values().length - 1; i++) {
             ar[i] = new MeasurementValue.ValueSpec(System.values()[i], type, 0);
         }
 
