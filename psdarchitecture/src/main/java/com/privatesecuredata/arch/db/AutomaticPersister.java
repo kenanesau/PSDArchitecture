@@ -435,6 +435,9 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
         try {
 
             for (ObjectRelation rel : getDescription().getOneToOneRelations()) {
+                /* If it's a composition -- the data is saved with the referencing object */
+                if (rel.isComposition())
+                    continue;
                 errRel = rel;
                 IPersistable other = (IPersistable) rel.getField().get(persistable);
                 if (null == other)
