@@ -33,7 +33,7 @@ public class USWeightAvoirdupoisMeasurementSystem extends AbstractMeasurementSys
             new Conversion("Ton", "short ton", 0, 0)
     };
 
-    private Conversion metricConversion = new Conversion("Millimeter", "mm", 6479891, 100000);
+    private Conversion metricConversion = new Conversion("Milligramm", "mg", 6479891, 100000);
 
     @Override
     public MeasurementSysFactory.Type getType() {

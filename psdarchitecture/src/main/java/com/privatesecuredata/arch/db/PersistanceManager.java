@@ -922,6 +922,7 @@ public class PersistanceManager {
         }
     }
 
+    /** Convenience function to save object independent of its dirty-status **/
     public <T extends IPersistable> void forceSave(T persistable) throws DBException
     {
 
