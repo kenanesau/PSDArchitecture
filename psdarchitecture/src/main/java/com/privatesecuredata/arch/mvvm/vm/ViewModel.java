@@ -176,9 +176,6 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
             for (IModelChangedListener listener : modelChangeListeners.values())
                 listener.notifyModelChanged(ViewModel.this, originator);
         }
-        catch(ConcurrentModificationException ex) {
-            Log.e(getClass().getName(), ex.toString());
-        }
         finally {
             vmLock.unlock();
         }
