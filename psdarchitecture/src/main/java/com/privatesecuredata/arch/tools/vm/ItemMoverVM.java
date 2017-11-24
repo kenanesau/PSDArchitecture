@@ -185,6 +185,7 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
                     dbIds);
             Object dstModel = pm.load(dstId);
             dstVM.replaceModel(dstModel);
+
             return true;
         }
 
