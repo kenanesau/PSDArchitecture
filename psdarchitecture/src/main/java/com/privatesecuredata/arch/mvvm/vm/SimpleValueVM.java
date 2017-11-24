@@ -9,7 +9,6 @@ import com.privatesecuredata.arch.mvvm.ICommitCommand;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -103,6 +102,11 @@ public class SimpleValueVM<T> extends ViewModel<T> implements IViewModel<T> {
 	public void set(T newData) throws ArgumentException
 	{
 		set(newData, this);
+	}
+
+	public void setObject(Object newData) throws ArgumentException
+	{
+		set((T)newData, this);
 	}
 
 	public void setDefaultFilter(IDefaultFilter<T> filter)

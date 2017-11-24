@@ -297,6 +297,28 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		vm.delViewModelListener(this);
 	}
 
+	private Field[] getAllFields(MODEL m) {
+        Class cls = m.getClass();
+        Field[] fields = cls.getDeclaredFields();
+
+        ArrayList<Field> tmpFields = new ArrayList<Field>();
+        for (Field fld : fields)
+            tmpFields.add(fld);
+
+        while( !cls.getSuperclass().equals(Object.class))
+        {
+            cls = cls.getSuperclass();
+            fields = cls.getDeclaredFields();
+            for (Field fld : fields)
+                tmpFields.add(fld);
+        }
+
+        fields = new Field[tmpFields.size()];
+        tmpFields.toArray(fields);
+
+        return fields;
+    }
+
     /**
      * This method analyses all the mapping-annotations and returns a Hashmap of all
      * Modelnames to their VMs. Overwrite doMappings to get the Hashmap with name->VM-mappings.
@@ -325,23 +347,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
             }
             vms.clear();
         }
-        Class cls = m.getClass();
-        Field[] fields = cls.getDeclaredFields();
-
-        ArrayList<Field> tmpFields = new ArrayList<Field>();
-        for (Field fld : fields)
-            tmpFields.add(fld);
-
-        while( !cls.getSuperclass().equals(Object.class))
-        {
-            cls = cls.getSuperclass();
-            fields = cls.getDeclaredFields();
-            for (Field fld : fields)
-                tmpFields.add(fld);
-        }
-
-        fields = new Field[tmpFields.size()];
-        tmpFields.toArray(fields);
+        Field[] fields = getAllFields(m);
 
         for (Field field : fields)
         {
@@ -393,6 +399,40 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         }
 		return childViewModels;
 	}
+
+    private void replaceChildModels(Object m) {
+        setModel((MODEL)m);
+        Field[] fields = getAllFields((MODEL)m);
+
+        for (Field field : fields) {
+            field.setAccessible(true);
+            try {
+                SimpleVmMapping simpleAnno = field.getAnnotation(SimpleVmMapping.class);
+                if (null != simpleAnno)
+                    setNewModelSimple(field, simpleAnno);
+                else {
+                    ComplexVmMapping complexAnno = field.getAnnotation(ComplexVmMapping.class);
+                    if (null != complexAnno) {
+                        setNewModelComplex(field, complexAnno);
+                    } else {
+                        ListVmMapping listAnno = field.getAnnotation(ListVmMapping.class);
+                        if (null != listAnno)
+                            setNewModelList(field, listAnno);
+                    }
+                }
+            } catch (IllegalArgumentException ex) {
+                throw new ArgumentException("Wrong argument!", ex);
+            } catch (IllegalAccessException ex) {
+                throw new ArgumentException("Error accessing method!", ex);
+            } catch (InvocationTargetException ex) {
+                throw new ArgumentException("Error invoking method!", ex);
+            } catch (NoSuchMethodException ex) {
+                throw new ArgumentException(String.format("Could not find field with name \"%s\"", field.getName()), ex);
+            } catch (InstantiationException ex) {
+                throw new ArgumentException(String.format("Error instantiating complex viewmodel of field \"%s\"", field.getName()), ex);
+            }
+        }
+    }
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected void setListModelMapping(HashMap<String, IViewModel<?>> childViewModels,
@@ -416,8 +456,20 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 		
 		childViewModels.put(field.getName(), vm);
 	}
-	
-	protected void setComplexModelMapping(HashMap<String, IViewModel<?>> childModels,
+
+    protected void setNewModelList(Field field, ListVmMapping listAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException
+    {
+        IListViewModel<?> vmList = (IListViewModel<?>)nameViewModelMapping.get(field.getName());
+
+        if (listAnno.loadLazy()==false) {
+            vmList.init(this, field);
+        }
+        else
+            ((ComplexViewModel<?>)vmList).setModelGetter(this, field);
+    }
+
+
+    protected void setComplexModelMapping(HashMap<String, IViewModel<?>> childModels,
 			Field field, ComplexVmMapping complexAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
         try {
             Class<?> modelType = field.getType();
@@ -466,6 +518,38 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         }
 	}
 
+	protected void setNewModelComplex(Field field, ComplexVmMapping complexAnno) throws IllegalArgumentException, IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+        Class<?> modelType = field.getType();
+        Object childModel = field.get(getModel());
+        if (null == childModel) {
+            //TODO: childModel = MVVM.createMVVM().createModel(modelType);
+            throw new ArgumentException(String.format("The childmodel in type.field '%s.%s' is null!!",
+                    modelType.getName(), field.getName()));
+        }
+        /**
+         * If the Childmodel is != null -> it is in memory -> create the VM
+         */
+        ComplexViewModel<?> vm = (ComplexViewModel<?>)nameViewModelMapping.get(field.getName());
+        if (!complexAnno.loadLazy() || childModel != null) {
+            unsetLazy();
+            if (childModel != null) {
+                modelType = childModel.getClass();
+                ComplexVmMapping anno = modelType.getAnnotation(ComplexVmMapping.class);
+                if (null == anno)
+                    throw new ArgumentException(
+                            String.format("Type \"%s\" does not have a ComplexVmMapping-Annotation. Please provide one!", modelType.getName()));
+            }
+
+            vm.replaceChildModels(childModel);
+            vm.setModelGetter(this, field);
+        } else {
+            // Do we need to register a VM here?? create a VM when it is needed!!!
+            vm.setModel(null);
+            vm.setLazy();
+            vm.setModelGetter(this, field);
+        }
+    }
+
     protected void setLazy() {
         this.isLazy = true;
     }
@@ -492,6 +576,12 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
 		childModels.put(field.getName(), vm);
 	}
+
+    protected void setNewModelSimple(Field field, SimpleVmMapping simpleAnno) throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException
+    {
+        SimpleValueVM<?> vm = (SimpleValueVM<?>)nameViewModelMapping.get(field.getName());
+        vm.setObject(field.get(getModel()));
+    }
 
 	/**
 	 * Write all data of the complete object tree back to the model.
@@ -536,6 +626,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
     @Override
     public void commit() {
+
         startCommit();
         boolean wasDirty = this.isDirty();
         if (wasDirty) {
@@ -656,7 +747,7 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     }
 
     /**
-     * Write a new Model to the VM and completely rebuild the subsequent VM-tree
+     * Write a new Model to the VM and replace all models of the subsequent VM-tree
      *
      * @param m
      */
@@ -664,8 +755,17 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
     {
         setModel(null);
         unsetLazy();
-        setModelAndRegisterChildren(m);
-        notifyModelChanged();
+        replaceChildModels(m);
+        notifyComplexChildModels();
+    }
+
+    protected void notifyComplexChildModels() {
+        List<ComplexViewModel> lst = getComplexChildren();
+
+        for(ComplexViewModel vm : lst) {
+            vm.notifyModelChanged();
+            vm.notifyComplexChildModels();
+        }
     }
 
     /**

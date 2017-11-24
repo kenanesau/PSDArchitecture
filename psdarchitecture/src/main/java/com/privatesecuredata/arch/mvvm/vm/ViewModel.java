@@ -1,11 +1,15 @@
 	package com.privatesecuredata.arch.mvvm.vm;
 
+import android.util.Log;
+
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,7 +17,6 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
@@ -21,13 +24,13 @@ import io.reactivex.schedulers.Schedulers;
  * @author kenan
  *
  * Base for all ViewModel-Classes
- * 
+ *
  * @see SimpleValueVM, ListViewModel
  */
 public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IViewModel<MODEL> {
-	
-	private Collection<IViewModelChangedListener> viewModelChangeListeners = new ArrayList<IViewModelChangedListener>();
-	private Collection<IModelChangedListener> modelChangeListeners = new ArrayList<IModelChangedListener>();
+
+	private HashMap<Integer, IViewModelChangedListener> viewModelChangeListeners = new HashMap<>();
+	private HashMap<Integer, IModelChangedListener> modelChangeListeners = new HashMap<>();
 	private boolean isDirty = false;
 	private MODEL model;
     private String name;
@@ -39,13 +42,13 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	public void setModel (MODEL m) { this.model = m; }
 
     protected Collection<IModelChangedListener> getModelListeners() {
-        return modelChangeListeners;
+        return new ArrayList<>(modelChangeListeners.values());
     }
 
     protected Collection<IViewModelChangedListener> getViewModelListeners() {
-        return viewModelChangeListeners;
+        return new ArrayList<>(viewModelChangeListeners.values());
     }
-	
+
 	@Override
 	public MODEL getModel() throws MVVMException { return this.model; }
 	public boolean hasModel() { return (model != null);}
@@ -57,8 +60,13 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
             if (listener == this)
                 throw new ArgumentException("Cannot register viewmodel-listener with itself!!!");
 
+            if (this.viewModelChangeListeners.containsKey(System.identityHashCode(listener)))
+                throw new ArgumentException(
+                        String.format("You are registering a Viewmodel-listener for VM '%s' twice",
+                                getClass().getName()));
+
             if (null != listener)
-                this.viewModelChangeListeners.add(listener);
+                this.viewModelChangeListeners.put(System.identityHashCode(listener), listener);
         }
         finally {
             vmLock.unlock();
@@ -84,8 +92,13 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
             if (listener == this)
                 throw new ArgumentException("Cannot register model-listener with itself!!!");
 
+            if (this.modelChangeListeners.containsKey(System.identityHashCode(listener)))
+                throw new ArgumentException(
+                        String.format("You are registering a model-listener for VM '%s' twice",
+                        getClass().getName()));
+
             if (null != listener)
-                this.modelChangeListeners.add(listener);
+                this.modelChangeListeners.put(System.identityHashCode(listener), listener);
         }
         finally {
             vmLock.unlock();
@@ -124,7 +137,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
         try {
             vmLock.lock();
             this.setDirty();
-            for (IViewModelChangedListener listener : viewModelChangeListeners)
+            for (IViewModelChangedListener listener : viewModelChangeListeners.values())
                 if (originator != listener) listener.notifyViewModelDirty(this, originator);
         }
         finally {
@@ -160,20 +173,11 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
              */
 
             ViewModel.this.setClean();
-            for (IModelChangedListener listener : modelChangeListeners)
+            for (IModelChangedListener listener : modelChangeListeners.values())
                 listener.notifyModelChanged(ViewModel.this, originator);
-            /**
-            Observable.just(originator)
-                    .subscribeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Consumer<IViewModel<?>>() {
-                                   @Override
-                                   public void accept(IViewModel<?> vm) throws Exception {
-                                       ViewModel.this.setClean();
-                                       for (IModelChangedListener listener : modelChangeListeners)
-                                           listener.notifyModelChanged(ViewModel.this, vm);
-                                   }
-                               });
-            */
+        }
+        catch(ConcurrentModificationException ex) {
+            Log.e(getClass().getName(), ex.toString());
         }
         finally {
             vmLock.unlock();
@@ -241,7 +245,11 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 
     protected void startCommit() {}
     protected void finishCommit() {
-        notifyModelChanged();
+	    notifyModelChanged();
+	    /*Observable.just(this)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe( (vm) -> vm.notifyModelChanged());*/
+
     }
 
 	@Override
@@ -254,7 +262,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
         })
         .compose(applyCommit());
 	}
-	
+
 	/**
 	 * (re)load all data from the Model to the ViewModel
 	 */
