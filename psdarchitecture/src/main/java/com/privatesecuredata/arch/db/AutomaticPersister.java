@@ -545,129 +545,133 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
     }
 
     protected int copyDataRow(IPersistable obj, Cursor csr, SqlDataField[] coll, int colIndex) throws IllegalAccessException, ParseException {
-        SqlDataField currentField = null;
+        SqlDataField field = null;
         long referencedObjectId = -1;
         Field referencedObjectField = null;
 
         int i=0;
-        for (; i<coll.length;) {
-            SqlDataField field = coll[i];
+        try {
+            for (; i < coll.length; ) {
+                field = coll[i];
 
-            if (field.isComposition()) {
-                Field composedField = field.getComposeField();
-                IPersister composePersister = getPM().getUnspecificPersister(composedField.getType());
-                IPersistable composedObj = composePersister.createPersistable();
-                Collection<SqlDataField> composeColl = composePersister.getDescription().getTableFields();
-                SqlDataField[] compseAr = new SqlDataField[composeColl.size()];
-                composeColl.toArray(compseAr);
-                int n = copyDataRow(composedObj, csr, compseAr, colIndex);
-                composedField.set(obj, composedObj);
+                if (field.isComposition()) {
+                    Field composedField = field.getComposeField();
+                    IPersister composePersister = getPM().getUnspecificPersister(composedField.getType());
+                    IPersistable composedObj = composePersister.createPersistable();
+                    Collection<SqlDataField> composeColl = composePersister.getDescription().getTableFields();
+                    SqlDataField[] compseAr = new SqlDataField[composeColl.size()];
+                    composeColl.toArray(compseAr);
+                    int n = copyDataRow(composedObj, csr, compseAr, colIndex);
+                    composedField.set(obj, composedObj);
 
-                colIndex+=n;
-                i+=n;
-                continue;
+                    colIndex += n;
+                    i += n;
+                    continue;
+                }
+
+                Field fld = field.getObjectField();
+                fld.setAccessible(true);
+                switch (field.getSqlType()) {
+                    case DATE:
+                        String dateStr = csr.getString(colIndex);
+                        java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
+                        Date val = null;
+                        if (null != dateStr)
+                            val = df.parse(dateStr);
+                        fld.set(obj, val);
+                        break;
+                    case STRING:
+                        fld.set(obj, csr.getString(colIndex));
+                        break;
+                    case BOOLEAN:
+                        fld.set(obj, csr.getInt(colIndex) == 1 ? true : false);
+                        break;
+                    case DOUBLE:
+                        fld.set(obj, csr.getDouble(colIndex));
+                        break;
+                    case FLOAT:
+                        fld.set(obj, csr.getFloat(colIndex));
+                        break;
+                    case INTEGER:
+                        fld.set(obj, csr.getInt(colIndex));
+                        break;
+                    case LONG:
+                        fld.set(obj, csr.getLong(colIndex));
+                        break;
+                    case OBJECT_REFERENCE:
+                        referencedObjectId = csr.getLong(colIndex);
+                        referencedObjectField = fld;
+                        break;
+                    case OBJECT_NAME:
+                        String objectName = csr.getString(colIndex);
+                        IPersistable referencedObj = null;
+                        boolean failedLoad = false;
+                        if (null != objectName) {
+                            if ((referencedObjectId > -1) && (referencedObjectField != null)) {
+                                Class clazz = getPM().getPersistentType(objectName);
+                                referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
+                                failedLoad = (referencedObj == null);
+
+                                referencedObjectField.set(obj, referencedObj);
+                            }
+                        }
+
+
+                        /**
+                         * If the referenced object could not be loaded and the relation says it is mandatory
+                         * -> This object cannot exist -> delete it and return null
+                         */
+                        if (failedLoad) {
+                            ObjectRelation rel = getDescription().getOneToOneRelation(field.getObjectField().getName());
+                            if (rel.isMandatory()) {
+                                deleteObjectsWithObsoleteDataref(getPersistentType(), field, referencedObjectField);
+                                obj = null;
+                            } else {
+                                /**
+                                 * Mark this object for saving, so the non-existing referenced
+                                 * object-reference is updated
+                                 */
+                                obj.getDbId().setDirty();
+                            }
+                        }
+
+                        break;
+                    case COLLECTION_REFERENCE:
+                        int collSize = 0;
+                        if (!csr.isNull(colIndex))
+                            collSize = csr.getInt(colIndex);
+
+                        //TODO: If object is not lazily loaded omit the proxy-stuff ...
+                        //TODO: Get type of objects in collection...
+                        ObjectRelation rel = getDescription().getOneToManyRelation(field.getObjectField().getName());
+                        Query q = rel.getAndCacheQuery(getPM());
+                        ICursorLoader loader;
+                        if (null != q) {
+                            loader = new QueryCursorLoader(q);
+                        } else {
+                            loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
+                        }
+                        Collection lstItems = (Collection) CollectionProxyFactory.getCollectionProxy(getPM(), (Class) field.getReferencedType(), obj, collSize, loader);
+
+                        fld.set(obj, lstItems);
+                        break;
+
+                    default:
+                        throw new DBException("Unknow data-type");
+                }
+
+                colIndex++;
+                i++;
+
+                if (colIndex == getDescription().getTableFields().size() + 1)
+                    break;
+
+                if (obj == null)
+                    break;
             }
-
-            Field fld = field.getObjectField();
-            fld.setAccessible(true);
-            switch (field.getSqlType()) {
-                case DATE:
-                    String dateStr = csr.getString(colIndex);
-                    java.text.DateFormat df = new SimpleDateFormat(DATE_FORMAT);
-                    Date val = null;
-                    if (null != dateStr)
-                        val = df.parse(dateStr);
-                    fld.set(obj, val);
-                    break;
-                case STRING:
-                    fld.set(obj, csr.getString(colIndex));
-                    break;
-                case BOOLEAN:
-                    fld.set(obj, csr.getInt(colIndex) == 1 ? true : false);
-                    break;
-                case DOUBLE:
-                    fld.set(obj, csr.getDouble(colIndex));
-                    break;
-                case FLOAT:
-                    fld.set(obj, csr.getFloat(colIndex));
-                    break;
-                case INTEGER:
-                    fld.set(obj, csr.getInt(colIndex));
-                    break;
-                case LONG:
-                    fld.set(obj, csr.getLong(colIndex));
-                    break;
-                case OBJECT_REFERENCE:
-                    referencedObjectId = csr.getLong(colIndex);
-                    referencedObjectField = fld;
-                    break;
-                case OBJECT_NAME:
-                    String objectName = csr.getString(colIndex);
-                    IPersistable referencedObj = null;
-                    boolean failedLoad = false;
-                    if (null != objectName) {
-                        if ((referencedObjectId > -1) && (referencedObjectField != null)) {
-                            Class clazz = getPM().getPersistentType(objectName);
-                            referencedObj = getPM().load(obj.getDbId(), clazz, referencedObjectId);
-                            failedLoad = (referencedObj == null);
-
-                            referencedObjectField.set(obj, referencedObj);
-                        }
-                    }
-
-
-                    /**
-                     * If the referenced object could not be loaded and the relation says it is mandatory
-                     * -> This object cannot exist -> delete it and return null
-                     */
-                    if (failedLoad) {
-                        ObjectRelation rel = getDescription().getOneToOneRelation(field.getObjectField().getName());
-                        if (rel.isMandatory()) {
-                            deleteObjectsWithObsoleteDataref(getPersistentType(), field, referencedObjectField);
-                            obj = null;
-                        }
-                        else {
-                            /**
-                             * Mark this object for saving, so the non-existing referenced
-                             * object-reference is updated
-                             */
-                            obj.getDbId().setDirty();
-                        }
-                    }
-
-                    break;
-                case COLLECTION_REFERENCE:
-                    int collSize = 0;
-                    if (!csr.isNull(colIndex))
-                        collSize = csr.getInt(colIndex);
-
-                    //TODO: If object is not lazily loaded omit the proxy-stuff ...
-                    //TODO: Get type of objects in collection...
-                    ObjectRelation rel = getDescription().getOneToManyRelation(field.getObjectField().getName());
-                    Query q = rel.getAndCacheQuery(getPM());
-                    ICursorLoader loader;
-                    if (null != q) {
-                        loader = new QueryCursorLoader(q);
-                    } else {
-                        loader = getPM().getLoader(getPersistentType(), field.getReferencedType());
-                    }
-                    Collection lstItems = (Collection)CollectionProxyFactory.getCollectionProxy(getPM(), (Class) field.getReferencedType(), obj, collSize, loader);
-
-                    fld.set(obj, lstItems);
-                    break;
-
-                default:
-                    throw new DBException("Unknow data-type");
-            }
-
-            colIndex++;
-            i++;
-
-            if (colIndex == getDescription().getTableFields().size() + 1)
-                break;
-
-            if (obj == null)
-                break;
+        }
+        catch (Exception ex) {
+            throw new DBException(String.format("Error copying data to type '%s' field '%s'", obj.getClass().getName(), field.getObjectField().getName()), ex);
         }
 
         return i;
@@ -677,8 +681,6 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 	public T rowToObject(int pos, Cursor csr) throws DBException {
 		T obj = null;
 		SqlDataField currentField = null;
-        long referencedObjectId = -1;
-        Field referencedObjectField = null;
 
 		try {
 			obj = createPersistable();

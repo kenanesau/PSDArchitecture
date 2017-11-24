@@ -205,6 +205,15 @@ public class QueryBuilder<T> {
                 foreignKeyType);
     }
 
+    public void addForeignKeyCondition(Class otherType, Class foreignKeyType, QueryCondition.Operation op)
+    {
+        String condId = DbNameHelper.getForeignKeyFieldName(otherType, foreignKeyType);
+        addForeignKeyCondition(otherType,
+                condId,
+                condId,
+                foreignKeyType, op);
+    }
+
     /**
      * Add a condition that the same object has to be referenced
      *
