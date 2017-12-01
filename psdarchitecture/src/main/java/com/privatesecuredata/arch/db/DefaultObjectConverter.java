@@ -2,7 +2,6 @@ package com.privatesecuredata.arch.db;
 
 import android.database.Cursor;
 
-import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.lang.reflect.Field;

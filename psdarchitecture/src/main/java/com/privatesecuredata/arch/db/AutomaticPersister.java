@@ -722,7 +722,7 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
 
     /**
      * Delete all data-rows in table for persistentType which are not in the table for
-     * type field.getReferencedType.
+     * type field.getReferencedListType.
      *
      * This is for example in a List of items where each item has a one-to-one-reference
      * to another type. And some of those object which were referenced are deleted...

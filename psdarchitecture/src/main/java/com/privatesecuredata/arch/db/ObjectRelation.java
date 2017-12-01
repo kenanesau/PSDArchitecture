@@ -73,6 +73,11 @@ public class ObjectRelation {
     public boolean isComposition() { return _isComposition; }
 	public Field getField() { return _fld; }
 	public Class getReferencingType() { return _referencingType; }
+
+    /**
+     * This is only set if the object relation relates to a list of objects
+     * @return
+     */
     public Class getReferencedListType() { return _referencedListType; }
 	public IPersister getPersister(PersistanceManager pm)
 	{

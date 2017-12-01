@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Environment;
 import android.util.Log;
 import android.util.Pair;
 
@@ -960,7 +959,7 @@ public class PersistanceManager {
      * Move the persistable with the DbId "item" to the container (foreign-key) with the
      * DbId "containerDst".
      * @param containerDst DbId of the destination container
-     * @param item         DbId of the item to move
+     * @param item         DbId of the item to checkAndMove
      * @param <T>
      * @throws DBException
      */
@@ -985,7 +984,7 @@ public class PersistanceManager {
      * DbId "containerDst".
      * @param <T>
      * @param containerDst DbId of the destination container
-     * @param itemIds      DbIds of the items to move
+     * @param itemIds      DbIds of the items to checkAndMove
      * @throws DBException
      */
     public <T extends IPersistable> void move(DbId<T> containerSrc, DbId<IPersistable> containerDst, Field fld, int oldSrcSize, int oldDstSize, ArrayList<DbId> itemIds) throws DBException

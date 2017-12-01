@@ -477,11 +477,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
              * This VM has a model otherwise this method would not be called
              **/
             Object childModel = field.get(getModel());
-            if (null == childModel) {
-                //TODO: childModel = MVVM.createMVVM().createModel(modelType);
-                throw new ArgumentException(String.format("The childmodel in type.field '%s.%s' is null!!",
-                        modelType.getName(), field.getName()));
-            }
+            /* if the childModel==null -> do nothing (otherwise optional object refs won't be possible */
+
             /**
              * If the Childmodel is != null -> it is in memory -> create the VM
              */
