@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * VM which can be used to move items (container-content) from one
+ * VM which can be used to checkAndMove items (container-content) from one
  * container to another
  *
  * The containers have to have a ViewModel which is derived from
@@ -33,7 +33,7 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
     /**
      * As a user of the ItemMoverVM-class you have to implement this abstract
      * class and overwrite the method checkMove(). Within this method return true
-     * if the imminent move-operation is allowed, false otherwise
+     * if the imminent checkAndMove-operation is allowed, false otherwise
      */
     public static abstract class CheckMoveCommand {
         private ItemMoverVM _mover;
@@ -41,17 +41,17 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
         public ItemMoverVM getMover() { return _mover; }
 
         /**
-         * Checks if the move-operation to dst would be legal and returns
-         * true if this is the case.
+         * Checks if the checkMove-operation to dst would be legal and returns
+         * the true destination if this is the case.
          *
-         * @param dst Potential destinatio of move-operation
-         * @return true if the move-operation would be legal, false otherwise
+         * @param dst Potential destinatio of checkAndMove-operation
+         * @return destination if the checkMove-operation would be legal, null otherwise
          */
-        public abstract boolean checkMove(ComplexViewModel dst);
+        public abstract ComplexViewModel checkMove(ComplexViewModel dst);
+        public abstract ComplexViewModel moveCommit(ComplexViewModel dst);
     }
 
     public static final String TAG_PSDARCH_ITEMMOVER = "psdarch_itemmover";
-    private DbId srcContainerId;
     private ComplexViewModel srcContainerVM;
     private ComplexViewModel dstConainerVM;
     private SparseArray<DbId> items = new SparseArray<>();
@@ -67,11 +67,16 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
      */
     private CheckMoveCommand checkMoveCommand = new CheckMoveCommand() {
         @Override
-        public boolean checkMove(ComplexViewModel dst) {
+        public ComplexViewModel checkMove(ComplexViewModel dst) {
             if ( (srcContainerVM == null) || (dst.getModel().getClass().isAssignableFrom(srcContainerVM.getModel().getClass())) )
-                return true;
+                return dst;
             else
-                return false;
+                return null;
+        }
+
+        @Override
+        public ComplexViewModel moveCommit(ComplexViewModel dst) {
+            return dst;
         }
     };
 
@@ -79,7 +84,7 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
      * Create a new ItemMover-Object
      *
      * @param pm The PersistanceManager
-     * @param srcContainer The source of the move-operation (items are removed from here)
+     * @param srcContainer The source of the checkAndMove-operation (items are removed from here)
      * @param getListCommand A command which returns the list of items of the src/dst-Container
      *                       where the items should be removed / added.
      */
@@ -95,14 +100,13 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
         registerChildVM(itemsCountTxt);
         this.pm = pm;
         if (null != srcContainer) {
-            srcContainerId = srcContainer.getModel().getDbId();
             srcContainerVM = srcContainer;
         }
         this.getListCommand = getListCommand;
     }
 
     /**
-     * Set a new command-object which checks the validity of the impending move-operation
+     * Set a new command-object which checks the validity of the impending checkAndMove-operation
      * @param cmd the command-object
      */
     public void setCheckMoveCommand(CheckMoveCommand cmd)
@@ -112,10 +116,10 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
     }
 
     /**
-     * Add a new Item for the move-operation
+     * Add a new Item for the checkAndMove-operation
      *
-     * @param dbIds List of pairs of position in the list to move from and references
-     *              to DbId-object of the items to move
+     * @param dbIds List of pairs of position in the list to checkAndMove from and references
+     *              to DbId-object of the items to checkAndMove
      */
     public void addItems(List<Pair<Integer, DbId>> dbIds)
     {
@@ -147,7 +151,7 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
     }
 
     /**
-     * remove an item from the move-operation
+     * remove an item from the checkAndMove-operation
      *
      * @param pos
      */
@@ -167,10 +171,13 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
      * @param <T> Type parameter (of the container)
      */
     public <T extends ComplexViewModel> boolean move(T dstVM) {
-        if (this.checkMoveCommand.checkMove(dstVM)) {
-            DbId dstId = ((IPersistable) dstVM.getModel()).getDbId();
+
+        ComplexViewModel realDestination = checkMove(dstVM);
+        if (realDestination != null) {
+            realDestination = this.checkMoveCommand.moveCommit(dstVM);
+
             IListViewModel listVM = getListCommand.getVM(srcContainerVM);
-            IListViewModel dstListVM = getListCommand.getVM(dstVM);
+            IListViewModel dstListVM = getListCommand.getVM(realDestination);
             ArrayList<DbId> dbIds = new ArrayList<>();
 
             for (int i = 0; i < items.size(); i++) {
@@ -178,14 +185,18 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
                 dbIds.add(dbId);
             }
 
-            pm.move(srcContainerId, ((IPersistable) dstVM.getModel()).getDbId(),
+            DbId dstId = ((IPersistable) realDestination.getModel()).getDbId();
+            pm.move(((IPersistable)getSource().getModel()).getDbId(),
+                    ((IPersistable) realDestination.getModel()).getDbId(),
                     ((ComplexViewModel) listVM).getModelField(),
                     listVM.size(),
                     dstListVM.size(),
                     dbIds);
             Object dstModel = pm.load(dstId);
-            dstVM.replaceModel(dstModel);
+            realDestination.replaceModel(dstModel);
 
+            dstVM.notifyModelChanged();
+            dstVM.notifyViewModelDirty();
             return true;
         }
 
@@ -195,7 +206,6 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
     public <T extends ComplexViewModel> boolean move(T srcVM, T dstVM)
     {
         if (null != srcVM) {
-            srcContainerId = ((IPersistable)srcVM.getModel()).getDbId();
             srcContainerVM = srcVM;
         }
 
@@ -208,18 +218,18 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
 
 
     /**
-     * Triggers the ceck of the move-operation an updates the Flag for the validity of the operation
+     * Triggers the ceck of the checkAndMove-operation an updates the Flag for the validity of the operation
      *
-     * @param dstVM potential target for the move operation
-     * @return true if the operation is allowed,false otherwise
+     * @param dstVM potential target for the checkAndMove operation
+     * @return The real destination if the operation is allowed, null otherwise
      */
-    public boolean checkMove(ComplexViewModel dstVM) {
-        boolean ret = this.checkMoveCommand.checkMove(dstVM);
-        this.actionValid.set(ret);
+    public ComplexViewModel checkMove(ComplexViewModel dstVM) {
+        ComplexViewModel ret = this.checkMoveCommand.checkMove(dstVM);
+        this.actionValid.set(ret != null);
         return ret;
     }
 
-    public boolean checkMove() {
+    public ComplexViewModel checkMove() {
         return checkMove(dstConainerVM);
     }
 
@@ -230,6 +240,9 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
     public ComplexViewModel getSource() {
         return srcContainerVM;
     }
+    protected void setSource(ComplexViewModel newSrc) {
+        srcContainerVM = newSrc;
+    }
 
     public void setDestination(ComplexViewModel dst) {
         dstConainerVM = dst;
@@ -239,4 +252,6 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
         this.getItems().clear();
         itemCount.set(items.size());
     }
+
+    public PersistanceManager getPm() { return this.pm; }
 }

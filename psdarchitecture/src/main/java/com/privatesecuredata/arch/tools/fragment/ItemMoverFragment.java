@@ -21,7 +21,7 @@ import com.privatesecuredata.arch.tools.vm.ItemMoverVM;
 /**
  * Created by kenan on 9/1/15.
  *
- * Fragment for the ItemMover. This is always displayed as long a move-operation
+ * Fragment for the ItemMover. This is always displayed as long a checkAndMove-operation
  * is imminent.
  */
 public class ItemMoverFragment extends MVVMFragment {
@@ -128,7 +128,7 @@ public class ItemMoverFragment extends MVVMFragment {
     public boolean checkMove()
     {
         if (null != this.vm)
-            return this.vm.checkMove();
+            return this.vm.checkMove() != null;
         else
             return false;
     }
@@ -136,12 +136,12 @@ public class ItemMoverFragment extends MVVMFragment {
     public boolean checkMove(ComplexViewModel dstVM)
     {
         if (null != this.vm)
-            return this.vm.checkMove(dstVM);
+            return this.vm.checkMove(dstVM) != null;
         else
             return false;
     }
 
-    public <T> void move()
+    public <T> void checkAndMove()
     {
         this.getItemMover().move();
         getActivity().getSupportFragmentManager()
@@ -153,7 +153,7 @@ public class ItemMoverFragment extends MVVMFragment {
         this.setItemMoverVM(null);
     }
 
-    public <T> void move(ComplexViewModel dstVM)
+    public <T> void checkAndMove(ComplexViewModel dstVM)
     {
         this.getItemMover().move(dstVM);
         getActivity().getSupportFragmentManager()
