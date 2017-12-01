@@ -124,6 +124,15 @@ public class Query<T> {
         setForeignKeyParameter(DbNameHelper.getForeignKeyFieldName(value.getType()), value);
     }
 
+    /**
+     * Sets a parameter which checks the corresponding condition which was added with
+     * addMatchingObjRefCondition. The condition returns true if the referenced object is the same
+     * (has the same DB-ID)
+     *
+     * @sa addMatchingObjRefCondition
+     * @param fldName
+     * @param obj
+     */
     public void setMatchinObjRefParameter(String fldName, IPersistable obj) {
         setParameter(
                 DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_REFERENCE),
@@ -131,6 +140,21 @@ public class Query<T> {
         setParameter(
                 DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_NAME),
                 obj != null ? DbNameHelper.getDbTypeName(obj.getDbId().getType()) : null);
+    }
+
+    /**
+     * Sets a parameter for the corresponding condition which was added with addEqualsObjCondition.
+     * The condition checks for equality (uses the equals()-operator on...) the object which is
+     * used as a parameter here (obj)
+     *
+     * TODO: Implementation not finished yet, Setting the parameter value does not work yet
+     *
+     * @sa addEqualsObjCondition
+     * @param fldName Object field name
+     * @param obj Paramter / Object to check for equality
+     */
+    public void setEqualsObjParameter(String fldName, IPersistable obj) {
+        setParameter(fldName, obj);
     }
 
     /**
@@ -142,6 +166,7 @@ public class Query<T> {
         this.sql = sql;
 
         Map<String, SqlDataField> fields = description.getFieldMap();
+
         /**
          * Set default values
          */
@@ -180,6 +205,7 @@ public class Query<T> {
 
                 args[i++] = para.getDbString();
             }
+
             return this.db.rawQuery(sb.toString(), args);
         }
         finally {

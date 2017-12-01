@@ -10,8 +10,20 @@ import java.util.Date;
  */
 public class QueryParameter {
     private SqlDataField.SqlFieldType fieldType;
+
+    /**
+     * Parameter ID
+     */
     private String id;
+
+    /**
+     * Object field name
+     */
     private String fieldName;
+
+    /**
+     * Object field value to compare against
+     */
     private Object value;
     private IQueryParamValueFilter filter = null;
 

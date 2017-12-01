@@ -26,7 +26,7 @@ public class QueryConditionContainer implements IQueryCondition {
     }
 
     private LinkedList<IQueryCondition> conditions = new LinkedList<>();
-    private LinkedList<QueryParameter> params = new LinkedList<>();
+    protected LinkedList<QueryParameter> params = new LinkedList<>();
     private String condId;
     Operation op = Operation.AND;
 
@@ -46,8 +46,9 @@ public class QueryConditionContainer implements IQueryCondition {
         this(condId);
 
         addCondition(conditions);
-
     }
+
+    public String getCondId() { return condId; }
 
     public void addCondition(IQueryCondition... conditions)
     {

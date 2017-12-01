@@ -1,6 +1,7 @@
 package com.privatesecuredata.arch.db.query;
 
 import com.privatesecuredata.arch.db.DbNameHelper;
+import com.privatesecuredata.arch.db.ObjectRelation;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
@@ -30,6 +31,8 @@ public class QueryCondition implements IQueryCondition {
 
         private int value;
 
+        public int val() {return value; }
+
         private Operation(int value) {
             this.value = value;
         }
@@ -41,9 +44,12 @@ public class QueryCondition implements IQueryCondition {
         TYPE(2),
         DBID(3),
         FOREIGNKEY(4),
-        DIRECTFIELDNAME(5); //No field name mangling through DBName-Helper
+        DIRECTFIELDNAME(5), //No field name mangling through DBName-Helper
+        LOADOBJANDCMP(6);  // Load referenced obj and compare to param
 
         private int value;
+
+        public int val() {return value; }
 
         private ConditionType(int value) {
             this.value = value;
@@ -76,30 +82,30 @@ public class QueryCondition implements IQueryCondition {
     }
 
     /**
-     * Create a query
+     * Create a query-condition
      *
-     * @param fieldName Fieldname of field in Object
+     * @param fieldName Fieldname of field in the Object
      */
     public QueryCondition(String fieldName) {
         this(fieldName, fieldName);
     }
 
     /**
-     * Create a query
+     * Create a query-condition
      *
      * @param condId ID of the condition
-     * @param fieldName Fieldname of field in Object
+     * @param fieldName Fieldname of field in the Object
      */
     public QueryCondition(String condId, String fieldName) {
         this(condId, fieldName, fieldName);
     }
 
     /**
-     * Create a query
+     * Create a query-condition
      *
      * @param condId ID of the condition
      * @param paraId ID of the parameter
-     * @param fieldName Fieldname of field in Object
+     * @param fieldName Fieldname of field in the Object
      */
     public QueryCondition(String condId, String paraId, String fieldName) {
         this.params[0] = new QueryParameter(paraId, fieldName);
@@ -119,7 +125,8 @@ public class QueryCondition implements IQueryCondition {
     public boolean isDirectFieldnameCondition() { return this.type == ConditionType.DIRECTFIELDNAME; }
     public void setForeignKeyCondition() { this.type = ConditionType.FOREIGNKEY; }
     public boolean isForeignKeyCondition() { return this.type == ConditionType.FOREIGNKEY; }
-
+    public void setObjEqualsCondition() { this.type = ConditionType.LOADOBJANDCMP; }
+    public boolean isObjEqualsCondition() { return this.type == ConditionType.LOADOBJANDCMP; }
 
     /**
      * @return The type for which this condition is meant (only used for joins)
@@ -160,6 +167,20 @@ public class QueryCondition implements IQueryCondition {
         return sqlField;
     }
 
+    protected String getSqlFieldName(String objFieldName) {
+        String sqlFieldName = null;
+
+        if (isTypeCondition())
+            sqlFieldName = DbNameHelper.getFieldName(objFieldName, SqlDataField.SqlFieldType.OBJECT_NAME);
+        else if (isForeignKeyCondition() || isDirectFieldnameCondition()) {
+            sqlFieldName = params[0].fieldName();
+        }
+        else
+            sqlFieldName = DbNameHelper.getSimpleFieldName(objFieldName);
+
+        return sqlFieldName;
+    }
+
     /**
      * Append condition to an SQL-Query
      *
@@ -170,16 +191,8 @@ public class QueryCondition implements IQueryCondition {
      */
     @Override
     public StringBuilder append(PersistanceManager pm, PersisterDescription desc, StringBuilder sb) {
-        String sqlFieldName = null;
+        String sqlFieldName = getSqlFieldName(params[0].fieldName());
         SqlDataField sqlField = null;
-
-        if (isTypeCondition())
-            sqlFieldName = DbNameHelper.getFieldName(params[0].fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
-        else if (isForeignKeyCondition() || isDirectFieldnameCondition()) {
-            sqlFieldName = params[0].fieldName();
-        }
-        else
-            sqlFieldName = DbNameHelper.getSimpleFieldName(params[0].fieldName());
 
         if (getPersistableType() == null) {
             sqlField = isDbIdCondition() ?
@@ -194,17 +207,31 @@ public class QueryCondition implements IQueryCondition {
         }
         else {
             /**
-             * Join-case
+             * Join- and compose-case
              */
-            PersisterDescription joinedDesc = pm.getPersister(getPersistableType()).getDescription();
-            sqlField = findField(joinedDesc, sqlFieldName);
+            ObjectRelation objRel = desc.getOneToOneRelation(condId);
+            boolean isComposition = ((null != objRel) && (objRel.isComposition()));
+
+            PersisterDescription realDesc = pm.getPersister(getPersistableType()).getDescription();
+            if (isComposition) {
+                SqlDataField compField = realDesc.getTableField(sqlFieldName);
+                SqlDataField actualField = new SqlDataField(objRel.getField(), compField);
+                sqlFieldName = actualField.getSqlName();
+                sqlField = findField(desc, sqlFieldName);
+            }
+            else {
+                sqlField = findField(realDesc, sqlFieldName);
+            }
+
+
             if (null == sqlField)
                 throw new DBException(String.format("Unable to create query: Could not find sqlField of joined type \"%s\" with name \"%s\"",
                         getPersistableType().getName(),
                         params[0].fieldName()));
 
-            sb.append(DbNameHelper.getTableName(getPersistableType()))
-                    .append(".");
+            if (!isComposition)
+                sb.append(DbNameHelper.getTableName(getPersistableType()))
+                        .append(".");
         }
 
         sb.append(sqlField.getSqlName());
@@ -315,7 +342,8 @@ public class QueryCondition implements IQueryCondition {
              * Set default if no value set yet
              */
             if (null == para.value()) {
-                String dbFieldName = DbNameHelper.getFieldName(para.fieldName(), SqlDataField.SqlFieldType.OBJECT_NAME);
+                String dbFieldName = DbNameHelper.getFieldName(para.fieldName(),
+                        SqlDataField.SqlFieldType.OBJECT_NAME);
                 if (fields.containsKey(dbFieldName)) {
                     SqlDataField sqlField = fields.get(dbFieldName);
                     para.setValue(sqlField.getObjectField().getType().getName());

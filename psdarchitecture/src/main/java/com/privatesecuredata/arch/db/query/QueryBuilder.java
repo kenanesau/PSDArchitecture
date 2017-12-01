@@ -1,6 +1,5 @@
 package com.privatesecuredata.arch.db.query;
 
-import android.graphics.Path;
 import android.util.Pair;
 
 import com.privatesecuredata.arch.db.AbstractPersister;
@@ -10,6 +9,7 @@ import com.privatesecuredata.arch.db.OrderByTerm;
 import com.privatesecuredata.arch.db.PersistanceManager;
 import com.privatesecuredata.arch.db.PersisterDescription;
 import com.privatesecuredata.arch.db.SqlDataField;
+import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.DBException;
 
 import java.util.LinkedHashMap;
@@ -106,6 +106,12 @@ public class QueryBuilder<T> {
 
     public void addCondition(String condId, String fldName) {
         addCondition(new QueryCondition(condId, fldName));
+    }
+
+    public void addCondition(String localObjField, Class referencedType, String referencedObjField) {
+        QueryCondition cond = new QueryCondition(localObjField, referencedObjField, referencedObjField);
+        cond.setPersistableType(referencedType);
+        addCondition(cond);
     }
 
     public void addTypeCondition(Class persistableType, String condId, String paraId, String fldName) {
@@ -215,24 +221,53 @@ public class QueryBuilder<T> {
     }
 
     /**
+     * Add a condition that NOT the same object has to be referenced
+     *
+     * Type and db-id must match
+     *
+     * @param otherType Type of a joined table
+     * @param fldName Field name
+     */
+    public void addNotMatchinObjRefCondition(String fldName, Class otherType) {
+        QueryConditionContainer cont = createMatchingObjRefCondition(fldName, otherType, QueryCondition.Operation.NOTEQUAL);
+        addCondition(cont);
+    }
+
+    /**
      * Add a condition that the same object has to be referenced
      *
      * Type and db-id must match
      *
-     * @param type Type of a joined table
+     * @param otherType Type of a joined table
      * @param fldName Field name
      */
-    public void addMatchinObjRefCondition(Class type, String fldName) {
+    public void addMatchingObjRefCondition(String fldName, Class otherType) {
+        QueryConditionContainer cont = createMatchingObjRefCondition(fldName, otherType, QueryCondition.Operation.EQUALS);
+        addCondition(cont);
+    }
+
+    public static QueryConditionContainer createMatchingObjRefCondition(String fldName, Class otherType, QueryCondition.Operation op)
+    {
+        if ( !((op == QueryCondition.Operation.EQUALS) ||
+                (op == QueryCondition.Operation.NOTEQUAL)) )
+            throw new ArgumentException("This operation is not supported");
+
         QueryCondition typeNameCond = new QueryCondition(DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_REFERENCE));
         typeNameCond.setDirectFieldnameCondition();
-        if (null != type)
-            typeNameCond.setPersistableType(type);
+        if (null != otherType)
+            typeNameCond.setPersistableType(otherType);
         QueryCondition idCond = new QueryCondition(DbNameHelper.getFieldName(fldName, SqlDataField.SqlFieldType.OBJECT_NAME));
         idCond.setDirectFieldnameCondition();
-        if (null != type)
-            idCond.setPersistableType(type);
+        if (null != otherType)
+            idCond.setPersistableType(otherType);
         QueryConditionContainer andContainer = new QueryConditionContainer(fldName + "_obj_ref_cnt", typeNameCond, idCond);
-        addCondition(andContainer);
+
+        if (op == QueryCondition.Operation.NOTEQUAL) {
+            typeNameCond.setOperation(QueryCondition.Operation.NOTEQUAL);
+            idCond.setOperation(QueryCondition.Operation.NOTEQUAL);
+            andContainer.setOperation(QueryConditionContainer.Operation.OR);
+        }
+        return andContainer;
     }
 
     /**
@@ -242,8 +277,71 @@ public class QueryBuilder<T> {
      *
      * @param fldName Field name
      */
-    public void addMatchinObjRefCondition(String fldName) {
-        addMatchinObjRefCondition(null, fldName);
+    public void addMatchingObjRefCondition(String fldName) {
+        addMatchingObjRefCondition(fldName, null);
+    }
+
+    /**
+     * Add a condition that the DB object to load the object in fldName and compare it to
+     * the supplied param
+     *
+     * TODO: Implementation not finished yet, Setting the parameter value does not work yet
+     *
+     * @param otherType Corresponding joined/composed Type
+     * @param referencingFldName Field name
+     * @param op Operation
+     */
+    public void addEqualsObjCondition(String referencingFldName, Class otherType, QueryCondition.Operation op) {
+        if (! ((op.val() == QueryCondition.Operation.EQUALS.val()) ||
+                (op.val() == QueryCondition.Operation.NOTEQUAL.val())) ) {
+            throw new ArgumentException("This operation is not allowed!");
+        }
+
+        /**
+         * By default the container has an AND-Operation
+         */
+        QueryConditionContainer cont = new ObjectEqualsQueryCondition(referencingFldName, otherType);
+        if (op == QueryCondition.Operation.NOTEQUAL)
+            cont.setOperation(QueryConditionContainer.Operation.OR);
+
+        addCondition(cont);
+    }
+
+    /**
+     * Add a condition that the DB object to load the object in fldName and compare it to
+     * the supplied param
+     *
+     * TODO: Implementation not finished yet, Setting the parameter value does not work yet
+     *
+     * @param fldName Field name
+     */
+    public void addEqualsObjCondition(String fldName, Class otherType) {
+        addEqualsObjCondition(fldName, otherType, QueryCondition.Operation.EQUALS);
+    }
+
+    /**
+     * Add a condition that the DB object to load the object in fldName and compare it to
+     * the supplied param
+     *
+     * TODO: Implementation not finished yet, Setting the parameter value does not work yet
+     *
+     * @param fldName Field name
+     * @param op
+     */
+    public void addEqualsObjCondition(String fldName, QueryCondition.Operation op) {
+        addEqualsObjCondition(fldName, null, op);
+    }
+
+    /**
+     * Add a condition that the DB object to load the object in fldName and compare it to
+     * the supplied param
+     *
+     * TODO: Implementation not finished yet, Setting the parameter value does not work yet
+     *
+     * @param fldName Field name
+     */
+    public void addEqualsObjCondition(String fldName) {
+        addEqualsObjCondition(fldName, null, QueryCondition.Operation.EQUALS);
     }
 
     public void appendOrderByTerm(OrderByTerm term) {
