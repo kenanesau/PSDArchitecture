@@ -25,7 +25,7 @@ public class MetricWeightMeasurementSystem extends AbstractMeasurementSystem {
 
     private Conversion[] convs = new Conversion[] {
             new Conversion("Milligramm", "mg", 1000, 1),
-            new Conversion("Gramm", "gr", 1000, 1),
+            new Conversion("Gramm", "g", 1000, 1),
             new Conversion("Kilogramm", "kg", 1000, 1),
             new Conversion("Tonne", "to", 0, 0)
     };
