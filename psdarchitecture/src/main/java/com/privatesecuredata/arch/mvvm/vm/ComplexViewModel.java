@@ -520,8 +520,8 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         Object childModel = field.get(getModel());
         if (null == childModel) {
             //TODO: childModel = MVVM.createMVVM().createModel(modelType);
-            throw new ArgumentException(String.format("The childmodel in type.field '%s.%s' is null!!",
-                    modelType.getName(), field.getName()));
+            //throw new ArgumentException(String.format("The childmodel in type.field '%s.%s' is null!!",
+             //       modelType.getName(), field.getName()));
         }
         /**
          * If the Childmodel is != null -> it is in memory -> create the VM
@@ -772,27 +772,30 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
      * child VMs
      *
      * @param oldChildVM old child VM -- which needs to be replaced
-     * @param newChildViewModel new "value" for child-VM
+     * @param newChildVM new "value" for child-VM
      * @param <T> Model-Type of the child VMs
      * @return Returns the new child-VM
      */
-    public <T extends ComplexViewModel> T replaceVM(T oldChildVM, T newChildViewModel) {
-        if (null == newChildViewModel)
+    public <T extends ComplexViewModel> T replaceVM(T oldChildVM, T newChildVM) {
+        if (null == newChildVM)
             throw new ArgumentException("Parameter 'newChildViewModel' must not be null!");
         if (null != oldChildVM) {
             unregisterChildVM(oldChildVM);
 
             Field fld = oldChildVM.getModelField();
+
+            /** Move all modelListeners of oldChidlVM tro newChildVM **/
             Collection<IModelChangedListener> modelListeners = oldChildVM.getModelListeners();
             for (IModelChangedListener listener : modelListeners) {
                 oldChildVM.delModelListener(listener);
-                newChildViewModel.addModelListener(listener);
+                newChildVM.addModelListener(listener);
             }
 
+            /** Move all vmListeners of oldChidlVM tro newChildVM **/
             Collection<IViewModelChangedListener> vmListeners = oldChildVM.getViewModelListeners();
             for (IViewModelChangedListener listener : vmListeners) {
                 oldChildVM.delViewModelListener(listener);
-                newChildViewModel.addViewModelListener(listener);
+                newChildVM.addViewModelListener(listener);
             }
 
             if (null == fld)
@@ -802,14 +805,14 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
              * Without this it would not be possible for the child-VM to write it's new value
              * to the parent-VM.
              */
-            newChildViewModel.setModelGetter(this, oldChildVM.getModelField());
+            newChildVM.setModelGetter(this, oldChildVM.getModelField());
         }
         else throw new ArgumentException("Parameter 'oldChildVM' must not be null!");
 
-        registerChildVM(newChildViewModel);
-        newChildViewModel.notifyViewModelDirty();
+        addChild(newChildVM);
+        newChildVM.notifyViewModelDirty();
 
-        return newChildViewModel;
+        return newChildVM;
     }
 
 
