@@ -194,9 +194,7 @@ public class ItemMoverVM<SRC extends IPersistable, DST extends IPersistable> ext
                     dbIds);
             Object dstModel = pm.load(dstId);
             realDestination.replaceModel(dstModel);
-
             dstVM.notifyModelChanged();
-            dstVM.notifyViewModelDirty();
             return true;
         }
 
