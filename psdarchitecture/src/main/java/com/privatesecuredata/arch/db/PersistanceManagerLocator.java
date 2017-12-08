@@ -15,6 +15,7 @@ import io.reactivex.subjects.ReplaySubject;
 public class PersistanceManagerLocator {
 	private static PersistanceManagerLocator instance = null;
 	private static HashMap<String, PersistanceManager> pmMap = new HashMap<String, PersistanceManager>();
+	private boolean skipUpgrade = false;
 
 	private PersistanceManagerLocator() {}
 
@@ -40,6 +41,10 @@ public class PersistanceManagerLocator {
             pm.publishStatus(new StatusMessage(PersistanceManager.Status.INITIALIZEDPM));
 		}
 	}
+
+	public void skipUpgrade(boolean skip) {
+	    skipUpgrade = skip;
+    }
 
     protected boolean checkAndDoUpgrade(PersistanceManager pm, Context ctx, IDbDescription dbDesc) throws DBException
     {
@@ -117,7 +122,7 @@ public class PersistanceManagerLocator {
         }
 
         boolean ret = false;
-        if ( (currentDbs.size() > 0) && (highestDbVersionFound < dbDesc.getVersion()) ) {
+        if ( (currentDbs.size() > 0) && (highestDbVersionFound < dbDesc.getVersion()) && !skipUpgrade) {
             Log.i(getClass().getName(), String.format("Upgrading DB '%s' V%d I%d to V%d",
                     dbDesc.getBaseName(), highestDbVersionFound, dbDesc.getInstance(), dbDesc.getVersion()));
             pm.onUpgrade(ctx, highestDbVersionFound, dbDesc.getVersion(), dbNames);
