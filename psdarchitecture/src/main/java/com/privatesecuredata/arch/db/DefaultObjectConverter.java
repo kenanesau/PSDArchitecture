@@ -219,7 +219,6 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
                         fldConverter.convertField(newSqlField, newObject, _oldDesc, oldObject);
                 }
             }
-            this.save(oldObject, newObject);
 
             Collection<ObjectRelation> oneToOneRels = _newDesc.getOneToOneRelations();
             for (ObjectRelation newOneToOneRel : oneToOneRels)
@@ -227,7 +226,6 @@ public class DefaultObjectConverter<T extends IPersistable> extends BaseObjectCo
                 convertOneToOneRelation(newOneToOneRel, newObject, oldObject);
             }
 
-            newObject.getDbId().setDirty();
             this.save(oldObject, newObject);
 
             Collection<ObjectRelation> oneToManyRels = _newDesc.getOneToManyRelations();

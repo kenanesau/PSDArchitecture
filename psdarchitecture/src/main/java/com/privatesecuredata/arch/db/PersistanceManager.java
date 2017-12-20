@@ -482,6 +482,10 @@ public class PersistanceManager {
         }
 		catch (Exception ex)
 		{
+		    ex.printStackTrace();
+		    if (null != ex.getCause()) {
+		        ex.getCause().printStackTrace();
+		    }
 			throw new DBException(String.format("Error adding common Persister for type '%s'!", (null != persistentType) ? persistentType.getName() : "NULL"), ex);
 		}
 	}
@@ -1475,6 +1479,10 @@ public class PersistanceManager {
                 }
             }
             catch (Exception e) {
+                e.printStackTrace();
+                if(null != e.getCause())
+                    e.getCause().printStackTrace();
+
                 throw new MVVMException(String.format("Error creating provider of type '%s' for type '%s'",
                         providerType.getName(), modelType.getName()), e);
             }

@@ -86,7 +86,6 @@ public class MeasurementValue implements IPersistable, Parcelable {
         this.dbId = (DbId<MeasurementValue>)dbId;
     }
 
-
     public double getVal() {
         return val;
     }
