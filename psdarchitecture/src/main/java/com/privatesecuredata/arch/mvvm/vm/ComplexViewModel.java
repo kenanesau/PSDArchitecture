@@ -619,7 +619,9 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 	}
 
 	@CallSuper
-	protected void startCommit() {}
+	protected void startCommit() {
+	    getMVVM().notifyStartCommit(this);
+    }
 
     @Override
     public void commit() {

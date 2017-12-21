@@ -562,6 +562,8 @@ public class AutomaticPersister<T extends IPersistable> extends AbstractPersiste
                     SqlDataField[] compseAr = new SqlDataField[composeColl.size()];
                     composeColl.toArray(compseAr);
                     int n = copyDataRow(composedObj, csr, compseAr, colIndex);
+                    DbId id = getPM().assignDbId(composedObj, 0, true);
+                    id.setComposition();
                     composedField.set(obj, composedObj);
 
                     colIndex += n;

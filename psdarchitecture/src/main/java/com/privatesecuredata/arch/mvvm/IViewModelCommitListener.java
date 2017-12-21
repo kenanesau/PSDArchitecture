@@ -9,5 +9,6 @@ import com.privatesecuredata.arch.mvvm.vm.IViewModel;
  *
  */
 public interface IViewModelCommitListener {
+	void notifyStartCommit(IViewModel<?> vm);
 	void notifyCommit(IViewModel<?> vm);
 }

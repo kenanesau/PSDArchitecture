@@ -20,6 +20,7 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
     private boolean dirtyForeignKey = false; //Parent container changed
     private Class type = null;
 	private long id = -1;
+	private boolean isComposition = false;
 	private IDirtyChangedListener dirtyListener;
 	
 	private T persistableObj;
@@ -43,13 +44,18 @@ public class DbId<T extends IPersistable> implements IDirtyChangedListener {
     public Class<?> getType() { return this.type; }
 	
 	public boolean getDirty() { return this.dirty; }
-	public void setDirty() { this.dirty = true; }
+	public void setDirty() {
+	    if (!isComposition) //Compositions are NEVER dirty -- they are saved with their "parents"
+	        this.dirty = true;
+	}
 	public void setClean() {
         this.dirty = false;
     }
     public boolean getDirtyForeignKey() { return this.dirtyForeignKey; }
     public void setDirtyForeignKey() { this.dirtyForeignKey = true; }
     public void setCleanForeignKey() { this.dirtyForeignKey = false; }
+    public boolean isComposition() { return this.isComposition; }
+    public void setComposition() { this.isComposition = true; }
 	
 	public long getId() { return this.id; }
 

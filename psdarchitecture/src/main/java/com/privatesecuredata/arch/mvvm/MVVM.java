@@ -144,6 +144,11 @@ public class MVVM {
     public void setListViewModelFactory(IListViewModelFactory lstFactory) { this.listVmFactory = lstFactory; }
     public IListViewModelFactory getListViewModelFactory() { return this.listVmFactory; }
 
+    public void notifyStartCommit(IViewModel<?> vm) {
+        for(IViewModelCommitListener listener : globalCommitListeners)
+            listener.notifyStartCommit(vm);
+    }
+
     public void notifyCommit(IViewModel<?> vm) {
         for(IViewModelCommitListener listener : globalCommitListeners)
             listener.notifyCommit(vm);
