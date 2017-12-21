@@ -314,7 +314,7 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
      */
     public void reinit(IViewModel<?> complexVM)
     {
-        this.init(this.view, complexVM);
+    	this.init(this.view, complexVM);
     }
 	
 	public boolean isViewChanged() {

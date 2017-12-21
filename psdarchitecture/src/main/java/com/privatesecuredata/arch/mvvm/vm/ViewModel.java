@@ -60,12 +60,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
             if (listener == this)
                 throw new ArgumentException("Cannot register viewmodel-listener with itself!!!");
 
-            if (this.viewModelChangeListeners.containsKey(System.identityHashCode(listener)))
-                throw new ArgumentException(
-                        String.format("You are registering a Viewmodel-listener for VM '%s' twice",
-                                getClass().getName()));
-
-            if (null != listener)
+            if ( (null != listener) && (!this.viewModelChangeListeners.containsKey(System.identityHashCode(listener))) )
                 this.viewModelChangeListeners.put(System.identityHashCode(listener), listener);
         }
         finally {
@@ -92,12 +87,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
             if (listener == this)
                 throw new ArgumentException("Cannot register model-listener with itself!!!");
 
-            if (this.modelChangeListeners.containsKey(System.identityHashCode(listener)))
-                throw new ArgumentException(
-                        String.format("You are registering a model-listener for VM '%s' twice",
-                        getClass().getName()));
-
-            if (null != listener)
+            if ( (null != listener) && (!this.modelChangeListeners.containsKey(System.identityHashCode(listener))) )
                 this.modelChangeListeners.put(System.identityHashCode(listener), listener);
         }
         finally {
