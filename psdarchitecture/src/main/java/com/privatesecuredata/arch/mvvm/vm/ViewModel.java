@@ -73,7 +73,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
 	{
         try {
             vmLock.lock();
-            this.viewModelChangeListeners.remove(listener);
+            this.viewModelChangeListeners.remove(System.identityHashCode(listener));
         }
         finally {
             vmLock.unlock();
@@ -101,7 +101,7 @@ public abstract class ViewModel<MODEL> implements IViewModelChangedListener, IVi
         try {
             vmLock.lock();
             if (null != listener)
-                this.modelChangeListeners.remove(listener);
+                this.modelChangeListeners.remove(System.identityHashCode(listener));
         }
         finally {
             vmLock.unlock();

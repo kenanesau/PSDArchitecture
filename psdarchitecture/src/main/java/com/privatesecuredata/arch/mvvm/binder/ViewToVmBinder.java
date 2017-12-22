@@ -351,20 +351,20 @@ public class ViewToVmBinder<T> extends TransientViewToVmBinder<T>
                 this.setVM(simpleVM);
             SimpleValueVM vm = this.getVM();
 
-            vmUpdatesView = true;
             if (null != vm)
                 writeDataToView();
-            vmUpdatesView=false;
         }
 	}
 
 	private void writeDataToView() {
+		setVMUpdatesView();
         Observable.just(this)
                 .subscribeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Consumer<ViewToVmBinder<T>>() {
                     @Override
                     public void accept(ViewToVmBinder<T> binder) throws Exception {
                         ViewToVmBinder.this.writeViewCmd.set(binder.view, binder.getVM().get());
+                        resetVMUpdatesView();
                     }
                 });
     }
