@@ -2,6 +2,7 @@ package com.privatesecuredata.arch.db;
 
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -10,6 +11,7 @@ import android.util.Pair;
 import com.google.common.io.Files;
 import com.privatesecuredata.arch.db.annotations.DbExtends;
 import com.privatesecuredata.arch.db.annotations.DbPartialClass;
+import com.privatesecuredata.arch.db.annotations.DbThisToOne;
 import com.privatesecuredata.arch.db.annotations.Persister;
 import com.privatesecuredata.arch.db.query.Query;
 import com.privatesecuredata.arch.db.query.QueryBuilder;
@@ -338,10 +340,9 @@ public class PersistanceManager {
                     /**
                      * Create delete Triggers
                      */
-                    sqlStatements.addAll(createTriggerStatementLst(persister.getDescription().getType(),
-                            "one_", desc.getOneToOneRelations()));
-                    sqlStatements.addAll(createTriggerStatementLst(persister.getDescription().getType(),
-                            "lst_", desc.getOneToManyRelations()));
+                    sqlStatements.addAll(
+                            createTriggerStatementLst(persister.getDescription().getType(),
+                            desc));
 
                     for (String triggerSQL : sqlStatements) {
                         getDb().execSQL(triggerSQL);
@@ -363,6 +364,11 @@ public class PersistanceManager {
 	}
 
     protected String createTriggerStatement(Class persistentType, String prefix, Class<?> childType) {
+        return createTriggerStatement(persistentType, prefix, childType,
+                DbNameHelper.getForeignKeyFieldName(persistentType));
+    }
+
+    protected String createTriggerStatement(Class persistentType, String prefix, Class childType, String fieldName) {
         String tableName = DbNameHelper.getTableName(persistentType);
 
         return new StringBuilder("CREATE TEMP TRIGGER trigger_").append(prefix)
@@ -372,13 +378,69 @@ public class PersistanceManager {
                 .append(" FOR EACH ROW BEGIN DELETE FROM ")
                 .append(DbNameHelper.getTableName(childType))
                 .append(" WHERE ")
-                .append(DbNameHelper.getForeignKeyFieldName(persistentType))
+                .append(fieldName)
                 .append("=OLD._id; END").toString();
     }
 
+    protected String createOneToOneTriggerStatement(Class persistentType, String prefix, Class childType, String fieldName) {
+        String tableName = DbNameHelper.getTableName(persistentType);
 
-    protected Collection<String> createTriggerStatementLst(Class persitentType, String prefix, Collection<ObjectRelation> relations) {
+        return new StringBuilder("CREATE TEMP TRIGGER trigger_").append(prefix)
+                .append(tableName).append("_delete_").append(DbNameHelper.getTableName(childType))
+                .append(" AFTER DELETE ON ")
+                .append(tableName)
+                .append(" FOR EACH ROW BEGIN DELETE FROM ")
+                .append(DbNameHelper.getTableName(childType))
+                .append(" WHERE ")
+                .append("_id=OLD.")
+                .append(fieldName)
+                .append("; END").toString();
+    }
+
+
+    protected Collection<String> createTriggerStatementLst(Class persitentType, PersisterDescription desc) {
         Hashtable<Pair<String, Class>, String> sqlStatements = new Hashtable<>();
+        Collection<ObjectRelation> relations = desc.getOneToOneRelations();
+
+        for (ObjectRelation rel : relations) {
+            if (rel.isComposition())
+                continue;
+
+            if (rel.deleteChildren()) {
+                Class<?> childType = rel.getReferencedListType();
+                if (null == childType)
+                    childType = rel.getField().getType();
+                IPersister persister = getIPersister(childType);
+
+                if (null == persister)
+                    continue;
+
+                SqlDataField sqlField = new SqlDataField(rel.getField());
+                String fieldName = DbNameHelper.getFieldName(rel.getField(), SqlDataField.SqlFieldType.LONG);
+                if (persister.tableExists()) {
+                    Pair key = new Pair<String, Class>("one_", childType);
+                    if (!sqlStatements.contains(key)) {
+                        String sqlTrigger = createOneToOneTriggerStatement(persitentType, "one_", childType, sqlField.getSqlName());
+                        sqlStatements.put(key, sqlTrigger);
+                    }
+                }
+
+                List<AutomaticPersister> lst = persister.getExtendingPersisters();
+                for (AutomaticPersister autoPersister : lst) {
+                    if (autoPersister.tableExists()) {
+                        childType = autoPersister.getPersistentType();
+                        Pair key = new Pair<String, Class>("one_", childType);
+                        if (!sqlStatements.contains(key)) {
+                            String sqlTrigger = createOneToOneTriggerStatement(persitentType, "one_", childType, sqlField.getSqlName());
+                            sqlStatements.put(key, sqlTrigger);
+                        }
+                    }
+                }
+            }
+        }
+
+        relations = desc.getOneToManyRelations();
+
         for (ObjectRelation rel : relations) {
             if (rel.isComposition())
                 continue;
@@ -393,9 +455,9 @@ public class PersistanceManager {
                     continue;
 
                 if (persister.tableExists()) {
-                    Pair key = new Pair<String, Class>(prefix, childType);
+                    Pair key = new Pair<String, Class>("lst_", childType);
                     if (!sqlStatements.contains(key)) {
-                        String sqlTrigger = createTriggerStatement(persitentType, prefix, childType);
+                        String sqlTrigger = createTriggerStatement(persitentType, "lst_", childType);
                         sqlStatements.put(key, sqlTrigger);
                     }
                 }
@@ -404,9 +466,9 @@ public class PersistanceManager {
                 for (AutomaticPersister autoPersister : lst) {
                     if (autoPersister.tableExists()) {
                         childType = autoPersister.getPersistentType();
-                        Pair key = new Pair<String, Class>(prefix, childType);
+                        Pair key = new Pair<String, Class>("lst_", childType);
                         if (!sqlStatements.contains(key)) {
-                            String sqlTrigger = createTriggerStatement(persitentType, prefix, childType);
+                            String sqlTrigger = createTriggerStatement(persitentType, "lst_", childType);
                             sqlStatements.put(key, sqlTrigger);
                         }
                     }
@@ -615,6 +677,15 @@ public class PersistanceManager {
 
                     ConversionManager convMan = new ConversionManager(oldPm, newPm, conv);
                     conv.convert(convMan);
+
+                    /** FIXME Remove this on the next release (1.5?) **/
+                    if (oldVersion == 4) {
+                        SharedPreferences settings = ctx.getSharedPreferences("MyHoardPrefs", 0);
+                        SharedPreferences.Editor editor = settings.edit();
+                        editor.putBoolean("fixedWrongStockitemWeights", true);
+                        // Commit the edits!
+                        editor.commit();
+                    }
 
                     newPm.getDb().close();
                     Log.i(getClass().getName(), "Renaming new Db-File");
