@@ -620,7 +620,10 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
 
 	@CallSuper
 	protected void startCommit() {
-	    getMVVM().notifyStartCommit(this);
+	    MVVM mvvm = getMVVM();
+
+	    if (null != mvvm)
+	        mvvm.notifyStartCommit(this);
     }
 
     @Override
@@ -630,21 +633,25 @@ public abstract class ComplexViewModel<MODEL> extends ViewModel<MODEL> {
         boolean wasDirty = this.isDirty();
         if (wasDirty) {
             this.commitData();
-
-            if (isGlobalNotifyEnabled()) {
-                MVVM mvvm = getMVVM();
-                /** MVVM can be null if we have a VM which created otherwise
-                 * (e.g. CalculateReach-Dialog).
-                 */
-                if (null != mvvm)
-                    mvvm.notifyCommit(this);
-            }
-
             finishCommit();
         }
     }
 
-	/**
+    @Override
+    protected void finishCommit() {
+        if (isGlobalNotifyEnabled()) {
+            MVVM mvvm = getMVVM();
+            /** MVVM can be null if we have a VM which created otherwise
+             * (e.g. CalculateReach-Dialog).
+             */
+            if (null != mvvm)
+                mvvm.notifyCommit(this);
+        }
+
+        super.finishCommit();
+    }
+
+    /**
 	 * (re)load all data from the Model to the ViewModel
 	 */
 	public void reload() 

@@ -5,6 +5,7 @@ import android.util.Log;
 import com.privatesecuredata.arch.exceptions.ArgumentException;
 import com.privatesecuredata.arch.exceptions.MVVMException;
 import com.privatesecuredata.arch.mvvm.IViewModelChangedListener;
+import com.privatesecuredata.arch.mvvm.MVVM;
 
 import java.util.ArrayList;
 import java.util.Collection;
