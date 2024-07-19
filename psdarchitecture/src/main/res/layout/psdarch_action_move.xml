@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="@dimen/toolbar_height"
+             android:background="@color/primary"
+             android:id="@+id/fragment_action_move"
+             android:layout_gravity="bottom"
+    >
+
+    <ImageView
+        android:id="@+id/psdarch_btn_action_move_cancel"
+        android:layout_width="@dimen/raster6"
+        android:layout_height="@dimen/raster6"
+        android:layout_marginLeft="@dimen/keyline1"
+        android:layout_marginStart="@dimen/keyline1"
+        android:layout_marginTop="@dimen/raster4"
+        android:src="@drawable/ic_cancel"
+        android:clickable="true"
+        android:onClick="onButtonClick"
+        />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="@dimen/keyline2"
+        android:layout_marginStart="@dimen/keyline2">
+
+        <TextView
+            android:id="@+id/psdarch_txt_action_move"
+            android:textSize="20sp"
+            android:padding="0dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:textColor="@color/light_text_on_dark_bg_color"
+            android:layout_gravity="center_vertical"
+            android:text="@string/psdarch_moving"/>
+
+        <TextView
+            android:id="@+id/psdarch_txt_action_move_number_of_items"
+            android:textSize="20sp"
+            android:padding="0dp"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:textColor="@color/light_text_on_dark_bg_color"
+            android:layout_gravity="center_vertical"
+            />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/psdarch_btn_action_move_ok"
+        android:layout_gravity="end|center_vertical"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_marginRight="@dimen/keyline1"
+        android:layout_marginEnd="@dimen/keyline1"
+        android:textColor="@color/light_text_on_dark_bg_color"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="@string/psdarch_action_move"
+        android:clickable="true"
+        android:onClick="onButtonClick"
+        />
+</FrameLayout>

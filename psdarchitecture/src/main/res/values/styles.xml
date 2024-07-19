@@ -1,0 +1,93 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Base application theme, dependent on API level. This theme is replaced
+        by AppBaseTheme fromSys res/values-vXX/styles.xml on newer devices.
+    -->
+
+    <style name="PsdWidgetBase">
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">start|top</item>
+        <item name="android:layout_marginBottom">@dimen/raster4</item>
+    </style>
+
+    <style name="PsdEditBase" parent="@style/PsdWidgetBase" />
+    <style name="PsdEdit" parent="@style/PsdEditBase" />
+
+    <style name="PsdEdit.Large">
+        <item name="android:textAppearance">?android:attr/textAppearanceLarge</item>
+    </style>
+
+    <style name="PsdTitle">
+        <item name="android:textSize">26sp</item>
+    </style>
+
+    <style name="AppBaseTheme.OverFlow" parent="@android:style/Widget.Holo.Light.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_overflow</item>
+    </style>
+
+    <!-- The part just containing the menus -->
+    <style name="ActionBar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        <!--item name="displayOptions">showHome</item-->
+        <!--item name="android:logo">@drawable/psd_icon</item-->
+        <item name="background">@drawable/actionbar_background</item>
+        <item name="android:background">@drawable/actionbar_background</item>
+        <item name="actionBarDivider">@android:color/transparent</item>
+        <item name="titleTextStyle">@style/ActionBar.TitleText</item>
+        <item name="android:textColor">#fff</item>
+        <item name="android:textColorSecondary">#fff</item>
+        <item name="actionModeBackground">@drawable/actionbar_background</item>
+        <item name="android:actionModeBackground">@drawable/actionbar_background</item>
+        <item name="actionModeCloseDrawable">?android:attr/actionModeCloseDrawable</item>
+        <item name="android:actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
+        <item name="actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
+        <item name="height">@dimen/toolbar_height</item>
+    </style>
+
+    <style name="ActionBar.TitleText" >
+        <item name="android:textSize">22sp</item>
+    </style>
+
+    <!-- The part containing the Actionbar plus additional information -->
+    <style name="HeaderBar" >
+        <item name="android:background">@color/primary</item>
+        <item name="android:textColor">#fff</item>
+    </style>
+
+    <style name="AppBaseTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
+        <item name="actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
+        <item name="actionBarStyle">@style/ActionBar</item>
+        <item name="actionModeStyle">@style/ActionBar</item>
+        <item name="android:actionModeStyle">@style/ActionBar</item>
+        <item name="actionModeBackground">@drawable/actionbar_background</item>
+        <item name="actionModeSplitBackground">@drawable/actionbar_background</item>
+        <item name="icon">@drawable/psd_icon</item>
+        <item name="android:colorActivatedHighlight">@color/accent</item>
+        <item name="colorControlHighlight">@color/accent</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
+        <item name="windowActionModeOverlay">true</item>
+
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related toSys
+            backward-compatibility can go here.
+        -->
+    </style>
+
+    <!-- Application theme. -->
+    <style name="AppTheme" parent="AppBaseTheme">
+        <!-- All customizations that are NOT specific toSys a particular API-level can go here. -->
+    </style>
+
+    <!-- activated-Style for pre-HoneyComb-Devices see BCG chapter "Choice Modes and the Activated Style" -->
+    <style name="activated" parent="AppBaseTheme">
+        <item name="android:background">?android:attr/activatedBackgroundIndicator</item>
+    </style>
+</resources>

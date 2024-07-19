@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <TabHost
+        android:id="@+id/edit_measval_tabhost"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="@dimen/action_area_height"
+        >
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TabWidget
+                android:id="@android:id/tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/dark_text_on_light_bg_color"
+                />
+
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+            </FrameLayout>
+        </LinearLayout>
+    </TabHost>
+    <FrameLayout
+        android:id="@+id/psdarch_no_tabs_frame"
+        android:visibility="gone"
+        android:layout_marginBottom="@dimen/action_area_height"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"></FrameLayout>
+
+    <android.support.v7.widget.GridLayout
+        android:layout_gravity="bottom"
+        app:columnCount="2"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/action_area_height"
+
+        >
+        <TextView
+            android:id="@+id/psdarch_edit_measval_cancel"
+            app:layout_column="0"
+            app:layout_columnWeight="8"
+            android:layout_marginEnd="@dimen/raster2"
+            android:layout_marginRight="@dimen/raster2"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/button_height"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/raster2"
+            android:paddingLeft="@dimen/raster2"
+            android:paddingEnd="@dimen/raster2"
+            android:paddingRight="@dimen/raster2"
+            app:layout_gravity="right|center_vertical"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/primary"
+            android:text="@string/psdarch_cancel"
+            />
+
+        <TextView
+            android:id="@+id/psdarch_edit_measval_ok"
+            app:layout_column="1"
+            app:layout_gravity="center_vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/button_height"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/raster2"
+            android:paddingLeft="@dimen/raster2"
+            android:paddingEnd="@dimen/raster2"
+            android:paddingRight="@dimen/raster2"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="@color/primary"
+            android:text="@string/psdarch_ok"
+            />
+
+    </android.support.v7.widget.GridLayout>
+</FrameLayout>

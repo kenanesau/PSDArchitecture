@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="PsdEdit" parent="@style/PsdEditBase">
+        <item name="android:background">@android:color/background_light</item>
+        <item name="android:elevation">@dimen/raster1</item>
+    </style>
+
+    <style name="AppBaseTheme.OverFlow" parent="@android:style/Widget.Material.ActionButton.Overflow">
+        <item name="android:tint">#fff</item>
+    </style>
+
+    <style name="AppBaseTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:actionOverflowButtonStyle">@style/AppBaseTheme.OverFlow</item>
+        <!--@style/AppBaseTheme.OverFlow</item>--> <!--@android:style/Widget.Material.Light.ActionButton.Overflow</item-->
+        <!-- Main theme colors -->
+        <!--   your app's branding color (for the app bar) -->
+        <item name="android:colorPrimary">@color/primary</item>
+        <!--   darker variant of colorPrimary (for status bar, contextual app bars) -->
+        <item name="android:colorPrimaryDark">@color/primary_dark</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:colorControlActivated">@color/primary</item>
+        <item name="android:actionModeBackground">@color/primary</item>
+        <item name="android:activatedBackgroundIndicator">@drawable/activated_selector</item>
+        <item name="android:titleTextAppearance">@style/ActionBar.TitleText</item>
+        <item name="windowActionModeOverlay">true</item>
+
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+</resources>

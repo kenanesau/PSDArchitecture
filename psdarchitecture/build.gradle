@@ -1,0 +1,61 @@
+apply plugin: 'com.android.library'
+apply plugin: 'me.tatarka.retrolambda'
+//apply plugin: 'com.getkeepsafe.dexcount'
+
+android {
+    compileSdkVersion 27
+    buildToolsVersion '27.0.1'
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 27
+    }
+
+    compileOptions {
+        incremental false
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    retrolambda {
+        jvmArgs '-noverify'
+        //jdk '/usr/lib/jvm/java-8-oracle'
+        javaVersion JavaVersion.VERSION_1_7
+        defaultMethods false
+        defaultMethods false
+    }
+
+    buildTypes {
+        debug {
+            testCoverageEnabled = true
+        }
+
+        release {
+            minifyEnabled true
+            zipAlignEnabled true
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    def supportLibVersion = "${rootProject.ext.versions.supportLib}"
+    compile "com.android.support:support-annotations:${supportLibVersion}"
+    compile "com.android.support:support-v4:${supportLibVersion}"
+    compile "com.android.support:appcompat-v7:${supportLibVersion}"
+    compile "com.android.support:recyclerview-v7:${supportLibVersion}"
+    compile "com.android.support:gridlayout-v7:${supportLibVersion}"
+    compile "com.android.support:design:${supportLibVersion}"
+    compile "com.google.guava:guava:${rootProject.ext.versions.guava}"
+    compile 'javax.annotation:jsr250-api:1.0'
+    compile "io.reactivex.rxjava2:rxandroid:${rootProject.ext.versions.rxandroid}"
+    compile "io.reactivex.rxjava2:rxjava:${rootProject.ext.versions.rxjava}"
+}
+
+repositories {
+    jcenter()
+    google()
+}

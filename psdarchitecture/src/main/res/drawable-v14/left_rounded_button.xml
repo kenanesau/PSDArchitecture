@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/accent_light"
+    android:id="@+id/psdarch_upper_rounded_button_bg">
+    <corners android:topLeftRadius="@dimen/raster6" android:topRightRadius="0dp"
+        android:bottomLeftRadius="@dimen/raster6" android:bottomRightRadius="0dp"/>
+    <solid android:color="@color/primary" />
+</shape>

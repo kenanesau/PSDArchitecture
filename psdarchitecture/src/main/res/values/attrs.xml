@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<declare-styleable name="psdarch_fab">
+	    <attr name="bgcolor" format="color" />
+        <attr name="checked_bgcolor" format="color" />
+	    <attr name="icon_checked" format="reference" />
+	    <attr name="icon_default" format="reference" />
+	    <attr name="icon_out_animation" format="reference" />
+	    <attr name="icon_in_animation" format="reference" />
+	    <attr name="default_animation" format="reference" />
+        <attr name="disable_outline" format="boolean" />
+  	</declare-styleable>
+    <declare-styleable name="psdarch_number_selector">
+        <attr name="android:orientation" />
+    </declare-styleable>
+    <attr name="edit_mode" format="enum">
+        <enum name="ro" value="0"/>
+        <enum name="simple" value="1"/>
+        <enum name="complex" value="2"/>
+        <enum name="full" value="3"/>
+    </attr>
+    <declare-styleable name="psdarch_measvalctrl">
+        <attr name="edit_mode" />
+        <attr name="android:orientation" />
+        <attr name="android:hint" />
+        <attr name="format_string" format="string" />
+        <attr name="label" format="string" />
+        <attr name="hide_label" format="boolean" />
+        <attr name="unit_postfix" format="string" />
+    </declare-styleable>
+    <declare-styleable name="psdarch_dialog_titlebar">
+        <attr name="icon_cancel" format="reference" />
+        <attr name="txt_title" format="reference" />
+        <attr name="txt_ok" format="reference" />
+        <attr name="hide_ok" format="boolean" />
+        <attr name="hide_cancel" format="boolean" />
+        <attr name="hide_title" format="boolean" />
+    </declare-styleable>
+    <declare-styleable name="psdarch_dialog_editable_title_titlebar"
+        parent="@declare-styleable/psdarch_dialog_titlebar">
+        <attr name="hide_title_icon" format="boolean" />
+    </declare-styleable>
+</resources>
+ 

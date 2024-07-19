@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/background_light"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.privatesecuredata.arch.ui.widget.DialogTitlebar
+        style="@style/HeaderBar"
+        android:id="@+id/headerbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/toolbar_height"
+        app:txt_title="@string/title_activity_licenses"
+        app:hide_ok="true"
+        />
+
+    <FrameLayout android:id="@+id/license_main_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/toolbar_height"
+        tools:layout="@layout/fragment_product_list"
+        />
+</FrameLayout>

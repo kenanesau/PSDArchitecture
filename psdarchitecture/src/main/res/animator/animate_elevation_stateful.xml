@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true">
+        <set>
+        	<objectAnimator
+            	android:propertyName="translationZ"
+	            android:duration="@android:integer/config_mediumAnimTime"
+	            android:valueType="floatType"
+	            android:valueTo="@dimen/elevation"
+                android:interpolator="@android:anim/anticipate_overshoot_interpolator"
+                >
+        	</objectAnimator>
+        </set>
+    </item>
+    <item android:state_activated="false">
+        <set>
+            <objectAnimator 
+                android:propertyName="translationZ" 
+                android:duration="@android:integer/config_mediumAnimTime"
+                android:valueTo="0" 
+                android:valueType="floatType">
+            </objectAnimator>
+        </set>
+    </item>
+</selector>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="@dimen/raster4"
+    android:paddingLeft="@dimen/raster4"
+    android:paddingRight="@dimen/raster4">
+
+    <android.support.v7.widget.GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:columnCount="4"
+        app:rowCount="1"
+        app:alignmentMode="alignBounds"
+        >
+        <EditText app:layout_column="0"
+            app:layout_row="0"
+            app:layout_columnSpan="3"
+            app:layout_gravity="fill_horizontal"
+            app:layout_columnWeight="1"
+            android:id="@+id/psdarch_measval_value"
+            android:inputType="numberDecimal"
+            android:selectAllOnFocus="true"
+            android:layout_width="0dp"
+            android:maxLength="24"
+            />
+        <Spinner app:layout_column="3"
+            app:layout_row="0"
+            app:layout_gravity="fill_horizontal"
+            android:id="@+id/psdarch_unit_spinner"
+            />
+    </android.support.v7.widget.GridLayout>
+    <RadioGroup
+        android:id="@+id/unit_of_account_choices"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/raster2">
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/unspecified_weight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/psdarch_unspecified_value" />
+        <android.support.v7.widget.AppCompatRadioButton
+            android:id="@+id/custom_weight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/psdarch_custom_value" />
+    </RadioGroup>
+
+</LinearLayout>

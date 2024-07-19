@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/activity_psdarch_edit_measval_full_test"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.privatesecuredata.arch.ui.widget.MeasurementValueControl
+        android:id="@+id/psdarch_test_meas_val"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:edit_mode="full"
+         />
+</LinearLayout>

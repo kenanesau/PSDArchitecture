@@ -1,0 +1,30 @@
+<resources>
+
+    <string name="app_name">PSDArchitecture</string>
+    <string name="psdarch_async_operation_in_progress_title">Async operation in progress</string>
+    <string name="psdarch_async_operation_in_progress_message">At the moment you cannot buy the item, since another operation is still running in the background. Please try again!</string>
+    <string name="psdarch_custom_value">custom value</string>
+    <string name="psdarch_dialog_titlebar_title">Title</string>
+    <string name="psdarch_dialog_titlebar_txt_ok">Save</string>
+    <string name="psdarch_fragment_action_move_number_of_items">items</string>
+    <string name="psdarch_action_move">Move</string>
+    <string name="psdarch_titlebar_title_sku_list">Shop</string>
+    <string name="psdarch_content_buy_item">You can buy this item!</string>
+    <string name="psdarch_content_bought_item">You already bought this item!</string>
+    <string name="psdarch_already_bought_title">Already bought!</string>
+    <string name="psdarch_already_bought_message">You already bought that item!</string>
+    <string name="psdarch_ok">OK</string>
+    <string name="psdarch_cancel">Cancel</string>
+    <string name="psdarch_moving">moving…</string>
+    <string name="psdarch_searching">Searching…</string>
+    <string name="title_activity_licenses">Licenses</string>
+    <string name="toast_info_activity" formatted="false">%s V%s uses these great Open-Source products!! THANK YOU!!!</string>
+    <string name="psdarch_unspecified_length">unspecified length</string>
+    <string name="psdarch_unspecified_volume">unspecified volume</string>
+    <string name="psdarch_unspecified_weight">unspecified weight</string>
+    <string name="psdarch_unspecified_value">unspecified value</string>
+    <string name="psdarch_unit">Unit</string>
+    <string name="psdarch_per_piece">per piece</string>
+    <string name="psdarch_per_bin">per bin</string>
+    <string name="psdarch_value">value</string>
+</resources>
